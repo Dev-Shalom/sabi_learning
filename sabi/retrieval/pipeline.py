@@ -120,7 +120,12 @@ def corpus_document_frequencies(s: Session, corpus_version: str) -> tuple[dict[s
     return _df_state["df"], n
 
 
-def retrieve(s: Session, query: str, corpus_version: str = "") -> RetrievalResult:
+def retrieve(
+    s: Session,
+    query: str,
+    corpus_version: str = "",
+    query_vector: list[float] | None = None,
+) -> RetrievalResult:
     cfg = runtime()
     started = time.perf_counter()
 
@@ -131,8 +136,10 @@ def retrieve(s: Session, query: str, corpus_version: str = "") -> RetrievalResul
     final_n = int(cfg.get("retrieval.final_context_chunks", 4))
 
     lexical = lexical_candidates(s, query, k_lex)
-    embedder = get_embedder()
-    semantic = vector_candidates(s, embedder.embed_one(query), k_vec)
+    # The caller has usually embedded the question already for the cache lookup.
+    # Re-embedding here would double the only per-request cost a cache hit has.
+    vector = query_vector if query_vector is not None else get_embedder().embed_one(query)
+    semantic = vector_candidates(s, vector, k_vec)
 
     fused = reciprocal_rank_fusion([lexical, semantic], k=rrf_k)
     shortlist = fused[:rerank_n]

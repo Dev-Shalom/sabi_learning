@@ -177,3 +177,26 @@ def sibling_chunks(
         SIBLINGS_SQL, {"doc_ids": doc_ids, "exclude": exclude_refs or [""]}
     ).all()
     return _rows_to_candidates(rows, "sibling")
+
+
+EXCLUSION_SQL = text(
+    """
+    SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
+           0.0 AS score
+    FROM chunks c
+    JOIN documents d ON d.id = c.document_id
+    WHERE d.active AND c.heading ILIKE :pattern
+    """
+)
+
+
+def exclusion_chunks(s: Session, pattern: str = "%not on this syllabus%") -> list[Candidate]:
+    """Chunks that say what the syllabus does NOT cover.
+
+    Every syllabus document ends with a section naming what belongs to Further
+    Mathematics instead. Indexing those makes a refusal *grounded*: the system
+    can cite the line that says differentiating sin x is not on this paper,
+    rather than refusing because a similarity score fell below a number.
+    """
+    rows = s.execute(EXCLUSION_SQL, {"pattern": pattern}).all()
+    return _rows_to_candidates(rows, "exclusion")

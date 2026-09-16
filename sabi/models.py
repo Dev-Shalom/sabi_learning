@@ -206,6 +206,10 @@ class Request(Base):
     tokens_in: Mapped[int] = mapped_column(Integer, default=0)
     tokens_out: Mapped[int] = mapped_column(Integer, default=0)
     cost_usd: Mapped[float] = mapped_column(Numeric(12, 8), default=0)
+    # True when cost_usd is a price-list estimate rather than a billed amount --
+    # the offline provider makes no API call, and a report that quietly mixes
+    # estimated and actual spend is a report that lies.
+    cost_is_estimated: Mapped[bool] = mapped_column(Boolean, default=False)
 
     latency_ms: Mapped[int] = mapped_column(Integer, default=0)
     retrieval_ms: Mapped[int] = mapped_column(Integer, default=0)
@@ -308,7 +312,7 @@ class AnswerCache(Base):
 
     payload: Mapped[dict] = mapped_column(JSONB)
     model: Mapped[str] = mapped_column(String(80))
-    prompt_version: Mapped[str] = mapped_column(String(24))
+    prompt_version: Mapped[str] = mapped_column(String(64))
     corpus_version: Mapped[str] = mapped_column(String(64))
 
     hits: Mapped[int] = mapped_column(Integer, default=0)

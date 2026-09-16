@@ -140,6 +140,27 @@ def cmd_ask(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_cache(args: argparse.Namespace) -> int:
+    from sqlalchemy import func, select
+
+    from sabi.answer.cache import invalidate_all
+    from sabi.db import session_scope
+    from sabi.models import AnswerCache
+
+    with session_scope() as s:
+        if args.action == "clear":
+            print(f"cleared {invalidate_all(s)} cache entries")
+            return 0
+        rows = s.execute(
+            select(
+                func.count(),
+                func.coalesce(func.sum(AnswerCache.hits), 0),
+            )
+        ).one()
+        print(f"entries {rows[0]}   hits served {rows[1]}")
+    return 0
+
+
 def cmd_plans(args: argparse.Namespace) -> int:
     from sabi.schema import sync_plans
 
@@ -196,6 +217,10 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("query")
     ask.add_argument("--user", default="cli-local", help="anonymous id to meter against")
     ask.set_defaults(func=cmd_ask)
+
+    ca = sub.add_parser("cache", help="semantic cache")
+    ca.add_argument("action", choices=["stats", "clear"], nargs="?", default="stats")
+    ca.set_defaults(func=cmd_cache)
 
     pl = sub.add_parser("plans", help="plan limits")
     pl.add_argument("action", choices=["sync"])

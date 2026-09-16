@@ -54,7 +54,7 @@ cache:
 
 models:
   # Cheap model serves by default. Escalation is logged per request.
-  default: "claude-haiku-4-5-20251001"
+  default: "claude-haiku-4-5"
   escalation: "claude-sonnet-5"
   judge: "claude-sonnet-5"
 

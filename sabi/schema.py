@@ -1,11 +1,16 @@
 """Schema bootstrap.
 
-Deliberately not Alembic. The schema is created by `create_all` plus a short
-list of statements that SQLAlchemy does not express (the vector extension, the
-HNSW index, the trigram index). At this stage of the project a migration tool
-would be ceremony: there is one deployment and the corpus is rebuilt by
-re-ingesting, not by migrating. Noted in DECISIONS.md as a thing to revisit the
-day there is production data worth preserving.
+Deliberately not Alembic *yet*. The schema is created by `create_all`, plus the
+statements SQLAlchemy does not express (the vector extension, the HNSW indexes,
+the trigram index), plus a forward-only list of idempotent ALTERs for columns
+added after a table already existed somewhere.
+
+That last list is a migration system in miniature, and saying so is more honest
+than pretending `create_all` is enough -- it silently ignores columns added to
+an existing table, which is exactly the bug that made this list necessary. It
+works because every statement is `IF NOT EXISTS` and the corpus is rebuilt by
+re-ingesting rather than migrated. The day there is production data worth
+preserving, this becomes Alembic. Noted in DECISIONS.md.
 """
 
 from __future__ import annotations
@@ -19,6 +24,15 @@ from sabi.models import Base, Plan
 EXTRA_DDL = [
     "CREATE EXTENSION IF NOT EXISTS vector",
     "CREATE EXTENSION IF NOT EXISTS pg_trgm",
+]
+
+# Forward-only, idempotent, append-only. Never edit an entry, only add one.
+MIGRATIONS = [
+    # 001: distinguish billed spend from price-list estimates (offline provider).
+    """ALTER TABLE requests
+       ADD COLUMN IF NOT EXISTS cost_is_estimated boolean NOT NULL DEFAULT false""",
+    # 002: cache scope keys are longer than a bare prompt version.
+    "ALTER TABLE answer_cache ALTER COLUMN prompt_version TYPE varchar(64)",
 ]
 
 POST_DDL = [
@@ -42,6 +56,8 @@ def bootstrap(seed_plans: bool = True) -> None:
     Base.metadata.create_all(engine())
 
     with engine().begin() as c:
+        for stmt in MIGRATIONS:
+            c.execute(text(stmt))
         for stmt in POST_DDL:
             c.execute(text(stmt))
 
