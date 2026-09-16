@@ -35,7 +35,18 @@ TARGET_WORDS = 180
 MAX_WORDS = 340
 MIN_WORDS = 40
 
-ATOMIC_HEADINGS = ("solution", "question", "worked example")
+ATOMIC_HEADINGS = (
+    "solution",
+    "question",
+    "worked example",
+    # "Not on this syllabus" sections are short -- 30 to 40 words -- so the
+    # merge rule below used to fold them into the preceding chunk and drop their
+    # heading. That quietly broke grounded refusals: the refusal path finds
+    # out-of-scope evidence by heading, and after merging only one such section
+    # in the whole corpus still had one. The eval suite reported 0 of 12
+    # out-of-syllabus questions caught, and this line is most of the reason.
+    "not on this syllabus",
+)
 NUMBERED_STEP = re.compile(r"^\s*\d+\.\s", re.MULTILINE)
 
 

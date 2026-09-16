@@ -174,12 +174,18 @@ def confidence(
 
     mass = sum(1 for s in scored[:4] if s.score >= 0.35 * max(top, 1e-6)) / 4.0
 
-    value = (
-        0.50 * min(1.0, top)
-        + 0.20 * min(1.0, margin * 2.5)
-        + 0.20 * agreement
-        + 0.10 * mass
-    )
+    # Agreement and mass *modulate* the top score; they do not add to it.
+    #
+    # The first version summed them, which handed out 0.30 of confidence before
+    # the quality of the best chunk was considered at all. Both saturate easily:
+    # any two retrievers agree on something, and four mediocre chunks are still
+    # four chunks. The eval suite caught it -- "Explain photosynthesis" retrieved
+    # a best chunk scoring 0.12 and came out at 0.37 confidence, over the refusal
+    # threshold, and got answered. Multiplying instead means a bad best chunk
+    # cannot be rescued by agreement about how bad it is.
+    base = min(1.0, top)
+    support = 0.70 + 0.30 * (0.6 * agreement + 0.4 * mass)  # in [0.70, 1.00]
+    value = base * support + 0.12 * base * min(1.0, margin * 2.5)
     parts = {
         "top": round(top, 4),
         "margin": round(margin, 4),

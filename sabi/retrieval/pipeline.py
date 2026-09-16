@@ -47,6 +47,7 @@ class RetrievalResult:
             {
                 "locator": s.candidate.locator,
                 "ref": s.candidate.ref,
+                "doc_id": s.candidate.doc_id,
                 "heading": s.candidate.heading,
                 "attribution": s.candidate.provenance.get("attribution"),
                 "source": s.candidate.provenance.get("source"),

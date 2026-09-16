@@ -190,6 +190,48 @@ EXCLUSION_SQL = text(
 )
 
 
+EXCLUSION_MATCH_SQL = text(
+    """
+    SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
+           (0.5 * COALESCE(ts_rank_cd(c.tsv, query, 32), 0)
+            + 0.5 * (1 - (c.embedding <=> CAST(:vec AS vector)))) AS score
+    FROM chunks c
+    JOIN documents d ON d.id = c.document_id
+    LEFT JOIN LATERAL to_tsquery('english', :q) AS query ON true
+    WHERE d.active AND c.heading ILIKE :pattern AND c.embedding IS NOT NULL
+    ORDER BY score DESC
+    LIMIT :lim
+    """
+)
+
+
+def exclusion_match(
+    s: Session,
+    query: str,
+    vector: list[float],
+    limit: int = 3,
+    pattern: str = "%not on this syllabus%",
+) -> list[Candidate]:
+    """Score a question against the out-of-scope sections, lexically and semantically.
+
+    The first version of this scored lexical term overlap only, and caught
+    0 of 12 out-of-syllabus questions in the golden set: the corpus says
+    "Differentiation of trigonometric ... functions", the student types
+    "Differentiate sin x", and raw token overlap sees two different words.
+    Postgres full-text search stems both to the same root, and the vector half
+    covers the cases where the wording shares no stem at all ("dot product" vs
+    "scalar product"). `ts_rank_cd` with normalisation flag 32 is bounded to
+    0..1, so the two halves are on comparable scales before being averaged.
+    """
+    q = _tsquery_terms(query)
+    vec = "[" + ",".join(f"{x:.6f}" for x in vector) + "]"
+    rows = s.execute(
+        EXCLUSION_MATCH_SQL,
+        {"q": q or "nothing", "vec": vec, "pattern": pattern, "lim": limit},
+    ).all()
+    return _rows_to_candidates(rows, "exclusion")
+
+
 def exclusion_chunks(s: Session, pattern: str = "%not on this syllabus%") -> list[Candidate]:
     """Chunks that say what the syllabus does NOT cover.
 

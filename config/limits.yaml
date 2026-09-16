@@ -40,8 +40,13 @@ retrieval:
   rerank_top_n: 8
   final_context_chunks: 4
   # Below this confidence the system refuses instead of answering.
-  # Tuned against the golden set -- see EVALUATION.md, not guessed.
-  refusal_threshold: 0.34
+  # Chosen by tools/sweep_thresholds.py over a 5x5 grid against the 100-item
+  # golden set, under a selection rule fixed before the sweep ran. See
+  # EVALUATION.md for the grid and the tradeoff that was rejected.
+  refusal_threshold: 0.46
+  # How strongly a question has to match a "Not on this syllabus" section
+  # before the system refuses and cites that section as evidence.
+  scope_exclusion_threshold: 0.42
   # Below this, escalate to the stronger model instead of refusing outright.
   escalation_threshold: 0.55
 

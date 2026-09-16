@@ -42,7 +42,15 @@ STOPWORDS = frozenset(
 
 
 def tokenize(text: str) -> list[str]:
-    return [t for t in TOKEN.findall(text.lower()) if t not in STOPWORDS and len(t) > 1]
+    """Content terms.
+
+    Single characters are kept. In ordinary prose they are noise, but this
+    corpus is mathematics: `x`, `y`, `n`, `r` and `d` are the subject matter.
+    Dropping them made "reflect in the line y = x" and "reflect in the line
+    y = -x" identical to the retriever, which is how a golden item asking for
+    one got an answer about the other.
+    """
+    return [t for t in TOKEN.findall(text.lower()) if t not in STOPWORDS]
 
 
 class Embedder(ABC):

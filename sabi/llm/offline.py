@@ -37,12 +37,22 @@ def _strip_context_header(text: str) -> str:
 
 
 def _pick_primary(context: list[dict]) -> dict | None:
-    """Prefer a Solution over the Question it answers."""
+    """Prefer a Solution over the Question it answers -- from the same document.
+
+    The `doc_id` check is not defensive tidiness, it is the fix for a real bug
+    the eval suite caught: without it, a question about the volume of a cone
+    matched the cone's Question chunk, then picked up the *sphere's* Solution
+    because that was the first chunk in context whose heading said "Solution".
+    The answer was internally consistent, fully cited, and about a different
+    solid. Two golden items failed on exactly this.
+    """
     if not context:
         return None
     best = context[0]
     if (best.get("heading") or "").strip().lower() == "question":
         for c in context:
+            if c.get("doc_id") != best.get("doc_id"):
+                continue
             if (c.get("heading") or "").strip().lower() == "solution":
                 return c
     return best

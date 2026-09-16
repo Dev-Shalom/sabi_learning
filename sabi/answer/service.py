@@ -272,7 +272,13 @@ def answer_question(
     client: str = "web",
     plan_hint: str = "free",
     llm: LLMClient | None = None,
+    use_cache: bool = True,
 ) -> AnswerResult:
+    """Answer one question.
+
+    `use_cache=False` is for the eval harness: a suite that answers from the
+    cache measures the cache, not the system. Cache behaviour has its own tests.
+    """
     request_id = uuid.uuid4()
     started = time.perf_counter()
     question = (question or "").strip()
@@ -348,7 +354,11 @@ def answer_question(
         embedder = get_embedder()
         query_vector = embedder.embed_one(question)
         scope = answer_cache.scope_key(cfg.prompt_version, settings().llm_provider)
-        hit = answer_cache.lookup(s, question, query_vector, scope, version)
+        hit = (
+            answer_cache.lookup(s, question, query_vector, scope, version)
+            if use_cache
+            else None
+        )
         if hit is not None:
             answer_cache.record_hit(s, hit.entry_id)
             payload = hit.payload
@@ -401,7 +411,8 @@ def answer_question(
         gen_started = time.perf_counter()
         try:
             generated: Generated = generate(
-                s, question, retrieval, llm or get_llm(), decision.model
+                s, question, retrieval, llm or get_llm(), decision.model,
+                query_vector=query_vector,
             )
         except LLMUnavailable as e:
             generation_ms = int((time.perf_counter() - gen_started) * 1000)
@@ -450,24 +461,25 @@ def answer_question(
 
         # A refusal is cached too: out-of-syllabus questions repeat as much as
         # answerable ones, and a fast refusal is as valuable as a fast answer.
-        answer_cache.store(
-            s,
-            question,
-            query_vector,
-            {
-                "text": result.text,
-                "refused": result.refused,
-                "refusal_kind": result.refusal_kind,
-                "citations": [c.__dict__ for c in result.citations],
-                "model": result.model,
-                "confidence": result.confidence,
-                "suggestions": result.suggestions,
-                "retrieved_refs": retrieval.refs,
-            },
-            result.model or "unknown",
-            scope,
-            version,
-        )
+        if use_cache:
+            answer_cache.store(
+                s,
+                question,
+                query_vector,
+                {
+                    "text": result.text,
+                    "refused": result.refused,
+                    "refusal_kind": result.refusal_kind,
+                    "citations": [c.__dict__ for c in result.citations],
+                    "model": result.model,
+                    "confidence": result.confidence,
+                    "suggestions": result.suggestions,
+                    "retrieved_refs": retrieval.refs,
+                },
+                result.model or "unknown",
+                scope,
+                version,
+            )
 
         _persist(
             s, request_id=request_id, user=user, plan_name=plan.name,

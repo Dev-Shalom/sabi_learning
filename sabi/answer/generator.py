@@ -28,8 +28,7 @@ from sabi.answer.prompts import get_prompts, render_sources
 from sabi.config import runtime
 from sabi.llm.base import LLMClient, LLMResponse, LLMUnavailable
 from sabi.retrieval.pipeline import RetrievalResult
-from sabi.retrieval.rerank import FeatureReranker
-from sabi.retrieval.store import exclusion_chunks
+from sabi.retrieval.store import exclusion_match
 
 CITATION = re.compile(r"\[([A-Z]{2,3}\s?[A-Z]?\d{1,3}(?:\.\d+)?)\]")
 
@@ -82,16 +81,18 @@ def suggestions_from(retrieval: RetrievalResult, limit: int = 2) -> list[str]:
 
 
 def scope_exclusion(
-    s: Session, question: str, retrieval: RetrievalResult
+    s: Session, question: str, query_vector: list[float] | None
 ) -> tuple[float, object | None]:
     """Score the question against the 'Not on this syllabus' sections."""
-    candidates = exclusion_chunks(s)
+    if query_vector is None:
+        from sabi.retrieval.embeddings import get_embedder
+
+        query_vector = get_embedder().embed_one(question)
+
+    candidates = exclusion_match(s, question, query_vector)
     if not candidates:
         return 0.0, None
-    scored = FeatureReranker().rerank(question, candidates)
-    if not scored:
-        return 0.0, None
-    return scored[0].score, scored[0].candidate
+    return candidates[0].score, candidates[0]
 
 
 def generate(
@@ -100,6 +101,7 @@ def generate(
     retrieval: RetrievalResult,
     llm: LLMClient,
     model: str,
+    query_vector: list[float] | None = None,
 ) -> Generated:
     cfg = runtime()
     prompts = get_prompts(cfg.prompt_version)
@@ -107,9 +109,14 @@ def generate(
 
     # 1. Grounded out-of-scope.
     scope_threshold = float(cfg.get("retrieval.scope_exclusion_threshold", 0.42))
-    exc_score, exc_chunk = scope_exclusion(s, question, retrieval)
-    best_context = retrieval.chunks[0].score if retrieval.chunks else 0.0
-    if exc_chunk is not None and exc_score >= scope_threshold and exc_score >= best_context:
+    exc_score, exc_chunk = scope_exclusion(s, question, query_vector)
+    # An earlier version also required the exclusion evidence to outscore the
+    # best in-scope chunk. That guard never fired: an out-of-syllabus question
+    # shares most of its vocabulary with in-scope material ("integration by
+    # parts" looks a lot like "integration"), so the in-scope chunk always won.
+    # The threshold alone decides, and it is tuned against the golden set with
+    # over-refusal on the 78 answerable items as the constraint.
+    if exc_chunk is not None and exc_score >= scope_threshold:
         prov = exc_chunk.provenance
         r = refusals.out_of_syllabus(
             prov.get("subtopic") or prov.get("topic"),

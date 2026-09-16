@@ -237,6 +237,8 @@ def build_parser() -> argparse.ArgumentParser:
     ev.add_argument("--save", default="", help="write results to this path")
     ev.add_argument("--fail-under", default="", help="gate: metric=value,metric=value")
     ev.add_argument("--json", action="store_true")
+    ev.add_argument("--heuristic-judge", action="store_true",
+                    help="force the deterministic judge even if a key is set")
     ev.set_defaults(func=cmd_eval)
 
     sv = sub.add_parser("serve", help="run the web app")
