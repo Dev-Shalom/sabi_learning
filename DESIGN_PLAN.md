@@ -58,7 +58,7 @@ Closed state — inline in the answer, at the end of the sentence it supports:
 
 ```
 The sum of the interior angles of a polygon
-is (n - 2) x 180 degrees. [2018 Q7b]
+is (n - 2) x 180 degrees. [EX 31]
                           ^ mono, mark red, underlined with a 1px
                             red rule sitting 2px low — a pen line
                             under the reference, not a hyperlink
@@ -67,7 +67,7 @@ is (n - 2) x 180 degrees. [2018 Q7b]
 Open state — the source, rendered as a strip of the paper it came from:
 
 ```
-|  2018 Q7b                   WAEC · Core Maths
+|  EX 31                     Worked example
 |  --------------------------------------------
 |  Calculate the sum of the interior angles
 |  of a regular polygon with 12 sides.
@@ -92,6 +92,24 @@ Three details do the work:
 
 Panels are hairline-ruled and square-cornered (2px radius). No shadow. Paper does not float.
 
+### Why a locator is `EX 31` and not `2018 Q7b`
+
+My first draft of this plan used `2018 Q7b` as the example citation. I removed it.
+I do not have licensed access to WAEC past papers, so an exact year and question
+number would be metadata I had invented. In a product whose entire claim is that
+its citations can be trusted, a plausible-looking fabricated citation is the worst
+possible bug — it is the failure mode the product exists to prevent, printed in the
+hero element. So the corpus carries only provenance I can stand behind:
+
+- `SYL A3` for a section of the published WAEC syllabus.
+- `EX 31` for a worked example authored in Paper 2 style, every numeric answer
+  machine-verified.
+
+Each chunk stores an `attribution` field (`syllabus` or `worked_example`) and the
+citation panel renders it in words, so a student is never misled about what they
+are looking at. Dropping real past papers in later is an ingestion job, not a code
+change. See DECISIONS.md.
+
 ## Wireframe — main answer view, 360px
 
 ```
@@ -106,14 +124,14 @@ Panels are hairline-ruled and square-cornered (2px radius). No shadow. Paper doe
 |                                        |
 |  Use the formula for the sum of        |  <- answer, 17px/1.6
 |  interior angles of a polygon with     |
-|  n sides. [2018 Q7b]                   |  <- locator, mono, red
+|  n sides. [EX 31]                      |  <- locator, mono, red
 |                                        |
 |      Sum = (n - 2) x 180               |  <- display maths, centred,
 |          = (12 - 2) x 180              |     mono, ink
 |          = 1800 degrees                |
 |                                        |
 |  +----------------------------------+  |
-|  |# 2018 Q7b           WAEC · Core  |  |  <- source panel, collapsed
+|  |# EX 31         Worked example    |  |  <- source panel, collapsed
 |  |# Show the source                 |  |     by default on mobile
 |  +----------------------------------+  |
 |                                        |
@@ -140,8 +158,8 @@ Refusal state replaces the answer body, same page furniture:
 |  I do not have material on this.       |  <- ink, same size as an answer
 |                                        |
 |  # What I have is WAEC Core Maths for  |  <- red margin rule: this is a
-|  # SS3. Matrices and determinants are  |     correction, so it is red
-|  # on the Further Maths syllabus, not  |
+|  # SS3. Differentiating sin x is on    |     correction, so it is red
+|  # the Further Maths syllabus, not     |
 |  # this one.                           |
 |                                        |
 |  Try searching: "transformation of     |

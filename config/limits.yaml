@@ -1,0 +1,63 @@
+# Runtime configuration. Changing this file takes effect on the next request --
+# there is no deploy step and no process restart. The loader stats the file and
+# reloads when mtime changes (sabi/config.py).
+#
+# Plan limits here are the SEED for the `plans` table. Once seeded, the table in
+# the database is the source of truth so an admin can change a limit live; run
+# `sabi plans sync` to push changes from this file into the table.
+
+plans:
+  free:
+    label: "Free"
+    daily_question_cap: 15
+    # Questions a single IP can ask per day across all anonymous ids. Anonymous
+    # ids are resettable by clearing site data, so the cap alone is trivially
+    # evaded; this is the backstop. Set generously -- shared school wifi and
+    # Nigerian mobile carrier CGNAT put many real students behind one address.
+    daily_ip_cap: 90
+    burst_per_minute: 6
+    monthly_cost_ceiling_usd_per_user: 0.40
+
+limiter:
+  # Applies to every caller including internal testing and the eval harness.
+  # The eval harness runs as a real user on the `internal` plan; it is metered.
+  enforce_for_internal: true
+
+budget:
+  # Global monthly kill switch. Spend is summed from the requests table.
+  monthly_ceiling_usd: 25.00
+  # Below this fraction of the ceiling: normal service.
+  # Between warn and ceiling: cheap model only, no escalation.
+  warn_fraction: 0.75
+  # At the ceiling: cache-only. A question with no cache hit gets an honest
+  # "we are at capacity today" page, never a silently degraded answer.
+  degrade_mode: "cache_only"
+
+retrieval:
+  top_k_lexical: 24
+  top_k_vector: 24
+  rrf_k: 60
+  rerank_top_n: 8
+  final_context_chunks: 4
+  # Below this confidence the system refuses instead of answering.
+  # Tuned against the golden set -- see EVALUATION.md, not guessed.
+  refusal_threshold: 0.34
+  # Below this, escalate to the stronger model instead of refusing outright.
+  escalation_threshold: 0.55
+
+cache:
+  enabled: true
+  # Cosine similarity on the question embedding. Exam questions repeat across
+  # students, so this is the main cost lever.
+  similarity_threshold: 0.94
+  ttl_days: 30
+
+models:
+  # Cheap model serves by default. Escalation is logged per request.
+  default: "claude-haiku-4-5-20251001"
+  escalation: "claude-sonnet-5"
+  judge: "claude-sonnet-5"
+
+answering:
+  prompt_version: "v3"
+  max_answer_tokens: 700
