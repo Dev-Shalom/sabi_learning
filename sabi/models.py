@@ -280,7 +280,9 @@ class GoldenItem(Base):
     expected_answer: Mapped[str | None] = mapped_column(Text)
     # Short deterministic string the answer must contain, e.g. "1800" or "3/8".
     expected_value: Mapped[str | None] = mapped_column(String(200))
-    expected_refs: Mapped[list[str] | None] = mapped_column(ARRAY(String))
+    # Holds doc_ids, not chunk refs: chunk indices move when a document is
+    # edited, and an eval set that breaks on a typo fix is an eval set nobody runs.
+    expected_docs: Mapped[list[str] | None] = mapped_column(ARRAY(String))
 
     answerable: Mapped[bool] = mapped_column(Boolean, default=True)
     # Why it is unanswerable, for the failure report: out_of_syllabus |

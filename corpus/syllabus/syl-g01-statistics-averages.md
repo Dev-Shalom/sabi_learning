@@ -1,6 +1,6 @@
 ---
 doc_id: syl-g01-statistics-averages
-title: Statistics: tables, charts and averages
+title: "Statistics: tables, charts and averages"
 source: WAEC General Mathematics syllabus
 attribution: syllabus
 topic: Statistics and probability
