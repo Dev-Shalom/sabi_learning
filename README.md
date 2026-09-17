@@ -47,6 +47,22 @@ mean what, and lists all four remaining failures with their causes.
 
 ---
 
+## What it looks like
+
+Captured at 360px, the width of the phones this is for.
+
+| Answer, with a source open | A refusal |
+|---|---|
+| ![An answer with its source panel open](docs/screenshots/answer-with-source-open.png) | ![A refusal](docs/screenshots/refusal.png) |
+
+The opened source panel is the hero element: a red margin rule down the left
+like the ruled margin of a marked script, the provenance in mono at the top, and
+the sentence the answer leans on underlined in pen rather than highlighted. The
+locator in the answer (`EX 31`) and the locator in the panel header are the same
+string in the same colour — that is the academic-footnote link, made literal.
+
+---
+
 ## Run it
 
 Needs Docker and Python 3.12+. **No API key required** — the offline providers
@@ -200,7 +216,8 @@ What is real, and what is not:
 | Feedback loop and review queue | **Working**, promotion into the golden set tested |
 | Run against Claude or Voyage | **Never done.** No API key was available. The clients are written and the seams are tested against fakes, but no real inference call has been made. |
 | LLM-as-judge | **Never run.** Rubric written and wired; the numbers in EVALUATION.md come from the heuristic stand-in. |
-| Public URL | **Not deployed.** `Dockerfile`, `docker-compose.yml` and `fly.toml` are here and the image builds, but deploying needs accounts and payment details that are the repo owner's to provide. |
+| Public URL | **Not deployed.** `Dockerfile`, `docker-compose.yml` and `fly.toml` are here and the image builds clean, but deploying needs accounts and payment details that are the repo owner's to provide. |
+| Demo video | **Not recorded.** The brief asked for a two-minute walkthrough; there are screenshots above instead. A video needs a deployed URL to walk through. |
 | Real users | **None.** The brief asked for a shipped tool with real students; this is a complete system that has not been put in front of anyone. |
 
 The last three are the honest gap between this and the brief. They need an API
