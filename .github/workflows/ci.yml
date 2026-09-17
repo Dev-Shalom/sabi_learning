@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # The same image used locally. Retrieval is half SQL -- tsvector
+        # ranking, cosine distance, the lateral join in the exclusion query --
+        # so CI runs against a real Postgres with pgvector, not a stand-in.
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: sabi
+          POSTGRES_PASSWORD: sabi
+          POSTGRES_DB: sabi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sabi"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      # No API keys in CI. The offline providers make the whole suite -- corpus,
+      # retrieval, answering, refusal, metering, cost accounting -- run with no
+      # secrets, which is also why anyone can reproduce the numbers in
+      # EVALUATION.md from a clean clone.
+      SABI_DATABASE_URL: postgresql+psycopg://sabi:sabi@localhost:5432/sabi
+      SABI_TEST_ADMIN_URL: postgresql://sabi:sabi@localhost:5432/postgres
+      SABI_TEST_DATABASE_URL: postgresql+psycopg://sabi:sabi@localhost:5432/sabi_test
+      SABI_LLM_PROVIDER: offline
+      SABI_EMBEDDING_PROVIDER: local_lsa
+      SABI_ADMIN_TOKEN: ci-admin-token
+      SABI_IP_HASH_SALT: ci-salt
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Create schema and ingest the corpus
+        run: |
+          python -m sabi.cli init
+          python -m sabi.cli ingest
+
+      - name: Design -- palette contrast
+        run: python tools/contrast_check.py
+
+      - name: Tests
+        run: python -m pytest -q
+
+      # The gate the brief asks for: a prompt, corpus or retrieval change that
+      # regresses the suite fails the build. Two mechanisms, both needed.
+      #
+      #   --baseline   catches a *relative* regression against the committed
+      #                numbers, including small ones a fixed floor would miss.
+      #   --fail-under catches an *absolute* breach, so a slow slide over
+      #                several commits cannot walk the baseline downhill.
+      - name: Evaluation suite
+        run: |
+          python -m sabi.cli eval \
+            --baseline eval/baselines/current.json \
+            --save .eval-runs/ci.json \
+            --fail-under "citations.validity=1.0,retrieval.recall_at_k=0.95,grounding.mean_ratio=0.90,correctness.value_pass_rate=0.95,refusal.unanswerable_caught=0.80"
+
+      - name: Upload the eval run
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-run
+          path: .eval-runs/ci.json
+          if-no-files-found: ignore

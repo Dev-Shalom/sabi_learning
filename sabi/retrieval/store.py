@@ -68,7 +68,11 @@ TRIGRAM_SQL = text(
            similarity(c.text, :raw) AS score
     FROM chunks c
     JOIN documents d ON d.id = c.document_id
-    WHERE d.active AND c.text %% :raw
+    -- An explicit threshold rather than the `%` operator: a literal percent
+    -- sign does not survive the driver's parameter escaping, and `%` depends on
+    -- a session GUC anyway, so spelling the threshold out is both safer and
+    -- clearer about what "similar enough" means.
+    WHERE d.active AND similarity(c.text, :raw) > 0.08
     ORDER BY score DESC
     LIMIT :lim
     """

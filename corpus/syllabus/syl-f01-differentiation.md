@@ -35,6 +35,13 @@ minimum.
 
 ## Not on this syllabus
 
-Differentiation of trigonometric, exponential and logarithmic functions, the
-product rule, the quotient rule and the chain rule for anything beyond a simple
-power are Further Mathematics, not this paper.
+Differentiation of trigonometric functions is not on this syllabus. You will not
+be asked to differentiate sin x, cos x or tan x on this paper. Differentiating
+exponential functions such as e to the power x, and logarithmic functions such
+as ln x or log x, is also not on this syllabus.
+
+The product rule, the quotient rule and the chain rule for anything beyond a
+simple power are not required either.
+
+All of these belong to Further Mathematics, which is a separate subject with its
+own paper.

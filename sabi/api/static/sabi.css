@@ -1,0 +1,443 @@
+/* Sabi — see DESIGN_PLAN.md. Six colour tokens, one type family plus mono for
+   locators, no webfonts, no shadows, no gradients. Paper, not chrome. */
+
+:root {
+  --paper: #FBF9F4;
+  --rule: #DCD4C4;
+  --ink: #2E3338;
+  --ink-soft: #565E66;
+  --mark: #8C2F2F;
+  --wash: #F6EAE6;
+
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "Roboto Mono", "DejaVu Sans Mono", Consolas, monospace;
+
+  --gutter: 16px;
+  --measure: 34rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.6;
+  /* Paper has a grain, not a gradient: a single hairline baseline rule at the
+     top edge and nothing else. */
+}
+
+.wrap {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* ---------------------------------------------------------------- header */
+
+.masthead {
+  border-bottom: 1px solid var(--rule);
+}
+
+.masthead-inner {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 0 12px;
+}
+
+.wordmark {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.subject {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.allowance {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.allowance strong { color: var(--ink); font-weight: 600; }
+
+/* ------------------------------------------------------------------ text */
+
+main { padding-bottom: 120px; }
+
+h1 {
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  margin: 26px 0 8px;
+}
+
+h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 28px 0 8px;
+}
+
+p { margin: 0 0 14px; }
+
+.lede { color: var(--ink-soft); margin-bottom: 22px; }
+
+.asked {
+  margin: 22px 0 0;
+  font-size: 17px;
+  color: var(--ink);
+}
+
+.asked-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  display: block;
+  margin-bottom: 4px;
+}
+
+hr.sep {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 18px 0;
+}
+
+/* ---------------------------------------------------------------- answer */
+
+.answer { font-size: 17px; }
+
+.answer ol.steps {
+  margin: 0 0 14px;
+  padding-left: 1.35em;
+}
+
+.answer ol.steps li { margin-bottom: 6px; }
+
+/* The citation marker. Mono, marking red, with a pen line under it that sits
+   low — a reference underlined by hand, not a hyperlink. */
+.cite {
+  font-family: var(--mono);
+  font-size: 0.82em;
+  color: var(--mark);
+  text-decoration: underline;
+  text-decoration-color: var(--mark);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  padding: 0 1px;
+}
+
+.cite:hover { background: var(--wash); }
+
+/* --------------------------------------------------------- source panels */
+
+.sources { margin: 22px 0 0; }
+
+.sources-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+
+.source {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--mark);
+  border-radius: 2px;
+  margin-bottom: 10px;
+  background: var(--paper);
+}
+
+.source[open] { background: var(--wash); }
+
+.source > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 11px 13px;
+  min-height: 44px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.source > summary::-webkit-details-marker { display: none; }
+
+.locator {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mark);
+}
+
+.source-kind {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.source-title {
+  flex-basis: 100%;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.source-open {
+  margin-left: auto;
+  font-size: 13.5px;
+  color: var(--mark);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.source[open] .source-open { visibility: hidden; }
+
+.source-body {
+  padding: 2px 13px 13px;
+  border-top: 1px solid var(--rule);
+  font-size: 15.5px;
+  line-height: 1.62;
+}
+
+.source-body p { margin: 12px 0 0; }
+
+/* The matched span, underlined in pen. Not a highlighter block: a block says
+   "search result", an underline says a person read this. */
+.source-body mark {
+  background: none;
+  color: inherit;
+  border-bottom: 2px solid var(--mark);
+  padding-bottom: 1px;
+}
+
+/* The one piece of motion in the product: the margin rule of a panel flashes
+   once when it opens, so the eye can find which thing moved. */
+.source[open] { animation: mark-flash 620ms ease-out 1; }
+
+@keyframes mark-flash {
+  0%   { border-left-color: var(--ink); }
+  35%  { border-left-color: var(--mark); }
+  100% { border-left-color: var(--mark); }
+}
+
+/* --------------------------------------------------------------- refusal */
+
+.refusal-note {
+  border-left: 2px solid var(--mark);
+  padding: 2px 0 2px 13px;
+  margin: 14px 0;
+  color: var(--ink);
+}
+
+.suggestions { margin: 16px 0 0; }
+
+.suggestions a {
+  display: inline-block;
+  font-size: 15px;
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 7px 11px;
+  margin: 0 6px 6px 0;
+  text-decoration: none;
+}
+
+.suggestions a:hover { border-color: var(--ink-soft); }
+
+/* -------------------------------------------------------------- feedback */
+
+.feedback {
+  margin: 26px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.feedback-q { font-size: 15px; color: var(--ink-soft); margin-right: 2px; }
+
+.btn-plain {
+  font: inherit;
+  font-size: 15px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 8px 16px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.btn-plain:hover { border-color: var(--ink-soft); }
+
+.reasons {
+  margin: 12px 0 0;
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+
+.reasons.open { display: flex; }
+
+.reasons button {
+  font: inherit;
+  font-size: 14px;
+  background: var(--paper);
+  color: var(--mark);
+  border: 1px solid var(--mark);
+  border-radius: 2px;
+  padding: 7px 11px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.voted { font-size: 15px; color: var(--mark); }
+
+/* ------------------------------------------------------------ disclosure */
+
+.disclosure {
+  margin: 26px 0 0;
+  padding: 2px 0 2px 13px;
+  border-left: 2px solid var(--mark);
+  font-size: 14.5px;
+  color: var(--ink-soft);
+}
+
+.disclosure a { color: var(--ink-soft); }
+
+/* -------------------------------------------------------------- composer */
+
+.composer {
+  position: sticky;
+  bottom: 0;
+  background: var(--paper);
+  border-top: 1px solid var(--rule);
+  padding: 10px 0 14px;
+}
+
+.composer-row { display: flex; gap: 8px; align-items: flex-end; }
+
+.composer textarea {
+  flex: 1;
+  font: inherit;
+  font-size: 16px; /* 16px or iOS zooms on focus */
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 11px 12px;
+  resize: none;
+  min-height: 46px;
+  max-height: 140px;
+}
+
+.composer textarea::placeholder { color: var(--ink-soft); }
+
+.composer button {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 0 18px;
+  min-height: 46px;
+  cursor: pointer;
+}
+
+.composer-help {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin: 8px 0 0;
+}
+
+.working { display: none; font-size: 14px; color: var(--ink-soft); margin: 8px 0 0; }
+.working.on { display: block; }
+
+/* --------------------------------------------------------------- examples */
+
+.examples { margin: 6px 0 0; padding: 0; list-style: none; }
+
+.examples li { margin: 0 0 8px; }
+
+.examples form { margin: 0; }
+
+.examples button {
+  font: inherit;
+  text-align: left;
+  font-size: 15.5px;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 8px 0;
+  width: 100%;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.examples button:hover { border-bottom-color: var(--mark); }
+
+/* ----------------------------------------------------------------- misc */
+
+.cap-figure {
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--mark);
+}
+
+table.admin { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.admin th, table.admin td {
+  text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+table.admin th { font-size: 12px; color: var(--ink-soft); font-weight: 600; }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+
+footer {
+  border-top: 1px solid var(--rule);
+  margin-top: 40px;
+  padding: 14px 0 30px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+footer a { color: var(--ink-soft); }
+
+a { color: var(--ink); }
+
+/* ------------------------------------------------------------ a11y, motion */
+
+:focus-visible {
+  outline: 2px solid var(--mark);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .source[open] { animation: none; }
+  * { transition: none !important; }
+}
+
+@media (min-width: 640px) {
+  body { font-size: 17.5px; }
+  .composer { position: static; border-top: 0; padding-top: 24px; }
+}

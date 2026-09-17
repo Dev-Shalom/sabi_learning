@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Sabi — what it stores{% endblock %}
+
+{% block content %}
+<h1>What Sabi stores about you</h1>
+<p class="lede">
+  Most people using Sabi are under 18, so it collects as little as it can get
+  away with. Here is the whole list, in plain words.
+</p>
+
+<h2>You do not have an account</h2>
+<p>
+  There is no sign-up, no name, no phone number. Your browser holds a random id
+  that Sabi made up — something like <code>7f3c…</code> with no meaning. That id
+  is how it counts your {{ cap }} questions a day. Clear your browser data and
+  the id is gone and you are a new person to Sabi.
+</p>
+
+<h2>Your questions</h2>
+<p>
+  The question you type and the answer you get are stored, attached to that
+  random id. They are kept so that when you mark an answer wrong, the mistake
+  can actually be found and fixed. They are not attached to your name, because
+  Sabi does not know it.
+</p>
+
+<h2>Your network address</h2>
+<p>
+  Sabi stores a scrambled version of your IP address, not the address itself. It
+  cannot be turned back into the original. It exists only to stop one person
+  clearing their browser repeatedly to get unlimited free questions.
+</p>
+
+<h2>Feedback</h2>
+<p>
+  When you tap Yes or No on an answer, that is stored against the answer and the
+  random id, and nothing else.
+</p>
+
+<h2>Email</h2>
+<p>
+  Only if you type one into the waitlist yourself. It is never required, and it
+  is used for one thing: telling you if the daily limit changes.
+</p>
+
+<h2>What Sabi never does</h2>
+<p>
+  No adverts. Nothing sold to anyone. No trackers from other companies. No
+  location. Your exam answers are not shown to your school.
+</p>
+
+<div class="disclosure">
+  Sabi can be wrong. It is a study aid, not a teacher and not the exam board.
+  For anything that matters, your teacher and the official WAEC syllabus are the
+  authority.
+</div>
+
+<p><a href="/">Back to asking questions</a></p>
+{% endblock %}

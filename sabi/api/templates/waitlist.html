@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Sabi — more questions a day{% endblock %}
+
+{% block content %}
+{% if saved %}
+<h1>Noted.</h1>
+<p class="lede">
+  {% if left_email %}
+  You are on the list. I will only use that address to tell you when the limit
+  goes up, and for nothing else.
+  {% else %}
+  You are on the list. You did not leave an address, which is fine — the count
+  of people asking is the part that decides whether the limit goes up.
+  {% endif %}
+</p>
+<p><a href="/">Back to asking questions</a></p>
+
+{% else %}
+<h1>Need more than {{ cap }} a day?</h1>
+<p class="lede">
+  Say so and I will see how many people need it. The limit exists because each
+  answer costs money to produce, not to push anyone toward paying — there is
+  nothing to pay for.
+</p>
+
+<form method="post" action="/waitlist">
+  <p>
+    <label for="email">Email, only if you want to be told when it changes</label><br>
+    <input type="email" id="email" name="email" placeholder="optional"
+           style="font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--rule);border-radius:2px;width:100%;max-width:22rem;background:var(--paper);color:var(--ink)">
+  </p>
+  <button class="btn-plain" type="submit">Add me to the list</button>
+</form>
+
+<div class="disclosure">
+  Leaving an address is optional and always will be. Without one you are still
+  counted.
+</div>
+{% endif %}
+{% endblock %}

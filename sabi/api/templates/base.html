@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Sabi — WAEC Maths{% endblock %}</title>
+<meta name="description" content="Answers to WAEC Core Mathematics questions that show you where they came from.">
+<meta name="color-scheme" content="light">
+<link rel="stylesheet" href="/static/sabi.css">
+<link rel="icon" href="data:,">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="wordmark" href="/">Sabi</a>
+    <span class="subject">WAEC Maths</span>
+    {% if cap %}
+    <a class="allowance" href="/privacy" title="How the free limit works">
+      <strong>{{ remaining }}</strong> of {{ cap }} left today
+    </a>
+    {% endif %}
+  </div>
+</header>
+
+<main class="wrap">
+{% block content %}{% endblock %}
+</main>
+
+<footer>
+  <div class="wrap">
+    Sabi answers only WAEC Core Mathematics, and only from the syllabus and
+    worked examples it holds.
+    <a href="/privacy">What it stores about you</a>
+  </div>
+</footer>
+
+<script src="/static/sabi.js" defer></script>
+</body>
+</html>

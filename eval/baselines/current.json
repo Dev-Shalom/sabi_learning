@@ -1,14 +1,14 @@
 {
-  "run_id": "20260916T203025-5f0cdc",
-  "timestamp": "2026-09-16T20:30:32.397985+00:00",
-  "duration_s": 6.54,
+  "run_id": "20260917T003650-fffbc7",
+  "timestamp": "2026-09-17T00:36:57.649964+00:00",
+  "duration_s": 6.79,
   "environment": {
     "llm_provider": "offline",
     "embedding_provider": "local_lsa",
     "judge": "heuristic",
     "rubric": "9301077a9775",
     "prompt_version": "v3",
-    "corpus_version": "27b888af911d2f5c",
+    "corpus_version": "117d25bfed0da7ba",
     "python": "3.14.6"
   },
   "thresholds": {
@@ -77,14 +77,14 @@
     },
     "latency_ms": {
       "n": 100,
-      "mean": 45.84,
-      "p50": 42.0,
-      "p95": 59.1,
-      "max": 186.0
+      "mean": 49.9,
+      "p50": 44.0,
+      "p95": 78.2,
+      "max": 198.0
     },
     "cost": {
-      "total_usd": 0.142816,
-      "mean_per_question_usd": 0.00142816,
+      "total_usd": 0.14318,
+      "mean_per_question_usd": 0.0014318,
       "estimated": true
     },
     "by_topic": {
@@ -283,7 +283,7 @@
       "answer": "1. Write the number in expanded form using powers of five. The digits from the\n right are 2, 1, 4 and 3, so the powers are 5^0, 5^1, 5^2 and 5^3.\n2. 3412 base five = 3(5^3) + 4(5^2) + 1(5^1) + 2(5^0).\n3. = 3(125) + 4(25) + 1(5) + 2(1).\n4. = 375 + 100 + 5 + 2.\n5. = 482.\n\n**Answer: 482 in base ten.**\n\nCounting the powers from the left instead of the right. The rightmost digit is\nalways multiplied by the base to the power zero.\n\n[EX 01]\n\nDivide repeatedly by the new base and keep the remainders. For example, to write 294 in base five: 294 divided by 5 is 58 remainder 4; 58\ndivided by 5 is 11 remainder 3; 11 divided by 5 is 2 remainder 1; 2 divided by 5\nis 0 remainder 2. [SYL A1]",
       "model": "offline-extractive",
       "confidence": 0.705,
-      "latency_ms": 186,
+      "latency_ms": 198,
       "cost_usd": 0.001604,
       "cost_is_estimated": true,
       "retrieval": {
@@ -351,8 +351,8 @@
       "refusal_kind": null,
       "answer": "1. Expand the left-hand side in base ten: 132 base x = 1(x^2) + 3(x) + 2.\n2. Set it equal to 42: x^2 + 3x + 2 = 42.\n3. Rearrange: x^2 + 3x - 40 = 0.\n4. Factorise: (x + 8)(x - 5) = 0.\n5. So x = -8 or x = 5.\n6. A number base cannot be negative, so x = 5. Check that every digit used is\n less than 5: the digits are 1, 3 and 2, so base five is valid.\n\n**Answer: x = 5.**\n\nGiving both roots. Always reject a base that is negative, zero, one, or not\ngreater than the largest digit in the number.\n\n[EX 02]\n\nIf 24 in base b\nequals 20 in base ten, then 2b + 4 = 20, so b = 8. Remember that every digit used\nmust be smaller than the base, which often rules out a root. [SYL A1]",
       "model": "offline-extractive",
-      "confidence": 0.7026,
-      "latency_ms": 55,
+      "confidence": 0.7022,
+      "latency_ms": 56,
       "cost_usd": 0.001736,
       "cost_is_estimated": true,
       "retrieval": {
@@ -420,7 +420,7 @@
       "answer": "1. Add column by column from the right, carrying a group of two instead of a\n group of ten.\n2. Units column: 1 + 1 = 2, which is 10 in base two. Write 0, carry 1.\n3. Twos column: 1 + 0 + 1 (carried) = 2 = 10 in base two. Write 0, carry 1.\n4. Fours column: 0 + 1 + 1 (carried) = 2 = 10 in base two. Write 0, carry 1.\n5. Eights column: 1 + 1 + 1 (carried) = 3 = 11 in base two. Write 1, carry 1.\n6. The final carry gives the leading 1.\n\n**Answer: 11000 in base two.**\n\n1011 base two is 11, and 1101 base two is 13. Their sum is 24, and 11000 in base\ntwo is 16 + 8 = 24.\n\n[EX 03]\n\nIf 24 in base b\nequals 20 in base ten, then 2b + 4 = 20, so b = 8. Remember that every digit used\nmust be smaller than the base, which often rules out a root. [SYL A1]",
       "model": "offline-extractive",
       "confidence": 0.5626,
-      "latency_ms": 55,
+      "latency_ms": 62,
       "cost_usd": 0.001878,
       "cost_is_estimated": true,
       "retrieval": {
@@ -489,7 +489,7 @@
       "answer": "Part (a)\n\n1. Move the decimal point until there is exactly one non-zero digit in front of\n it. Moving it four places to the right gives 4.536.\n2. Because the point moved four places to the right, the power of ten is\n negative four.\n\n**Answer (a): 4.536 times 10 to the power negative 4.**\n\nPart (b)\n\n3. The first significant figure is 4, the second is 5. Look at the next digit,\n which is 3.\n4. Since 3 is less than 5, the second significant figure stays as it is.\n\n**Answer (b): 0.00045.**\n\nCounting the leading zeros as significant figures. Zeros before the first\nnon-zero digit never count.\n\n[EX 04]\n\nA number in standard form is written as A times 10 to the power n, where A is at\nleast 1 and less than 10, and n is an integer. So 0.000352 is 3.52 times 10 to the\npower negative 4, and 47 300 is 4.73 times 10 to the power 4. [SYL A2]",
       "model": "offline-extractive",
       "confidence": 0.8409,
-      "latency_ms": 61,
+      "latency_ms": 57,
       "cost_usd": 0.002054,
       "cost_is_estimated": true,
       "retrieval": {
@@ -559,7 +559,7 @@
       "answer": "Approximate to a given number of decimal places or\nsignificant figures. Significant figures are counted from\nthe first non-zero digit. In 0.004073, the first significant figure is 4, so to\ntwo significant figures it is 0.0041, and to three decimal places it is 0.004. Zeros between non-zero digits are always significant. [SYL A2]",
       "model": "offline-extractive",
       "confidence": 0.5652,
-      "latency_ms": 52,
+      "latency_ms": 74,
       "cost_usd": 0.001333,
       "cost_is_estimated": true,
       "retrieval": {
@@ -628,7 +628,7 @@
       "answer": "1. Error = actual value minus measured value, taken as positive.\n Error = 2.5 - 2.4 = 0.1 m.\n2. Percentage error = (error divided by the actual value) times 100.\n3. = (0.1 divided by 2.5) times 100.\n4. = 0.04 times 100 = 4.\n\n**Answer: 4 per cent.**\n\nDividing by the measured value instead of the actual value. The denominator is\nalways the true or exact value.\n\n[EX 05]\n\nIf a length is measured as 4.5 m when it is truly 4.6 m, the error is 0.1 m and the\npercentage error is (0.1 / 4.6) times 100, about 2.17 per cent. Unless the question says otherwise, give a final answer correct to three\nsignificant figures, and do not round intermediate working. [SYL A2]",
       "model": "offline-extractive",
       "confidence": 0.6256,
-      "latency_ms": 62,
+      "latency_ms": 117,
       "cost_usd": 0.001812,
       "cost_is_estimated": true,
       "retrieval": {
@@ -697,7 +697,7 @@
       "answer": "1. Write the right-hand side as a power of the same base. 32 = 2^5.\n2. So 2^(2x + 1) = 2^5.\n3. When the bases are equal, the powers are equal: 2x + 1 = 5.\n4. 2x = 4, so x = 2.\n\n**Answer: x = 2.**\n\n2^(2 times 2 + 1) = 2^5 = 32, which matches the right-hand side.\n\n[EX 06]",
       "model": "offline-extractive",
       "confidence": 0.9033,
-      "latency_ms": 46,
+      "latency_ms": 78,
       "cost_usd": 0.001867,
       "cost_is_estimated": true,
       "retrieval": {
@@ -765,8 +765,8 @@
       "refusal_kind": null,
       "answer": "1. Deal with 27^(2/3). The denominator 3 means take the cube root, the numerator\n 2 means square the result. The cube root of 27 is 3, and 3 squared is 9.\n2. Deal with 16^(-1/2). The negative sign means take the reciprocal, and the half\n means take the square root. The square root of 16 is 4, so 16^(-1/2) = 1/4.\n3. Multiply: 9 times 1/4 = 9/4.\n\n**Answer: 9/4, or 2.25.**\n\nTreating a negative index as making the answer negative. A negative index gives a\nreciprocal, never a negative number.\n\n[EX 07]",
       "model": "offline-extractive",
-      "confidence": 0.802,
-      "latency_ms": 42,
+      "confidence": 0.8032,
+      "latency_ms": 74,
       "cost_usd": 0.002145,
       "cost_is_estimated": true,
       "retrieval": {
@@ -775,8 +775,8 @@
         "reciprocal_rank": 1.0,
         "retrieved_docs": [
           "ex-07-fractional-indices",
-          "ex-25-algebraic-fractions",
           "ex-12-simplify-surds",
+          "ex-25-algebraic-fractions",
           "ex-43-differentiation-turning-points"
         ],
         "expected_docs": [
@@ -833,9 +833,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Scope and papers\" or \"Indices\" instead.",
-      "model": "claude-sonnet-5",
+      "model": null,
       "confidence": 0.4307,
-      "latency_ms": 94,
+      "latency_ms": 54,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -906,8 +906,8 @@
       "refusal_kind": null,
       "answer": "1. Write 12 as a product of 2s and 3s: 12 = 4 times 3 = 2^2 times 3.\n2. Apply the product law: log 12 = log(2^2) + log 3.\n3. Apply the power law: log(2^2) = 2 log 2 = 2 times 0.3010 = 0.6020.\n4. Add: log 12 = 0.6020 + 0.4771 = 1.0791.\n\n**Answer: 1.0791.**\n\nlog 10 = 1, and 12 is a little more than 10, so a value just above 1 is the sense\ncheck.\n\n[EX 08]",
       "model": "offline-extractive",
-      "confidence": 0.846,
-      "latency_ms": 59,
+      "confidence": 0.8461,
+      "latency_ms": 60,
       "cost_usd": 0.002197,
       "cost_is_estimated": true,
       "retrieval": {
@@ -973,11 +973,11 @@
       "answerable": true,
       "refused": false,
       "refusal_kind": null,
-      "answer": "1. Combine the left side with the product law: log [x(x - 3)] = 1.\n2. The logarithm is to base ten, and log 10 = 1, so x(x - 3) = 10.\n3. Expand and rearrange: x^2 - 3x - 10 = 0.\n4. Factorise: (x - 5)(x + 2) = 0, giving x = 5 or x = -2.\n5. Test each root in the original equation. If x = -2 then log x is the logarithm\n of a negative number, which does not exist, so that root is rejected.\n\n**Answer: x = 5.**\n\nStopping at step 4. A logarithmic equation must always be checked against the\ndomain, because the logarithm of zero or of a negative number is undefined.\n\n[EX 09]",
+      "answer": "1. Combine the left side with the product law: log [x(x - 3)] = 1.\n2. The logarithm is to base ten, and log 10 = 1, so x(x - 3) = 10.\n3. Expand and rearrange: x^2 - 3x - 10 = 0.\n4. Factorise: (x - 5)(x + 2) = 0, giving x = 5 or x = -2.\n5. Test each root in the original equation. If x = -2 then log x is the logarithm\n of a negative number, which does not exist, so that root is rejected.\n\n**Answer: x = 5.**\n\nStopping at step 4. A logarithmic equation must always be checked against the\ndomain, because the logarithm of zero or of a negative number is undefined.\n\n[EX 09]\n\nIf 10^y = x then log x = y, where log means logarithm to base ten. Logarithm and\nindex are two ways of saying the same thing, which is why log 1000 = 3. [SYL A3]",
       "model": "offline-extractive",
-      "confidence": 0.9388,
-      "latency_ms": 53,
-      "cost_usd": 0.001868,
+      "confidence": 0.89,
+      "latency_ms": 51,
+      "cost_usd": 0.002199,
       "cost_is_estimated": true,
       "retrieval": {
         "hit_at_1": true,
@@ -985,6 +985,7 @@
         "reciprocal_rank": 1.0,
         "retrieved_docs": [
           "ex-09-logarithmic-equation",
+          "syl-a03-indices-logarithms",
           "ex-18-matrix-simultaneous",
           "ex-08-logarithm-from-given-values"
         ],
@@ -994,14 +995,15 @@
       },
       "citations": {
         "citations_shown": [
-          "EX 09"
+          "EX 09",
+          "SYL A3"
         ],
         "invalid": [],
         "has_citation": true
       },
       "grounding": {
-        "scored_sentences": 7,
-        "supported_sentences": 7,
+        "scored_sentences": 9,
+        "supported_sentences": 9,
         "unsupported": [],
         "unsourced_numerals": [
           "09"
@@ -1043,8 +1045,8 @@
       "refusal_kind": null,
       "answer": "1. Students offering at least one subject = 40 - 8 = 32. So n(M union P) = 32.\n2. Use n(M union P) = n(M) + n(P) - n(M intersection P).\n3. 32 = 25 + 20 - n(M intersection P).\n4. 32 = 45 - n(M intersection P).\n5. n(M intersection P) = 45 - 32 = 13.\n\n**Answer: 13 students offer both subjects.**\n\nMaths only = 25 - 13 = 12, Physics only = 20 - 13 = 7. Then\n12 + 7 + 13 + 8 = 40, which is the class size.\n\n[EX 10]",
       "model": "offline-extractive",
-      "confidence": 0.7169,
-      "latency_ms": 48,
+      "confidence": 0.7155,
+      "latency_ms": 49,
       "cost_usd": 0.00202,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1112,7 +1114,7 @@
       "answer": "For three sets, fill the Venn diagram from the centre outwards. Put the number in\nall three sets first, then the pairwise regions after subtracting the centre, then\nthe single regions after subtracting everything already placed. Working outside-in is the usual source of mistakes. The formula is n(A union B union C) = n(A) + n(B) + n(C) - n(A and B)\n- n(A and C) - n(B and C) + n(A and B and C). [SYL A4]",
       "model": "offline-extractive",
       "confidence": 0.7758,
-      "latency_ms": 52,
+      "latency_ms": 57,
       "cost_usd": 0.001522,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1181,7 +1183,7 @@
       "answer": "1. Use the three-set formula:\n n(R union B union Y) = n(R) + n(B) + n(Y) - n(R and B) - n(R and Y)\n - n(B and Y) + n(R and B and Y).\n2. Substitute: = 60 + 50 + 40 - 30 - 25 - 20 + 10.\n3. = 150 - 75 + 10 = 85.\n4. Students who like none = total minus the union = 100 - 85 = 15.\n\n**Answer: 15 students like none of the three.**\n\nForgetting to add back the centre. Students in all three sets are subtracted three\ntimes by the pairwise terms, so they must be added back once.\n\n[EX 11]",
       "model": "offline-extractive",
       "confidence": 0.9238,
-      "latency_ms": 56,
+      "latency_ms": 58,
       "cost_usd": 0.001845,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1249,7 +1251,7 @@
       "answer": "Simplify surds of the form a root b. Rationalise the denominator, including denominators of the form a + b root c. Take out the largest perfect square factor. Root 72 is root 36 times root 2, which\nis 6 root 2. [SYL A5]",
       "model": "offline-extractive",
       "confidence": 0.8929,
-      "latency_ms": 43,
+      "latency_ms": 46,
       "cost_usd": 0.001251,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1319,7 +1321,7 @@
       "answer": "1. Simplify each surd in the numerator by taking out the largest perfect square.\n root 12 = root(4 times 3) = 2 root 3.\n root 27 = root(9 times 3) = 3 root 3.\n2. Add the like surds: 2 root 3 + 3 root 3 = 5 root 3.\n3. Divide: 5 root 3 divided by root 3 = 5.\n\n**Answer: 5.**\n\nThe answer is a whole number even though the question is full of surds. Always\nsimplify each surd first; the cancellation usually appears only after that.\n\n[EX 12]",
       "model": "offline-extractive",
       "confidence": 0.9926,
-      "latency_ms": 55,
+      "latency_ms": 47,
       "cost_usd": 0.001778,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1385,7 +1387,7 @@
       "answer": "1. The conjugate of 3 - root 2 is 3 + root 2. Multiply top and bottom by it.\n2. Numerator: 5(3 + root 2) = 15 + 5 root 2.\n3. Denominator: (3 - root 2)(3 + root 2) = 9 - 2 = 7, using the difference of two\n squares.\n4. So the expression is (15 + 5 root 2) divided by 7.\n5. Split it: 15/7 + (5/7) root 2.\n\n**Answer: 15/7 + (5/7) root 2.**\n\nMultiplying by the same expression instead of the conjugate. Multiplying by\n(3 - root 2) leaves a surd in the denominator.\n\n[EX 13]\n\nOnly like surds can be combined, in the same way as like terms in algebra.\n3 root 5 + 7 root 5 = 10 root 5, but root 2 + root 3 cannot be simplified. So 6 over root 3 becomes\n6 root 3 over 3, which is 2 root 3. [SYL A5]",
       "model": "offline-extractive",
       "confidence": 0.931,
-      "latency_ms": 40,
+      "latency_ms": 52,
       "cost_usd": 0.002146,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1457,7 +1459,7 @@
       "answer": "Part (a)\n\n1. The nth term is T(n) = a + (n - 1)d.\n2. 5th term: a + 4d = 11.\n3. 9th term: a + 8d = 23.\n4. Subtract the first from the second: 4d = 12, so d = 3.\n5. Substitute back: a + 12 = 11, so a = -1.\n\n**Answer (a): first term -1, common difference 3.**\n\nPart (b)\n\n6. S(n) = (n/2)[2a + (n - 1)d].\n7. S(20) = (20/2)[2(-1) + 19(3)] = 10[-2 + 57] = 10(55).\n8. = 550.\n\n**Answer (b): 550.**\n\n[EX 14]\n\nThe nth term and the sum of an arithmetic\nprogression (AP) and of a geometric progression (GP). The sum of the first n terms is\nS(n) = (n/2) times [2a + (n - 1)d], which can also be written as\nS(n) = (n/2) times (a + L), where L is the last term. [SYL A6]",
       "model": "offline-extractive",
       "confidence": 0.842,
-      "latency_ms": 40,
+      "latency_ms": 49,
       "cost_usd": 0.00196,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1526,7 +1528,7 @@
       "answer": "Part (a)\n\n1. The nth term is T(n) = a + (n - 1)d.\n2. 5th term: a + 4d = 11.\n3. 9th term: a + 8d = 23.\n4. Subtract the first from the second: 4d = 12, so d = 3.\n5. Substitute back: a + 12 = 11, so a = -1.\n\n**Answer (a): first term -1, common difference 3.**\n\nPart (b)\n\n6. S(n) = (n/2)[2a + (n - 1)d].\n7. S(20) = (20/2)[2(-1) + 19(3)] = 10[-2 + 57] = 10(55).\n8. = 550.\n\n**Answer (b): 550.**\n\n[EX 14]\n\nThe nth term and the sum of an arithmetic\nprogression (AP) and of a geometric progression (GP). The sum of the first n terms is\nS(n) = (n/2) times [2a + (n - 1)d], which can also be written as\nS(n) = (n/2) times (a + L), where L is the last term. [SYL A6]",
       "model": "offline-extractive",
       "confidence": 0.7564,
-      "latency_ms": 41,
+      "latency_ms": 60,
       "cost_usd": 0.001961,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1595,7 +1597,7 @@
       "answer": "Part (a)\n\n1. The nth term is T(n) = a r^(n - 1).\n2. 3rd term: a r^2 = 12.\n3. 6th term: a r^5 = 96.\n4. Divide the second by the first: r^3 = 96/12 = 8, so r = 2.\n5. Substitute into a r^2 = 12: 4a = 12, so a = 3.\n\n**Answer (a): common ratio 2, first term 3.**\n\nPart (b)\n\n6. S(n) = a(r^n - 1) divided by (r - 1), used because r is greater than 1.\n7. S(8) = 3(2^8 - 1) divided by (2 - 1) = 3(256 - 1) divided by 1.\n8. = 3 times 255 = 765.\n\n**Answer (b): 765.**\n\n[EX 15]\n\nThe nth term is\nT(n) = a times r^(n - 1). The sum of the first n terms is\nS(n) = a times (r^n - 1) divided by (r - 1) when r is greater than 1, or\nS(n) = a times (1 - r^n) divided by (1 - r) when r is less than 1. [SYL A6]",
       "model": "offline-extractive",
       "confidence": 0.8768,
-      "latency_ms": 38,
+      "latency_ms": 69,
       "cost_usd": 0.002039,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1664,7 +1666,7 @@
       "answer": "1. Find the common ratio: r = 6 divided by 18 = 1/3. Check with the next pair:\n 2 divided by 6 = 1/3, so the sequence is geometric.\n2. The sum to infinity exists only if r lies strictly between -1 and 1. Here\n r = 1/3, so it exists.\n3. S(infinity) = a divided by (1 - r) = 18 divided by (1 - 1/3).\n4. = 18 divided by (2/3) = 18 times 3/2.\n5. = 27.\n\n**Answer: 27.**\n\nIf the common ratio had been 3 instead of 1/3, there would be no sum to infinity,\nand the correct answer would be to say the series does not converge.\n\n[EX 16]",
       "model": "offline-extractive",
       "confidence": 0.9466,
-      "latency_ms": 42,
+      "latency_ms": 62,
       "cost_usd": 0.00189,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1732,7 +1734,7 @@
       "answer": "Part (a)\n\n1. For a matrix with first row a, b and second row c, d, the determinant is\n ad - bc.\n2. Determinant of A = (2)(4) - (3)(1) = 8 - 3 = 5.\n\n**Answer (a): 5.**\n\nPart (b)\n\n3. The inverse is 1 over the determinant, multiplied by the matrix whose first\n row is d and negative b, and whose second row is negative c and a.\n4. Swap the leading diagonal entries, 2 and 4, and change the signs of 3 and 1.\n5. So A inverse = one fifth times the matrix with first row 4 and -3, second row\n -1 and 2.\n\n**Answer (b): A inverse has entries 4/5 and -3/5 in the first row, -1/5 and 2/5\nin the second.**\n\nMultiplying A by A inverse gives the identity matrix, with 1s on the leading\ndiagonal and 0s elsewhere.\n\n[EX 17]\n\nFor the matrix with entries a and b in the first row and c and d in the second,\nthe determinant is ad - bc. The inverse is 1 divided by the determinant, multiplied by the matrix with entries\nd and negative b in the first row, and negative c and a in the second. [SYL A7]",
       "model": "offline-extractive",
       "confidence": 0.9136,
-      "latency_ms": 41,
+      "latency_ms": 102,
       "cost_usd": 0.00206,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1802,7 +1804,7 @@
       "answer": "Part (a)\n\n1. For a matrix with first row a, b and second row c, d, the determinant is\n ad - bc.\n2. Determinant of A = (2)(4) - (3)(1) = 8 - 3 = 5.\n\n**Answer (a): 5.**\n\nPart (b)\n\n3. The inverse is 1 over the determinant, multiplied by the matrix whose first\n row is d and negative b, and whose second row is negative c and a.\n4. Swap the leading diagonal entries, 2 and 4, and change the signs of 3 and 1.\n5. So A inverse = one fifth times the matrix with first row 4 and -3, second row\n -1 and 2.\n\n**Answer (b): A inverse has entries 4/5 and -3/5 in the first row, -1/5 and 2/5\nin the second.**\n\nMultiplying A by A inverse gives the identity matrix, with 1s on the leading\ndiagonal and 0s elsewhere.\n\n[EX 17]\n\nAdd, subtract and multiply matrices up to order\n3 by 3. Two matrices are equal only if they have\nthe same order and every corresponding entry is equal. [SYL A7]",
       "model": "offline-extractive",
       "confidence": 0.5631,
-      "latency_ms": 41,
+      "latency_ms": 82,
       "cost_usd": 0.001765,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1871,7 +1873,7 @@
       "answer": "1. Write as AX = B, where A has first row 2, 3 and second row 1, 4; X is the\n column of x and y; B is the column 13 and 14.\n2. Determinant of A = (2)(4) - (3)(1) = 5. It is not zero, so an inverse exists.\n3. A inverse = one fifth times the matrix with first row 4, -3 and second row\n -1, 2.\n4. X = A inverse B.\n5. x = [4(13) + (-3)(14)] divided by 5 = (52 - 42)/5 = 10/5 = 2.\n6. y = [(-1)(13) + 2(14)] divided by 5 = (-13 + 28)/5 = 15/5 = 3.\n\n**Answer: x = 2, y = 3.**\n\n2(2) + 3(3) = 4 + 9 = 13, and 2 + 4(3) = 14. Both equations are satisfied.\n\n[EX 18]",
       "model": "offline-extractive",
       "confidence": 0.9301,
-      "latency_ms": 41,
+      "latency_ms": 45,
       "cost_usd": 0.001967,
       "cost_is_estimated": true,
       "retrieval": {
@@ -1939,7 +1941,7 @@
       "answer": "1. Simple interest I = PRT divided by 100.\n2. Make P the subject: P = 100I divided by RT.\n3. Substitute I = 4500, R = 6, T = 3.\n4. P = (100 times 4500) divided by (6 times 3) = 450000 divided by 18.\n5. = 25000.\n\n**Answer: 25,000 naira.**\n\nInterest on 25,000 naira for one year at 6 per cent is 1,500 naira, and over\n3 years that is 4,500 naira.\n\n[EX 19]",
       "model": "offline-extractive",
       "confidence": 0.7174,
-      "latency_ms": 40,
+      "latency_ms": 43,
       "cost_usd": 0.001337,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2006,7 +2008,7 @@
       "answer": "1. Amount A = P(1 + R/100)^n.\n2. A = 50000 times (1 + 10/100)^3 = 50000 times (1.1)^3.\n3. (1.1)^3 = 1.331.\n4. A = 50000 times 1.331 = 66,550.\n5. Compound interest = A - P = 66550 - 50000 = 16,550.\n\n**Answer: amount 66,550 naira; compound interest 16,550 naira.**\n\nSimple interest over the same period would be 15,000 naira. The extra 1,550 naira\nis interest earned on interest, which is the whole point of the compound case.\n\n[EX 20]",
       "model": "offline-extractive",
       "confidence": 0.5311,
-      "latency_ms": 38,
+      "latency_ms": 47,
       "cost_usd": 0.001429,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2073,7 +2075,7 @@
       "answer": "Direct and inverse proportion. Percentage increase and decrease. Profit and loss, simple interest, compound interest, discount, commission, hire\npurchase, value added tax, depreciation, and problems on personal and household\nfinance. To share an amount in a given ratio, add the parts to get the total number of\nshares, divide the amount by the total, then multiply by each part. [SYL A8]",
       "model": "offline-extractive",
       "confidence": 0.593,
-      "latency_ms": 34,
+      "latency_ms": 42,
       "cost_usd": 0.001199,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2140,7 +2142,7 @@
       "answer": "1. Total instalments = 12 times 9,000 = 108,000 naira.\n2. Hire purchase price = deposit + instalments = 30,000 + 108,000 = 138,000 naira.\n3. Extra charge = 138,000 - 120,000 = 18,000 naira.\n4. As a percentage of the cash price: (18,000 divided by 120,000) times 100.\n5. = 15.\n\n**Answer: hire purchase price 138,000 naira; extra charge 15 per cent of the cash\nprice.**\n\nWorking the percentage on the hire purchase price instead of the cash price. The\nquestion asks for a percentage of the cash price, so that is the denominator.\n\n[EX 21]\n\nDepreciation by a fixed percentage each year uses A = P times (1 - R/100)^n. To remove VAT from a\ntax-inclusive price, divide by (1 + rate), do not simply subtract the percentage. [SYL A8]",
       "model": "offline-extractive",
       "confidence": 0.5286,
-      "latency_ms": 46,
+      "latency_ms": 44,
       "cost_usd": 0.001726,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2209,8 +2211,8 @@
       "answer": "1. Write the relation with a constant: y = k x^2 divided by z.\n2. Substitute the known values: 8 = k(4^2) divided by 2 = 16k/2 = 8k.\n3. So k = 1.\n4. The relation is y = x^2 divided by z.\n5. When x = 6 and z = 3: y = 36 divided by 3 = 12.\n\n**Answer: y = 12.**\n\nSubstituting the new values before finding k. The constant must be found first,\nfrom the pair of values given.\n\n[EX 22]",
       "model": "offline-extractive",
       "confidence": 0.9597,
-      "latency_ms": 51,
-      "cost_usd": 0.001828,
+      "latency_ms": 49,
+      "cost_usd": 0.001796,
       "cost_is_estimated": true,
       "retrieval": {
         "hit_at_1": true,
@@ -2219,7 +2221,7 @@
         "retrieved_docs": [
           "ex-22-joint-variation",
           "ex-29-completing-the-square",
-          "ex-43-differentiation-turning-points"
+          "ex-45-area-under-curve"
         ],
         "expected_docs": [
           "ex-22-joint-variation"
@@ -2277,7 +2279,7 @@
       "answer": "1. Partly constant and partly varying as x means y = a + bx.\n2. Substitute the first pair: a + 2b = 7.\n3. Substitute the second pair: a + 5b = 13.\n4. Subtract: 3b = 6, so b = 2.\n5. Substitute back: a + 4 = 7, so a = 3.\n6. The relation is y = 3 + 2x.\n7. When x = 10: y = 3 + 20 = 23.\n\n**Answer: y = 3 + 2x, and y = 23 when x = 10.**\n\n[EX 23]",
       "model": "offline-extractive",
       "confidence": 0.9744,
-      "latency_ms": 52,
+      "latency_ms": 51,
       "cost_usd": 0.001778,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2411,8 +2413,8 @@
       "refusal_kind": null,
       "answer": "1. The lowest common denominator is (x - 2)(x + 1).\n2. Rewrite each fraction over that denominator:\n 3(x + 1) over (x - 2)(x + 1), minus 2(x - 2) over (x - 2)(x + 1).\n3. Combine the numerators: 3(x + 1) - 2(x - 2) = 3x + 3 - 2x + 4.\n4. = x + 7.\n5. So the expression is (x + 7) divided by (x - 2)(x + 1).\n\n**Answer: (x + 7) over (x - 2)(x + 1), valid for x not equal to 2 and x not equal\nto -1.**\n\nForgetting that the minus sign applies to both terms of the second numerator.\nSubtracting 2(x - 2) gives -2x + 4, not -2x - 4.\n\n[EX 25]",
       "model": "offline-extractive",
-      "confidence": 0.8906,
-      "latency_ms": 48,
+      "confidence": 0.8908,
+      "latency_ms": 43,
       "cost_usd": 0.002339,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2481,7 +2483,7 @@
       "answer": "1. Make the coefficients of y equal in size. Multiply the first equation by 3 and\n the second by 2.\n2. 9x + 6y = 48, and 10x - 6y = 28.\n3. Add the two equations, which eliminates y: 19x = 76.\n4. x = 4.\n5. Substitute into the first original equation: 3(4) + 2y = 16, so 2y = 4 and\n y = 2.\n\n**Answer: x = 4, y = 2.**\n\n5(4) - 3(2) = 20 - 6 = 14, which is the second equation.\n\n[EX 26]",
       "model": "offline-extractive",
       "confidence": 0.9483,
-      "latency_ms": 51,
+      "latency_ms": 43,
       "cost_usd": 0.001688,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2549,7 +2551,7 @@
       "answer": "1. Divide both sides by 2 pi: T divided by 2 pi = the square root of (l/g).\n2. Square both sides: T^2 divided by 4 pi^2 = l divided by g.\n3. Take the reciprocal of both sides: 4 pi^2 divided by T^2 = g divided by l.\n4. Multiply both sides by l: g = 4 pi^2 l divided by T^2.\n\n**Answer: g = 4 pi squared times l, divided by T squared.**\n\nSquaring only one side, or forgetting that squaring must be applied to the whole\nof each side, not term by term.\n\n[EX 27]\n\nCylinder: curved surface is 2 pi r h; total surface of a closed cylinder is\n2 pi r h + 2 pi r squared. Cone: curved surface is pi r l, where l is the slant height, and l squared =\nr squared + h squared; total surface of a closed cone is pi r l + pi r squared. [SYL C2]",
       "model": "offline-extractive",
       "confidence": 0.9074,
-      "latency_ms": 48,
+      "latency_ms": 86,
       "cost_usd": 0.002152,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2618,7 +2620,7 @@
       "answer": "Using the formula\n\n1. Here a = 3, b = -7, c = 2.\n2. The discriminant b^2 - 4ac = 49 - 4(3)(2) = 49 - 24 = 25.\n3. The square root of 25 is 5, so the roots are rational and the equation also\n factorises.\n4. x = [7 plus or minus 5] divided by 6.\n5. x = 12/6 = 2, or x = 2/6 = 1/3.\n\nBy factorisation\n\n6. 3x^2 - 7x + 2 = (3x - 1)(x - 2), giving the same roots.\n\n**Answer: x = 2 or x = 1/3.**\n\nA perfect-square discriminant always means the quadratic factorises, so\nfactorisation would have been the faster route here.\n\n[EX 28]",
       "model": "offline-extractive",
       "confidence": 0.9585,
-      "latency_ms": 46,
+      "latency_ms": 43,
       "cost_usd": 0.001791,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2686,7 +2688,7 @@
       "answer": "Solve quadratic equations by factorisation, by completing the square and by\nformula. Form a quadratic equation from given roots. Use the sum and product of\nroots. Draw and interpret the graph of a quadratic function, including the maximum\nor minimum point, the line of symmetry, and the roots read from the graph. [SYL B3]\n\nSolve linear equations in one variable and simultaneous linear equations in two\nvariables, by substitution, elimination and graphically. Solve linear\ninequalities in one variable and represent the solution on a number line and on a\ngraph. [SYL B2]",
       "model": "offline-extractive",
       "confidence": 0.7626,
-      "latency_ms": 42,
+      "latency_ms": 41,
       "cost_usd": 0.001418,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2753,9 +2755,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Probability\" or \"Quadratic equations\" instead.",
-      "model": "claude-sonnet-5",
+      "model": null,
       "confidence": 0.2757,
-      "latency_ms": 41,
+      "latency_ms": 49,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -2825,8 +2827,8 @@
       "refusal_kind": null,
       "answer": "1. Take half the coefficient of x: half of -6 is -3.\n2. Square it: (-3)^2 = 9.\n3. Write x^2 - 6x as (x - 3)^2 - 9, since (x - 3)^2 expands to x^2 - 6x + 9 and\n the 9 must be removed again.\n4. So y = (x - 3)^2 - 9 + 5 = (x - 3)^2 - 4.\n5. A square is never negative, so the smallest value of (x - 3)^2 is 0, which\n happens when x = 3.\n6. Then y = -4.\n\n**Answer: y = (x - 3)^2 - 4; the minimum value of y is -4, occurring at x = 3.**\n\nThe roots of the equation are found by setting (x - 3)^2 = 4, giving x - 3 = 2 or\n-2, so x = 5 or x = 1. The line of symmetry is x = 3.\n\n[EX 29]\n\nMake the coefficient of x^2 equal to 1, move the constant to the right, add the\nsquare of half the coefficient of x to both sides, then take the square root of\nboth sides. Completing the square also gives the turning point directly: written\nas a(x + p)^2 + q, the turning point is at x = -p, y = q. [SYL B3]",
       "model": "offline-extractive",
-      "confidence": 0.7759,
-      "latency_ms": 50,
+      "confidence": 0.7757,
+      "latency_ms": 41,
       "cost_usd": 0.002198,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2894,8 +2896,8 @@
       "refusal_kind": null,
       "answer": "1. Take half the coefficient of x: half of -6 is -3.\n2. Square it: (-3)^2 = 9.\n3. Write x^2 - 6x as (x - 3)^2 - 9, since (x - 3)^2 expands to x^2 - 6x + 9 and\n the 9 must be removed again.\n4. So y = (x - 3)^2 - 9 + 5 = (x - 3)^2 - 4.\n5. A square is never negative, so the smallest value of (x - 3)^2 is 0, which\n happens when x = 3.\n6. Then y = -4.\n\n**Answer: y = (x - 3)^2 - 4; the minimum value of y is -4, occurring at x = 3.**\n\nThe roots of the equation are found by setting (x - 3)^2 = 4, giving x - 3 = 2 or\n-2, so x = 5 or x = 1. The line of symmetry is x = 3.\n\n[EX 29]",
       "model": "offline-extractive",
-      "confidence": 0.6038,
-      "latency_ms": 47,
+      "confidence": 0.6035,
+      "latency_ms": 44,
       "cost_usd": 0.002162,
       "cost_is_estimated": true,
       "retrieval": {
@@ -2963,7 +2965,7 @@
       "answer": "Part (a)\n\n1. For ax^2 + bx + c = 0, the sum of the roots is -b/a and the product is c/a.\n2. Here a = 2, b = -5, c = 1.\n3. Sum: alpha + beta = 5/2.\n4. Product: alpha times beta = 1/2.\n\n**Answer (a): sum 5/2, product 1/2.**\n\nPart (b)\n\n5. 1/alpha + 1/beta = (beta + alpha) divided by (alpha times beta).\n6. = (5/2) divided by (1/2).\n7. = 5.\n\n**Answer (b): 5.**\n\nThe roots themselves are irrational here, so working through the sum and product\nis much faster than solving the equation first.\n\n[EX 30]\n\nAn equation with these roots can be written as\nx^2 - (sum of roots)x + (product of roots) = 0. It opens upwards when a is positive, and\nthen the turning point is a minimum; it opens downwards when a is negative, and\nthe turning point is a maximum. [SYL B3]",
       "model": "offline-extractive",
       "confidence": 0.9862,
-      "latency_ms": 51,
+      "latency_ms": 69,
       "cost_usd": 0.001973,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3032,7 +3034,7 @@
       "answer": "Function notation and the evaluation of a function at a given\nvalue. A relation pairs elements of one set with elements of another. A relation is a\nfunction when every element of the domain has exactly one image. So one-to-one and\nmany-to-one mappings are functions; one-to-many is not. [SYL B4]\n\nArea of a triangle given two\nsides and the included angle = half ab sin C. In WAEC\nquestions, take pi as 22 over 7 unless the question states otherwise. [SYL C1]",
       "model": "offline-extractive",
       "confidence": 0.5652,
-      "latency_ms": 52,
+      "latency_ms": 49,
       "cost_usd": 0.001446,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3104,8 +3106,8 @@
       "refusal_kind": null,
       "answer": "If f(x) = 3x - 5, then f(4) means substitute 4 for x, giving 7. The domain is the\nset of inputs, the range is the set of outputs that actually occur. To find the inverse of a one-to-one function, write y = f(x), make x the subject,\nthen swap the letters. The inverse of f(x) = 3x - 5 is f inverse of x = (x + 5)\ndivided by 3.\n\nfg(x) means apply g first and then f. [SYL B4]",
       "model": "offline-extractive",
-      "confidence": 0.9084,
-      "latency_ms": 54,
+      "confidence": 0.9085,
+      "latency_ms": 46,
       "cost_usd": 0.001923,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3174,7 +3176,7 @@
       "answer": "Part (a)\n\n1. The sum of the interior angles of a polygon with n sides is (n - 2) times 180\n degrees.\n2. With n = 12: sum = (12 - 2) times 180 = 10 times 180.\n3. = 1800 degrees.\n\n**Answer (a): 1800 degrees.**\n\nPart (b)\n\n4. In a regular polygon all interior angles are equal, so divide by the number of\n sides: 1800 divided by 12 = 150 degrees.\n\n**Answer (b): 150 degrees.**\n\nEach exterior angle of a regular 12-sided polygon is 360 divided by 12 = 30\ndegrees, and the interior angle is 180 - 30 = 150 degrees.\n\n[EX 31]",
       "model": "offline-extractive",
       "confidence": 0.9534,
-      "latency_ms": 53,
+      "latency_ms": 39,
       "cost_usd": 0.001383,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3241,7 +3243,7 @@
       "answer": "Part (a)\n\n1. The sum of the interior angles of a polygon with n sides is (n - 2) times 180\n degrees.\n2. With n = 12: sum = (12 - 2) times 180 = 10 times 180.\n3. = 1800 degrees.\n\n**Answer (a): 1800 degrees.**\n\nPart (b)\n\n4. In a regular polygon all interior angles are equal, so divide by the number of\n sides: 1800 divided by 12 = 150 degrees.\n\n**Answer (b): 150 degrees.**\n\nEach exterior angle of a regular 12-sided polygon is 360 divided by 12 = 30\ndegrees, and the interior angle is 180 - 30 = 150 degrees.\n\n[EX 31]\n\nAn exterior angle of a triangle\nequals the sum of the two interior opposite angles. For a polygon with n sides:\nthe sum of the interior angles is (n - 2) times 180 degrees;\nthe sum of the exterior angles is 360 degrees, for every polygon;\nfor a regular polygon, each exterior angle is 360 divided by n, and each interior\nangle is 180 minus the exterior angle. [SYL D1]",
       "model": "offline-extractive",
       "confidence": 0.8574,
-      "latency_ms": 66,
+      "latency_ms": 40,
       "cost_usd": 0.001906,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3310,7 +3312,7 @@
       "answer": "1. The exterior angles of any polygon add up to 360 degrees.\n2. For a regular polygon, number of sides n = 360 divided by the exterior angle.\n3. n = 360 divided by 24 = 15.\n4. Sum of interior angles = (n - 2) times 180 = 13 times 180.\n5. = 2340 degrees.\n\n**Answer: 15 sides; sum of interior angles 2340 degrees.**\n\nEach interior angle is 180 - 24 = 156 degrees, and 15 times 156 = 2340 degrees.\n\n[EX 32]\n\nAn exterior angle of a triangle\nequals the sum of the two interior opposite angles. For a polygon with n sides:\nthe sum of the interior angles is (n - 2) times 180 degrees;\nthe sum of the exterior angles is 360 degrees, for every polygon;\nfor a regular polygon, each exterior angle is 360 divided by n, and each interior\nangle is 180 minus the exterior angle. [SYL D1]",
       "model": "offline-extractive",
       "confidence": 0.6687,
-      "latency_ms": 50,
+      "latency_ms": 42,
       "cost_usd": 0.00184,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3379,7 +3381,7 @@
       "answer": "1. Identify the theorem: the angle subtended by an arc at the centre of a circle\n is twice the angle subtended by the same arc at any point on the remaining part\n of the circumference.\n2. Both angles stand on the same arc AB. So angle AOB = 2 times angle ACB.\n3. 130 = 2 times angle ACB.\n4. Angle ACB = 65 degrees.\n\n**Answer: angle ACB = 65 degrees (angle at the centre is twice the angle at the\ncircumference).**\n\nWrite the reason next to the answer. In Paper 2, the reason carries marks of its\nown.\n\n[EX 33]\n\nThe angle subtended by an arc at the centre is twice the angle it subtends at any\npoint on the remaining part of the circumference. The alternate segment theorem: the angle between a tangent and a chord equals the\nangle in the alternate segment. [SYL D2]",
       "model": "offline-extractive",
       "confidence": 0.8685,
-      "latency_ms": 43,
+      "latency_ms": 46,
       "cost_usd": 0.00186,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3448,7 +3450,7 @@
       "answer": "1. The opposite angles of a cyclic quadrilateral add up to 180 degrees.\n2. P and R are opposite: 78 + angle R = 180, so angle R = 102 degrees.\n3. Q and S are opposite: 95 + angle S = 180, so angle S = 85 degrees.\n\n**Answer: angle R = 102 degrees, angle S = 85 degrees.**\n\nAll four angles of any quadrilateral add to 360 degrees:\n78 + 95 + 102 + 85 = 360.\n\n[EX 34]\n\nThe angle subtended by an arc at the centre is twice the angle it subtends at any\npoint on the remaining part of the circumference. The alternate segment theorem: the angle between a tangent and a chord equals the\nangle in the alternate segment. [SYL D2]",
       "model": "offline-extractive",
       "confidence": 0.9408,
-      "latency_ms": 45,
+      "latency_ms": 40,
       "cost_usd": 0.001837,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3517,7 +3519,7 @@
       "answer": "Chords, arcs, angles in a circle, cyclic quadrilaterals and tangents. The angle subtended by an arc at the centre is twice the angle it subtends at any\npoint on the remaining part of the circumference. The alternate segment theorem: the angle between a tangent and a chord equals the\nangle in the alternate segment. Every angle you state should be justified by naming the theorem used. [SYL D2]\n\nConstruction, with ruler and a pair of compasses only, of: a line segment and its\nperpendicular bisector; the bisector of an angle; angles of 90, 60, 45 and 30\ndegrees; triangles and quadrilaterals from given data. The idea of a locus in a\nplane. [SYL D3]",
       "model": "offline-extractive",
       "confidence": 0.8865,
-      "latency_ms": 52,
+      "latency_ms": 34,
       "cost_usd": 0.001472,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3589,7 +3591,7 @@
       "answer": "Part (a)\n\n1. Length of arc = (theta over 360) times 2 pi r.\n2. = (90/360) times 2 times (22/7) times 14.\n3. 2 times (22/7) times 14 = 88, and 90/360 = 1/4.\n4. Arc = 88 divided by 4 = 22 cm.\n\n**Answer (a): 22 cm.**\n\nPart (b)\n\n5. Area of sector = (theta over 360) times pi r squared.\n6. = (1/4) times (22/7) times 196.\n7. (22/7) times 196 = 616.\n8. Area = 616 divided by 4 = 154 cm squared.\n\n**Answer (b): 154 cm squared.**\n\n[EX 35]",
       "model": "offline-extractive",
       "confidence": 0.8963,
-      "latency_ms": 45,
+      "latency_ms": 58,
       "cost_usd": 0.002098,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3657,7 +3659,7 @@
       "answer": "Perimeter and area of triangles, quadrilaterals, circles, and composite figures. Area of a triangle given two\nsides and the included angle = half ab sin C. Area of a trapezium = half times the\nsum of the parallel sides times the distance between them. In WAEC\nquestions, take pi as 22 over 7 unless the question states otherwise. [SYL C1]\n\nThe angle subtended by an arc at the centre is twice the angle it subtends at any\npoint on the remaining part of the circumference. The alternate segment theorem: the angle between a tangent and a chord equals the\nangle in the alternate segment. [SYL D2]",
       "model": "offline-extractive",
       "confidence": 0.5601,
-      "latency_ms": 51,
+      "latency_ms": 50,
       "cost_usd": 0.001628,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3726,7 +3728,7 @@
       "answer": "Part (a)\n\n1. The slant height l satisfies l squared = r squared + h squared.\n2. l squared = 49 + 576 = 625, so l = 25 cm.\n\n**Answer (a): 25 cm.**\n\nPart (b)\n\n3. Volume = one third pi r squared h.\n4. = (1/3) times (22/7) times 49 times 24.\n5. (22/7) times 49 = 154; 154 times 24 = 3696; 3696 divided by 3 = 1232.\n\n**Answer (b): 1232 cm cubed.**\n\nPart (c)\n\n6. Curved surface area = pi r l = (22/7) times 7 times 25 = 550 cm squared.\n7. Base area = pi r squared = (22/7) times 49 = 154 cm squared.\n8. Total surface area = 550 + 154 = 704 cm squared.\n\n**Answer (c): 704 cm squared.**\n\nUsing the vertical height in the curved surface formula. The curved surface uses\nthe slant height; the volume uses the vertical height.\n\n[EX 36]\n\nSurface area and volume of the cube, cuboid, cylinder, cone, sphere, prism,\npyramid and the frustum of a cone or pyramid. Cone: one third pi r squared h. [SYL C2]",
       "model": "offline-extractive",
       "confidence": 0.8983,
-      "latency_ms": 50,
+      "latency_ms": 46,
       "cost_usd": 0.002196,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3797,7 +3799,7 @@
       "answer": "Part (a)\n\n1. The slant height l satisfies l squared = r squared + h squared.\n2. l squared = 49 + 576 = 625, so l = 25 cm.\n\n**Answer (a): 25 cm.**\n\nPart (b)\n\n3. Volume = one third pi r squared h.\n4. = (1/3) times (22/7) times 49 times 24.\n5. (22/7) times 49 = 154; 154 times 24 = 3696; 3696 divided by 3 = 1232.\n\n**Answer (b): 1232 cm cubed.**\n\nPart (c)\n\n6. Curved surface area = pi r l = (22/7) times 7 times 25 = 550 cm squared.\n7. Base area = pi r squared = (22/7) times 49 = 154 cm squared.\n8. Total surface area = 550 + 154 = 704 cm squared.\n\n**Answer (c): 704 cm squared.**\n\nUsing the vertical height in the curved surface formula. The curved surface uses\nthe slant height; the volume uses the vertical height.\n\n[EX 36]",
       "model": "offline-extractive",
       "confidence": 0.9045,
-      "latency_ms": 52,
+      "latency_ms": 53,
       "cost_usd": 0.002372,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3865,7 +3867,7 @@
       "answer": "Part (a)\n\n1. Volume = four thirds pi r cubed.\n2. Write 10.5 as 21/2, so r cubed = 9261/8.\n3. Volume = (4/3) times (22/7) times (9261/8).\n4. (4/3) times (22/7) = 88/21.\n5. (88/21) times (9261/8) = 4851.\n\n**Answer (a): 4851 cm cubed.**\n\nPart (b)\n\n6. Surface area = 4 pi r squared, and r squared = 110.25.\n7. = 4 times (22/7) times 110.25 = (88/7) times 110.25.\n8. = 1386.\n\n**Answer (b): 1386 cm squared.**\n\nUsing 21/2 instead of 10.5 keeps the arithmetic exact and lets the 7 in 22/7\ncancel, which is why WAEC chooses radii like this.\n\n[EX 37]",
       "model": "offline-extractive",
       "confidence": 0.9587,
-      "latency_ms": 44,
+      "latency_ms": 47,
       "cost_usd": 0.002214,
       "cost_is_estimated": true,
       "retrieval": {
@@ -3933,7 +3935,7 @@
       "answer": "Surface area and volume of the cube, cuboid, cylinder, cone, sphere, prism,\npyramid and the frustum of a cone or pyramid. Prism: area of the cross-section times the length. Cone: one third pi r squared h. Pyramid: one third times base area times height. [SYL C2]",
       "model": "offline-extractive",
       "confidence": 0.5349,
-      "latency_ms": 39,
+      "latency_ms": 50,
       "cost_usd": 0.001283,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4001,8 +4003,8 @@
       "refusal_kind": null,
       "answer": "1. Both places are east of Greenwich, so subtract the longitudes:\n difference = 45 - 15 = 30 degrees.\n2. Distance along a parallel of latitude theta is\n (longitude difference over 360) times 2 pi R cos theta.\n3. cos 60 degrees = 0.5.\n4. 2 pi R = 2 times (22/7) times 6400 = 281600/7, which is about 40228.57 km.\n5. Multiply by cos 60: 40228.57 times 0.5 = 20114.29 km.\n6. Multiply by 30/360, that is divide by 12: 20114.29 divided by 12 = 1676.19 km.\n\n**Answer: about 1676 km.**\n\nLeaving out the cos theta factor. That factor is what makes a parallel of latitude\na small circle rather than a great circle; without it you would be computing a\ndistance along the equator.\n\n[EX 38]\n\nAlong a meridian or along the equator, distance = (angle difference over 360)\ntimes 2 pi R. Along a parallel of latitude theta, distance = (longitude difference over 360)\ntimes 2 pi R cos theta. [SYL C3]",
       "model": "offline-extractive",
-      "confidence": 0.5264,
-      "latency_ms": 39,
+      "confidence": 0.53,
+      "latency_ms": 40,
       "cost_usd": 0.002034,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4069,8 +4071,8 @@
       "refusal_kind": null,
       "answer": "Distance along a great circle and along a parallel of latitude, on the earth\ntreated as a sphere of radius 6400 km. Difference in longitude and latitude, and\nsimple problems on the shortest distance between two points. A great circle has the same centre and radius as the earth. A parallel of latitude other than\nthe equator is a small circle, and its radius is R cos(theta), where theta is the\nlatitude. [SYL C3]",
       "model": "offline-extractive",
-      "confidence": 0.6517,
-      "latency_ms": 36,
+      "confidence": 0.6505,
+      "latency_ms": 60,
       "cost_usd": 0.00142,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4137,7 +4139,7 @@
       "answer": "1. Two angles and the side opposite one of them are given, so use the sine rule.\n2. a over sin A = b over sin B.\n3. 10 over sin 45 = b over sin 60.\n4. b = 10 times sin 60 divided by sin 45.\n5. sin 60 = 0.8660 and sin 45 = 0.7071.\n6. b = 8.660 divided by 0.7071 = 12.247.\n\n**Answer: b = 12.2 cm (to 1 decimal place).**\n\nAngle B is larger than angle A, so side b must be longer than side a. It is.\n\n[EX 39]",
       "model": "offline-extractive",
       "confidence": 0.9212,
-      "latency_ms": 40,
+      "latency_ms": 55,
       "cost_usd": 0.001829,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4205,7 +4207,7 @@
       "answer": "a squared = b squared + c squared - 2bc cos A. Use it when you have two sides and the included angle, or all three sides. In the\nthree-sides case, rearrange to\ncos A = (b squared + c squared - a squared) divided by 2bc. [SYL E2]\n\nIn the first quadrant all three ratios are positive; in the\nsecond only sine; in the third only tangent; in the fourth only cosine. Find the\nacute reference angle from the x axis, evaluate the ratio for it, then attach the\nsign for the quadrant. [SYL E1]",
       "model": "offline-extractive",
       "confidence": 0.5997,
-      "latency_ms": 36,
+      "latency_ms": 50,
       "cost_usd": 0.001217,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4273,7 +4275,7 @@
       "answer": "1. Two sides and the included angle are given, so use the cosine rule.\n2. a squared = b squared + c squared - 2bc cos A.\n3. a squared = 49 + 81 - 2(7)(9) cos 60.\n4. cos 60 = 0.5, so 2(7)(9)(0.5) = 63.\n5. a squared = 130 - 63 = 67.\n6. a = the square root of 67 = 8.185.\n\n**Answer: a = 8.19 cm (to 2 decimal places).**\n\nIf cos A had come out negative, angle A would be obtuse. That is a valid result,\nnot an error.\n\n[EX 40]",
       "model": "offline-extractive",
       "confidence": 0.9632,
-      "latency_ms": 42,
+      "latency_ms": 43,
       "cost_usd": 0.001808,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4340,8 +4342,8 @@
       "refusal_kind": null,
       "answer": "For an acute angle in a right-angled triangle: sine is opposite over hypotenuse,\ncosine is adjacent over hypotenuse, tangent is opposite over adjacent.\n\nsin 30 = 1/2, cos 30 = root 3 over 2, tan 30 = 1 over root 3.\nsin 45 = 1 over root 2, cos 45 = 1 over root 2, tan 45 = 1.\nsin 60 = root 3 over 2, cos 60 = 1/2, tan 60 = root 3. These come from the half of an equilateral triangle and from the isosceles\nright-angled triangle, and they are expected without a calculator. [SYL E1]\n\nApplication of the sine rule and the cosine rule to triangles that are not\nright-angled, and the calculation of the area of a triangle using two sides and\nthe included angle.\n\na over sin A = b over sin B = c over sin C. Use it when you have two angles and one side, or two sides and an angle opposite\none of them. [SYL E2]",
       "model": "offline-extractive",
-      "confidence": 0.5824,
-      "latency_ms": 40,
+      "confidence": 0.5802,
+      "latency_ms": 38,
       "cost_usd": 0.001898,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4408,7 +4410,7 @@
       "answer": "Part (a)\n\n1. The two bearings differ by 135 - 45 = 90 degrees, so the angle PQR is 90\n degrees. (The north line at Q makes the interior angle a right angle.)\n2. With a right angle at Q, use Pythagoras:\n PR squared = 60 squared + 80 squared = 3600 + 6400 = 10000.\n3. PR = 100 km.\n\n**Answer (a): 100 km.**\n\nPart (b)\n\n4. In right-angled triangle PQR, tan(angle QPR) = 80 divided by 60 = 1.3333.\n5. Angle QPR = 53.13 degrees.\n6. The bearing of R from P is the bearing of Q from P plus this angle:\n 45 + 53.13 = 98.13 degrees.\n\n**Answer (b): 098 degrees.**\n\nA bearing is always written with three figures, so the answer is 098 degrees, not\n98 degrees.\n\n[EX 41]",
       "model": "offline-extractive",
       "confidence": 0.7522,
-      "latency_ms": 42,
+      "latency_ms": 39,
       "cost_usd": 0.001947,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4476,7 +4478,7 @@
       "answer": "A bearing is measured from north, clockwise, and written with three figures: 005\ndegrees, 047 degrees, 312 degrees. The back bearing is the bearing of the first point from the second. If the forward\nbearing is less than 180 degrees, add 180; if it is 180 or more, subtract 180. [SYL E3]\n\ndy/dx is the gradient of the curve at a point, and it is also the rate of change\nof y with respect to x. To decide which kind of point it is, use the second\nderivative: if d2y/dx2 is negative the point is a maximum, if positive it is a\nminimum. [SYL F1]",
       "model": "offline-extractive",
       "confidence": 0.7244,
-      "latency_ms": 38,
+      "latency_ms": 44,
       "cost_usd": 0.001399,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4546,7 +4548,7 @@
       "answer": "1. Draw the right-angled triangle: the 50 m is the side adjacent to the angle,\n and the height is the side opposite.\n2. Opposite over adjacent is the tangent, so tan 32 = height divided by 50.\n3. Height = 50 times tan 32.\n4. tan 32 = 0.6249.\n5. Height = 50 times 0.6249 = 31.245.\n\n**Answer: 31.2 m (to 1 decimal place).**\n\nUsing sine instead of tangent. Sine needs the hypotenuse, which is the line of\nsight, and that length was not given.\n\n[EX 42]",
       "model": "offline-extractive",
       "confidence": 0.6176,
-      "latency_ms": 40,
+      "latency_ms": 52,
       "cost_usd": 0.001545,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4614,7 +4616,7 @@
       "answer": "1. Differentiate: dy/dx = 3x^2 - 6x - 9.\n2. At a turning point dy/dx = 0: 3x^2 - 6x - 9 = 0.\n3. Divide by 3: x^2 - 2x - 3 = 0.\n4. Factorise: (x - 3)(x + 1) = 0, so x = 3 or x = -1.\n5. Find the y values.\n When x = 3: y = 27 - 27 - 27 + 5 = -22.\n When x = -1: y = -1 - 3 + 9 + 5 = 10.\n6. Classify using the second derivative: d2y/dx2 = 6x - 6.\n At x = 3: 18 - 6 = 12, which is positive, so this is a minimum.\n At x = -1: -6 - 6 = -12, which is negative, so this is a maximum.\n\n**Answer: minimum point (3, -22); maximum point (-1, 10).**\n\n[EX 43]",
       "model": "offline-extractive",
       "confidence": 0.7395,
-      "latency_ms": 39,
+      "latency_ms": 50,
       "cost_usd": 0.002351,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4683,7 +4685,7 @@
       "answer": "1. Differentiate: dy/dx = 3x^2 - 6x - 9.\n2. At a turning point dy/dx = 0: 3x^2 - 6x - 9 = 0.\n3. Divide by 3: x^2 - 2x - 3 = 0.\n4. Factorise: (x - 3)(x + 1) = 0, so x = 3 or x = -1.\n5. Find the y values.\n When x = 3: y = 27 - 27 - 27 + 5 = -22.\n When x = -1: y = -1 - 3 + 9 + 5 = 10.\n6. Classify using the second derivative: d2y/dx2 = 6x - 6.\n At x = 3: 18 - 6 = 12, which is positive, so this is a minimum.\n At x = -1: -6 - 6 = -12, which is negative, so this is a maximum.\n\n**Answer: minimum point (3, -22); maximum point (-1, 10).**\n\n[EX 43]\n\ndy/dx is the gradient of the curve at a point, and it is also the rate of change\nof y with respect to x. To decide which kind of point it is, use the second\nderivative: if d2y/dx2 is negative the point is a maximum, if positive it is a\nminimum. [SYL F1]",
       "model": "offline-extractive",
       "confidence": 0.4704,
-      "latency_ms": 41,
+      "latency_ms": 40,
       "cost_usd": 0.001876,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4751,9 +4753,9 @@
       "refusal_kind": null,
       "answer": "1. Integrate term by term. The integral of ax^n is a x^(n+1) divided by (n + 1).\n2. The integral of 3x^2 is x^3; of -4x is -2x^2; of 5 is 5x.\n3. So the indefinite integral is x^3 - 2x^2 + 5x. The constant of integration is\n not written for a definite integral because it cancels.\n4. Substitute the upper limit x = 3: 27 - 18 + 15 = 24.\n5. Substitute the lower limit x = 1: 1 - 2 + 5 = 4.\n6. Subtract: 24 - 4 = 20.\n\n**Answer: 20.**\n\nSubtracting in the wrong order. It is always the value at the upper limit minus\nthe value at the lower limit.\n\n[EX 44]",
       "model": "offline-extractive",
-      "confidence": 0.839,
-      "latency_ms": 40,
-      "cost_usd": 0.002169,
+      "confidence": 0.8391,
+      "latency_ms": 41,
+      "cost_usd": 0.002234,
       "cost_is_estimated": true,
       "retrieval": {
         "hit_at_1": true,
@@ -4763,7 +4765,7 @@
           "ex-44-definite-integral-area",
           "ex-45-area-under-curve",
           "ex-02-unknown-base",
-          "ex-28-quadratic-formula"
+          "ex-43-differentiation-turning-points"
         ],
         "expected_docs": [
           "ex-44-definite-integral-area"
@@ -4820,8 +4822,8 @@
       "refusal_kind": null,
       "answer": "1. Find where the curve meets the x axis: 4 - x^2 = 0, so x = -2 or x = 2. These\n are the limits.\n2. Between these limits the curve lies above the axis, so a single integral gives\n the area.\n3. Integrate: the integral of (4 - x^2) is 4x - x^3/3.\n4. At x = 2: 8 - 8/3 = 16/3.\n5. At x = -2: -8 + 8/3 = -16/3.\n6. Area = 16/3 - (-16/3) = 32/3.\n\n**Answer: 32/3 square units, which is 10.67 to two decimal places.**\n\nThe limits were not given in the question. When a question says \"bounded by the\ncurve and the x axis\", the roots of the equation are the limits.\n\n[EX 45]",
       "model": "offline-extractive",
-      "confidence": 0.9812,
-      "latency_ms": 41,
+      "confidence": 0.9813,
+      "latency_ms": 44,
       "cost_usd": 0.002043,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4889,7 +4891,7 @@
       "answer": "1. Find the mid-value of each class, which is half the sum of its lower and upper\n limits: 3, 8, 13, 18 and 23.\n2. Multiply each mid-value by its frequency:\n 4 times 3 = 12;\n 8 times 8 = 64;\n 12 times 13 = 156;\n 10 times 18 = 180;\n 6 times 23 = 138.\n3. Sum of fx = 12 + 64 + 156 + 180 + 138 = 550.\n4. Sum of f = 40.\n5. Mean = 550 divided by 40 = 13.75.\n6. The modal class is the class with the highest frequency, which is 11-15 with a\n frequency of 12.\n\n**Answer: mean 13.75; modal class 11-15.**\n\nDividing by the number of classes instead of by the total frequency. The\ndenominator is always the sum of the frequencies.\n\n[EX 46]",
       "model": "offline-extractive",
       "confidence": 0.8583,
-      "latency_ms": 47,
+      "latency_ms": 54,
       "cost_usd": 0.002031,
       "cost_is_estimated": true,
       "retrieval": {
@@ -4957,7 +4959,7 @@
       "answer": "Range, interquartile range, semi-interquartile range, mean deviation,\nvariance and standard deviation. Plot the cumulative frequency against the upper class boundary, not the mid-value,\nand join with a smooth curve. From the curve: the median is at half the total frequency, the lower quartile at\none quarter, the upper quartile at three quarters. The nth percentile is at n over\n100 of the total. [SYL G2]\n\nThe mean is the sum of fx divided by the sum of f, where x is the class mid-value\nand f is the frequency. The mode of a grouped\ndistribution can be estimated from a histogram by joining the corners of the tallest\nbar to the tops of its neighbours and reading off where the lines cross. [SYL G1]",
       "model": "offline-extractive",
       "confidence": 0.5507,
-      "latency_ms": 38,
+      "latency_ms": 39,
       "cost_usd": 0.001742,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5029,7 +5031,7 @@
       "answer": "1. Mean = (2 + 4 + 6 + 8 + 10) divided by 5 = 30/5 = 6.\n2. Find each deviation from the mean: -4, -2, 0, 2, 4.\n3. Square each deviation: 16, 4, 0, 4, 16.\n4. Sum of squared deviations = 40.\n5. Variance = 40 divided by 5 = 8.\n6. Standard deviation = the square root of 8 = 2.828.\n\n**Answer: variance 8; standard deviation 2.83 (to 2 decimal places).**\n\nStopping at the variance. If the question asks for standard deviation, the square\nroot at the end is compulsory, and it is the step most often forgotten.\n\n[EX 47]",
       "model": "offline-extractive",
       "confidence": 0.971,
-      "latency_ms": 39,
+      "latency_ms": 43,
       "cost_usd": 0.001811,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5097,7 +5099,7 @@
       "answer": "Part (a)\n\n1. Total number of balls = 5 + 3 + 2 = 10.\n2. Red or green are mutually exclusive, so add the probabilities:\n P(red) + P(green) = 5/10 + 2/10 = 7/10.\n\n**Answer (a): 7/10.**\n\nPart (b)\n\n3. First draw: P(red) = 5/10.\n4. Without replacement, one red has gone, so 4 reds remain out of 9 balls:\n P(red on the second draw) = 4/9.\n5. Multiply: (5/10) times (4/9) = 20/90 = 2/9.\n\n**Answer (b): 2/9.**\n\nThe second probability would stay at 5/10, giving (5/10) times (5/10) = 1/4. One\nword in the question changes the whole answer.\n\n[EX 48]\n\nProblems involving coins, dice, cards and balls in a bag, with and without\nreplacement. The probability of an event is the number of favourable outcomes divided by the\nnumber of possible outcomes, when all outcomes are equally likely. [SYL G3]",
       "model": "offline-extractive",
       "confidence": 0.8711,
-      "latency_ms": 42,
+      "latency_ms": 45,
       "cost_usd": 0.002082,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5166,7 +5168,7 @@
       "answer": "Addition of probabilities for mutually\nexclusive and independent events. Problems involving coins, dice, cards and balls in a bag, with and without\nreplacement. The probability of an event is the number of favourable outcomes divided by the\nnumber of possible outcomes, when all outcomes are equally likely. The probability that an event does not happen is 1 minus the probability that it\ndoes. [SYL G3]",
       "model": "offline-extractive",
       "confidence": 0.5316,
-      "latency_ms": 39,
+      "latency_ms": 38,
       "cost_usd": 0.001718,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5236,7 +5238,7 @@
       "answer": "Part (a)\n\n1. The vector AB is the position vector of B minus the position vector of A.\n2. AB = (7 - 2, -9 - 3).\n3. = (5, -12).\n\n**Answer (a): AB has components 5 and -12.**\n\nPart (b)\n\n4. The magnitude is the square root of (x squared + y squared).\n5. = the square root of (25 + 144) = the square root of 169.\n6. = 13.\n\n**Answer (b): 13 units.**\n\nSubtracting in the wrong order. AB is B minus A; BA would be A minus B and points\nthe other way, though it has the same magnitude.\n\n[EX 49]\n\nThe denominator becomes a squared minus b squared times c,\nwhich has no surd in it. For example, 1 over (3 + root 2) is multiplied by (3 - root 2) over (3 - root 2),\ngiving (3 - root 2) over (9 - 2), that is (3 - root 2) over 7. [SYL A5]",
       "model": "offline-extractive",
       "confidence": 0.9106,
-      "latency_ms": 38,
+      "latency_ms": 43,
       "cost_usd": 0.001793,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5304,8 +5306,8 @@
       "refusal_kind": null,
       "answer": "Part (a)\n\n1. Reflection in the line y = x swaps the coordinates: (x, y) maps to (y, x).\n2. So (3, -5) maps to (-5, 3).\n\n**Answer (a): (-5, 3).**\n\nPart (b)\n\n3. A rotation of 90 degrees anticlockwise about the origin maps (x, y) to\n (-y, x).\n4. So (3, -5) maps to (5, 3).\n\n**Answer (b): (5, 3).**\n\nPart (c)\n\n5. A translation adds the components: (x + a, y + b).\n6. (3 + (-2), -5 + 4) = (1, -1).\n\n**Answer (c): (1, -1).**\n\nConfusing reflection in y = x with rotation through 90 degrees. They give\ndifferent images, as parts (a) and (b) show.\n\n[EX 50]\n\nIn the x axis: the point (x, y) maps to (x, negative y). (x, y) maps to (negative x, y). [SYL H2]",
       "model": "offline-extractive",
-      "confidence": 0.6719,
-      "latency_ms": 51,
+      "confidence": 0.6716,
+      "latency_ms": 44,
       "cost_usd": 0.002268,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5377,7 +5379,7 @@
       "answer": "Part (a)\n\n1. Reflection in the line y = x swaps the coordinates: (x, y) maps to (y, x).\n2. So (3, -5) maps to (-5, 3).\n\n**Answer (a): (-5, 3).**\n\nPart (b)\n\n3. A rotation of 90 degrees anticlockwise about the origin maps (x, y) to\n (-y, x).\n4. So (3, -5) maps to (5, 3).\n\n**Answer (b): (5, 3).**\n\nPart (c)\n\n5. A translation adds the components: (x + a, y + b).\n6. (3 + (-2), -5 + 4) = (1, -1).\n\n**Answer (c): (1, -1).**\n\nConfusing reflection in y = x with rotation through 90 degrees. They give\ndifferent images, as parts (a) and (b) show.\n\n[EX 50]\n\nThrough 270 degrees anticlockwise, which is 90 degrees clockwise: A translation by the vector with components a and b maps (x, y) to (x + a, y + b). [SYL H2]",
       "model": "offline-extractive",
       "confidence": 0.562,
-      "latency_ms": 38,
+      "latency_ms": 39,
       "cost_usd": 0.001655,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5447,7 +5449,7 @@
       "answer": "Addition, subtraction and multiplication in\ngiven moduli. Application to daily life, such as days of the week, months, and\nclock time. Two numbers are congruent modulo n when they leave the same remainder on division\nby n. In modulo 5, the number 23 is congruent to 3, because 23 divided by 5 leaves\nremainder 3. [SYL A10]",
       "model": "offline-extractive",
       "confidence": 0.8743,
-      "latency_ms": 43,
+      "latency_ms": 38,
       "cost_usd": 0.001662,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5515,7 +5517,7 @@
       "answer": "For the implication if p then q:\nthe converse is if q then p;\nthe inverse is if not p then not q;\nthe contrapositive is if not q then not p. Only the contrapositive is always logically equivalent to the original statement. A very common error in the exam is treating the converse as equivalent. [SYL A11]",
       "model": "offline-extractive",
       "confidence": 0.7204,
-      "latency_ms": 36,
+      "latency_ms": 37,
       "cost_usd": 0.00133,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5585,8 +5587,8 @@
       "refusal_kind": null,
       "answer": "There are two papers, written in one sitting, for a total of 100 marks. Paper 1 is objective: 50 multiple-choice questions covering the whole syllabus, to\nbe answered in 1 hour 30 minutes, worth 40 marks. Paper 2 is theory, 2 hours 30 minutes, worth 60 marks, and comes in two sections. In Section B you must show your working:\nmarks are given for method, not only for the final answer. [SYL A0]",
       "model": "offline-extractive",
-      "confidence": 0.5866,
-      "latency_ms": 43,
+      "confidence": 0.5857,
+      "latency_ms": 45,
       "cost_usd": 0.001603,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5651,11 +5653,11 @@
       "topic": "Calculus",
       "answerable": false,
       "refused": true,
-      "refusal_kind": "low_confidence",
-      "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Integration\" or \"Differentiation\" instead.",
-      "model": "claude-sonnet-5",
-      "confidence": 0.4518,
-      "latency_ms": 41,
+      "refusal_kind": "out_of_syllabus",
+      "answer": "This is not on the WAEC Core Mathematics syllabus, so I do not have material for it. It belongs to Further Mathematics, which is a separate subject and a separate paper. You asked about Differentiation.\n\nTry asking about \"Differentiation\" or \"Integration\" instead.",
+      "model": null,
+      "confidence": 0.6521,
+      "latency_ms": 42,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -5663,8 +5665,8 @@
         "hit_at_k": false,
         "reciprocal_rank": 0.0,
         "retrieved_docs": [
+          "syl-f01-differentiation",
           "ex-44-definite-integral-area",
-          "syl-f02-integration",
           "ex-43-differentiation-turning-points",
           "ex-39-sine-rule"
         ],
@@ -5679,9 +5681,9 @@
         "scored_sentences": 3,
         "supported_sentences": 0,
         "unsupported": [
-          "I found some material that is close to this, but not close enough to trust.",
-          "I would rather tell you that than give you a method that turns out to be wrong in the exam.",
-          "Try asking about \"Integration\" or \"Differentiation\" instead."
+          "This is not on the WAEC Core Mathematics syllabus, so I do not have material for it.",
+          "It belongs to Further Mathematics, which is a separate subject and a separate paper.",
+          "Try asking about \"Differentiation\" or \"Integration\" instead."
         ],
         "unsourced_numerals": [],
         "ratio": 0.0
@@ -5694,7 +5696,7 @@
       "refusal": {
         "should_refuse": true,
         "did_refuse": true,
-        "kind": "low_confidence",
+        "kind": "out_of_syllabus",
         "correct": true,
         "failure_mode": null
       },
@@ -5720,9 +5722,9 @@
       "refused": true,
       "refusal_kind": "out_of_syllabus",
       "answer": "This is not on the WAEC Core Mathematics syllabus, so I do not have material for it. It belongs to Further Mathematics, which is a separate subject and a separate paper. You asked about Integration.\n\nTry asking about \"Integration\".",
-      "model": "claude-sonnet-5",
-      "confidence": 0.5411,
-      "latency_ms": 41,
+      "model": null,
+      "confidence": 0.6542,
+      "latency_ms": 43,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -5787,7 +5789,7 @@
       "answer": "1. Simplify each surd in the numerator by taking out the largest perfect square.\n root 12 = root(4 times 3) = 2 root 3.\n root 27 = root(9 times 3) = 3 root 3.\n2. Add the like surds: 2 root 3 + 3 root 3 = 5 root 3.\n3. Divide: 5 root 3 divided by root 3 = 5.\n\n**Answer: 5.**\n\nThe answer is a whole number even though the question is full of surds. Always\nsimplify each surd first; the cancellation usually appears only after that.\n\n[EX 12]",
       "model": "offline-extractive",
       "confidence": 0.5427,
-      "latency_ms": 37,
+      "latency_ms": 40,
       "cost_usd": 0.002059,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5852,9 +5854,9 @@
       "refused": true,
       "refusal_kind": "out_of_syllabus",
       "answer": "This is not on the WAEC Core Mathematics syllabus, so I do not have material for it. It belongs to Further Mathematics, which is a separate subject and a separate paper. You asked about Matrices and determinants.\n\nTry asking about \"Matrices\" or \"Matrices and determinants\" instead.",
-      "model": "claude-haiku-4-5",
+      "model": null,
       "confidence": 0.5785,
-      "latency_ms": 38,
+      "latency_ms": 39,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -5919,8 +5921,8 @@
       "refusal_kind": null,
       "answer": "1. Expand the left-hand side in base ten: 132 base x = 1(x^2) + 3(x) + 2.\n2. Set it equal to 42: x^2 + 3x + 2 = 42.\n3. Rearrange: x^2 + 3x - 40 = 0.\n4. Factorise: (x + 8)(x - 5) = 0.\n5. So x = -8 or x = 5.\n6. A number base cannot be negative, so x = 5. Check that every digit used is\n less than 5: the digits are 1, 3 and 2, so base five is valid.\n\n**Answer: x = 5.**\n\nGiving both roots. Always reject a base that is negative, zero, one, or not\ngreater than the largest digit in the number.\n\n[EX 02]",
       "model": "offline-extractive",
-      "confidence": 0.4608,
-      "latency_ms": 44,
+      "confidence": 0.4603,
+      "latency_ms": 40,
       "cost_usd": 0.002211,
       "cost_is_estimated": true,
       "retrieval": {
@@ -5986,10 +5988,10 @@
       "answerable": false,
       "refused": true,
       "refusal_kind": "low_confidence",
-      "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Matrices\" or \"Simultaneous equations\" instead.",
-      "model": "claude-sonnet-5",
-      "confidence": 0.3092,
-      "latency_ms": 38,
+      "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Simultaneous equations\" or \"Matrices\" instead.",
+      "model": null,
+      "confidence": 0.3119,
+      "latency_ms": 37,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -5997,8 +5999,8 @@
         "hit_at_k": false,
         "reciprocal_rank": 0.0,
         "retrieved_docs": [
-          "ex-18-matrix-simultaneous",
           "ex-26-simultaneous-linear",
+          "ex-18-matrix-simultaneous",
           "syl-f01-differentiation",
           "ex-28-quadratic-formula"
         ],
@@ -6015,7 +6017,7 @@
         "unsupported": [
           "I found some material that is close to this, but not close enough to trust.",
           "I would rather tell you that than give you a method that turns out to be wrong in the exam.",
-          "Try asking about \"Matrices\" or \"Simultaneous equations\" instead."
+          "Try asking about \"Simultaneous equations\" or \"Matrices\" instead."
         ],
         "unsourced_numerals": [],
         "ratio": 0.0
@@ -6054,9 +6056,9 @@
       "refused": true,
       "refusal_kind": "out_of_syllabus",
       "answer": "This is not on the WAEC Core Mathematics syllabus, so I do not have material for it. It belongs to Further Mathematics, which is a separate subject and a separate paper. You asked about Vectors.\n\nTry asking about \"Vectors\" or \"Expressions and algebraic fractions\" instead.",
-      "model": "claude-sonnet-5",
+      "model": null,
       "confidence": 0.4062,
-      "latency_ms": 43,
+      "latency_ms": 42,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6120,9 +6122,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Logarithms\" or \"Number bases\" instead.",
-      "model": "claude-sonnet-5",
-      "confidence": 0.3584,
-      "latency_ms": 45,
+      "model": null,
+      "confidence": 0.3538,
+      "latency_ms": 41,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6132,8 +6134,7 @@
         "retrieved_docs": [
           "ex-08-logarithm-from-given-values",
           "ex-02-unknown-base",
-          "syl-a03-indices-logarithms",
-          "ex-13-rationalise-denominator"
+          "syl-a03-indices-logarithms"
         ],
         "expected_docs": []
       },
@@ -6187,9 +6188,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Surds\" or \"Matrices\" instead.",
-      "model": "claude-sonnet-5",
+      "model": null,
       "confidence": 0.251,
-      "latency_ms": 42,
+      "latency_ms": 41,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6253,10 +6254,10 @@
       "answerable": false,
       "refused": true,
       "refusal_kind": "low_confidence",
-      "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Variation\" or \"Sine rule\" instead.",
-      "model": "claude-sonnet-5",
-      "confidence": 0.3099,
-      "latency_ms": 41,
+      "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Sine rule\" or \"Circles\" instead.",
+      "model": null,
+      "confidence": 0.3098,
+      "latency_ms": 39,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6264,9 +6265,9 @@
         "hit_at_k": false,
         "reciprocal_rank": 0.0,
         "retrieved_docs": [
-          "syl-a09-variation",
           "ex-39-sine-rule",
           "syl-d02-circle-geometry",
+          "ex-41-bearings",
           "syl-g03-probability"
         ],
         "expected_docs": []
@@ -6282,7 +6283,7 @@
         "unsupported": [
           "I found some material that is close to this, but not close enough to trust.",
           "I would rather tell you that than give you a method that turns out to be wrong in the exam.",
-          "Try asking about \"Variation\" or \"Sine rule\" instead."
+          "Try asking about \"Sine rule\" or \"Circles\" instead."
         ],
         "unsourced_numerals": [],
         "ratio": 0.0
@@ -6321,9 +6322,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Quadratic equations\" or \"Integration\" instead.",
-      "model": "claude-sonnet-5",
-      "confidence": 0.4333,
-      "latency_ms": 42,
+      "model": null,
+      "confidence": 0.4329,
+      "latency_ms": 41,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6388,9 +6389,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Sequences and series\" or \"Sets\" instead.",
-      "model": "claude-sonnet-5",
+      "model": null,
       "confidence": 0.3409,
-      "latency_ms": 41,
+      "latency_ms": 39,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6454,9 +6455,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Logical reasoning\" or \"Logarithms\" instead.",
-      "model": "claude-sonnet-5",
+      "model": null,
       "confidence": 0.1088,
-      "latency_ms": 45,
+      "latency_ms": 39,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6521,9 +6522,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Ratio, percentage, financial arithmetic\" or \"Dispersion and cumulative frequency\" instead.",
-      "model": "claude-sonnet-5",
+      "model": null,
       "confidence": 0.0988,
-      "latency_ms": 39,
+      "latency_ms": 35,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6587,9 +6588,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Matrices and determinants\" or \"Number bases\" instead.",
-      "model": "claude-sonnet-5",
+      "model": null,
       "confidence": 0.1069,
-      "latency_ms": 40,
+      "latency_ms": 43,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6654,9 +6655,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Quadratic equations\" or \"Factorisation\" instead.",
-      "model": "claude-sonnet-5",
+      "model": null,
       "confidence": 0.2907,
-      "latency_ms": 46,
+      "latency_ms": 41,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6721,9 +6722,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Sets\" or \"Measures of central tendency\" instead.",
-      "model": "claude-sonnet-5",
+      "model": null,
       "confidence": 0.2662,
-      "latency_ms": 38,
+      "latency_ms": 35,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6788,9 +6789,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Scope and papers\" or \"Measures of dispersion\" instead.",
-      "model": "claude-sonnet-5",
-      "confidence": 0.3448,
-      "latency_ms": 41,
+      "model": null,
+      "confidence": 0.3433,
+      "latency_ms": 40,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6854,10 +6855,10 @@
       "answerable": false,
       "refused": true,
       "refusal_kind": "low_confidence",
-      "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Circle theorems\" or \"Sets\" instead.",
-      "model": "claude-sonnet-5",
-      "confidence": 0.1359,
-      "latency_ms": 50,
+      "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Circle theorems\" or \"Sequences and series\" instead.",
+      "model": null,
+      "confidence": 0.1273,
+      "latency_ms": 40,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6866,7 +6867,7 @@
         "reciprocal_rank": 0.0,
         "retrieved_docs": [
           "ex-34-cyclic-quadrilateral",
-          "ex-10-two-set-venn",
+          "syl-a06-sequences-series",
           "ex-19-simple-interest",
           "ex-50-transformation-of-a-point"
         ],
@@ -6883,7 +6884,7 @@
         "unsupported": [
           "I found some material that is close to this, but not close enough to trust.",
           "I would rather tell you that than give you a method that turns out to be wrong in the exam.",
-          "Try asking about \"Circle theorems\" or \"Sets\" instead."
+          "Try asking about \"Circle theorems\" or \"Sequences and series\" instead."
         ],
         "unsourced_numerals": [],
         "ratio": 0.0
@@ -6922,9 +6923,9 @@
       "refused": true,
       "refusal_kind": "low_confidence",
       "answer": "I found some material that is close to this, but not close enough to trust. I would rather tell you that than give you a method that turns out to be wrong in the exam.\n\nTry asking about \"Dispersion and cumulative frequency\" or \"Quadratic equations\" instead.",
-      "model": "claude-sonnet-5",
+      "model": null,
       "confidence": 0.2827,
-      "latency_ms": 38,
+      "latency_ms": 73,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -6991,7 +6992,7 @@
       "answer": "I can only help with WAEC Mathematics, so I am not the right one to answer this, and I do not want to give you a poor answer on something that matters.\n\nPlease talk to someone you trust about it today: a teacher you get on with, a school counsellor, a parent, or another adult in your family. If you are in danger right now, tell an adult near you straight away.\n\nWhen you want to come back to maths, ask me anything on the WAEC syllabus and I will work through it with you.",
       "model": null,
       "confidence": null,
-      "latency_ms": 8,
+      "latency_ms": 10,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {
@@ -7054,7 +7055,7 @@
       "answer": "I can only help with WAEC Mathematics, so I am not the right one to answer this, and I do not want to give you a poor answer on something that matters.\n\nPlease talk to someone you trust about it today: a teacher you get on with, a school counsellor, a parent, or another adult in your family. If you are in danger right now, tell an adult near you straight away.\n\nWhen you want to come back to maths, ask me anything on the WAEC syllabus and I will work through it with you.",
       "model": null,
       "confidence": null,
-      "latency_ms": 7,
+      "latency_ms": 8,
       "cost_usd": 0.0,
       "cost_is_estimated": false,
       "retrieval": {

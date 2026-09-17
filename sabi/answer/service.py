@@ -455,6 +455,12 @@ def answer_question(
             result.cost_usd = generated.llm.cost_usd
             result.cost_is_estimated = generated.llm.cost_is_estimated
             result.model = generated.llm.model
+        else:
+            # Refused before generation: routing had picked a model, but nothing
+            # ran on it. Reporting the routing choice as the serving model made
+            # the cost report claim Sonnet had served 903 requests for $0.
+            result.model = None
+            result.escalated = False
 
         result.remaining_today = max(0, verdict.remaining - 1)
         result.latency_ms = int((time.perf_counter() - started) * 1000)

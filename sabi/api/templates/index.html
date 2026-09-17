@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Every answer shows you where it came from.</h1>
+<p class="lede">
+  Sabi works through WAEC Core Maths questions using the syllabus and worked
+  examples. If it does not have the material, it says so instead of guessing.
+</p>
+
+<h2>Try one of these</h2>
+<ul class="examples">
+  {% for example in examples %}
+  <li>
+    <form method="post" action="/ask">
+      <input type="hidden" name="question" value="{{ example }}">
+      <button type="submit">{{ example }}</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+
+<div class="disclosure">
+  Sabi can be wrong. Check with your teacher or the WAEC syllabus before you
+  trust it in an exam.
+</div>
+
+{% include "_composer.html" %}
+{% endblock %}

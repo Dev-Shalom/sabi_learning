@@ -186,16 +186,23 @@ def month_start() -> datetime:
     return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
-def budget_state(s: Session) -> BudgetState:
+def budget_state(s: Session, include_eval: bool = False) -> BudgetState:
+    """Global spend against the monthly ceiling.
+
+    Eval traffic is excluded by default. The kill switch exists to stop the
+    account draining while serving students, and a threshold sweep is thirty
+    full suite runs in a row -- letting development work degrade the student
+    experience would be the wrong failure. Eval spend is still recorded on every
+    request and is reported separately, so it cannot hide.
+    """
     cfg = runtime()
     ceiling = cfg.monthly_ceiling_usd
-    spend = float(
-        s.execute(
-            select(func.coalesce(func.sum(Request.cost_usd), 0)).where(
-                Request.created_at >= month_start()
-            )
-        ).scalar_one()
+    query = select(func.coalesce(func.sum(Request.cost_usd), 0)).where(
+        Request.created_at >= month_start()
     )
+    if not include_eval:
+        query = query.where(Request.client != "eval")
+    spend = float(s.execute(query).scalar_one())
     fraction = spend / ceiling if ceiling > 0 else 0.0
 
     if fraction >= 1.0:

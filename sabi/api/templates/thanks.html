@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Sabi — thank you{% endblock %}
+
+{% block content %}
+{% if vote > 0 %}
+<h1>Good. Thank you.</h1>
+<p class="lede">That tells me the sources for that one were the right ones.</p>
+{% else %}
+<h1>Thank you for saying so.</h1>
+<p class="lede">
+  Answers marked wrong go into a review queue. The ones that turn out to be real
+  mistakes become test cases, so the same mistake gets caught before anyone else
+  sees it.
+</p>
+{% endif %}
+
+<p><a href="/">Ask another question</a></p>
+{% endblock %}

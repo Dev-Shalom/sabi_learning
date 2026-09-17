@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Sabi — that's today's questions{% endblock %}
+
+{% block content %}
+<h1>That's your questions for today.</h1>
+
+<div class="answer">
+  <p>{{ result.text }}</p>
+</div>
+
+<p>
+  <a class="btn-plain" href="/waitlist" style="display:inline-block;text-decoration:none">
+    Ask for more questions a day
+  </a>
+</p>
+
+<p class="composer-help">
+  Nothing you asked has been lost. Come back {{ result.reset_phrase }} and the
+  counter starts again.
+</p>
+
+<div class="disclosure">
+  {{ result.disclosure }}
+</div>
+{% endblock %}

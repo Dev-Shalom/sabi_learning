@@ -1,0 +1,13 @@
+<form class="composer" method="post" action="/ask" id="ask-form">
+  <div class="composer-row">
+    <label for="question" class="visually-hidden" hidden>Your question</label>
+    <textarea id="question" name="question" rows="1"
+              placeholder="Ask a WAEC maths question…"
+              autocomplete="off" required></textarea>
+    <button type="submit">Ask</button>
+  </div>
+  <p class="working" id="working">Working on it. On a slow connection this can take a few seconds.</p>
+  <p class="composer-help">
+    {{ remaining }} of {{ cap }} free questions left today. They come back {{ reset_phrase }}.
+  </p>
+</form>

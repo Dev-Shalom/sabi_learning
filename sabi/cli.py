@@ -140,6 +140,65 @@ def cmd_ask(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_corpus(args: argparse.Namespace) -> int:
+    from sqlalchemy import delete, func, select
+
+    from sabi.corpus.ingest import corpus_version
+    from sabi.db import session_scope
+    from sabi.models import Chunk, Document
+
+    with session_scope() as s:
+        if args.action == "list":
+            rows = s.execute(
+                select(
+                    Document.doc_id,
+                    Document.locator,
+                    Document.attribution,
+                    Document.title,
+                    func.count(Chunk.id),
+                )
+                .join(Chunk, Chunk.document_id == Document.id, isouter=True)
+                .group_by(Document.id)
+                .order_by(Document.locator)
+            ).all()
+            print(f"{'locator':<10} {'chunks':>6}  {'attribution':<14} {'doc_id':<38} title")
+            for doc_id, locator, attribution, title, n in rows:
+                print(f"{locator:<10} {n:>6}  {attribution:<14} {doc_id:<38} {title[:40]}")
+            print(f"\n{len(rows)} documents, corpus version {corpus_version()}")
+            return 0
+
+        if args.action == "show":
+            doc = s.execute(
+                select(Document).where(Document.doc_id == args.doc_id)
+            ).scalar_one_or_none()
+            if doc is None:
+                print(f"no document with doc_id {args.doc_id!r}")
+                return 1
+            print(f"{doc.doc_id}  [{doc.locator}]  {doc.attribution}")
+            print(f"{doc.title}\nsource: {doc.source}\npath: {doc.source_path}")
+            print(f"topic: {doc.topic} / {doc.subtopic}  section: {doc.syllabus_section}")
+            for c in sorted(doc.chunks, key=lambda c: c.chunk_index):
+                print(f"\n--- chunk {c.chunk_index} ({c.ref})  heading={c.heading}")
+                print(c.text)
+            return 0
+
+        if args.action == "rm":
+            doc = s.execute(
+                select(Document).where(Document.doc_id == args.doc_id)
+            ).scalar_one_or_none()
+            if doc is None:
+                print(f"no document with doc_id {args.doc_id!r}")
+                return 1
+            n = len(doc.chunks)
+            s.execute(delete(Document).where(Document.id == doc.id))
+            print(f"removed {doc.doc_id} and its {n} chunks")
+            print("the file on disk is untouched; delete it too or the next "
+                  "`sabi ingest` will put it back")
+            return 0
+
+    return 1
+
+
 def cmd_cache(args: argparse.Namespace) -> int:
     from sqlalchemy import func, select
 
@@ -217,6 +276,11 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("query")
     ask.add_argument("--user", default="cli-local", help="anonymous id to meter against")
     ask.set_defaults(func=cmd_ask)
+
+    co = sub.add_parser("corpus", help="inspect and remove corpus documents")
+    co.add_argument("action", choices=["list", "show", "rm"])
+    co.add_argument("doc_id", nargs="?", default="")
+    co.set_defaults(func=cmd_corpus)
 
     ca = sub.add_parser("cache", help="semantic cache")
     ca.add_argument("action", choices=["stats", "clear"], nargs="?", default="stats")
