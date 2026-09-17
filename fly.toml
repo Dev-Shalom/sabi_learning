@@ -1,0 +1,55 @@
+# Fly.io. Chosen over Render or Railway for one reason that matters to this
+# audience: Fly runs in Johannesburg (jnb), which is the closest region any of
+# the usual hosts offers to Lagos. A request from Nigeria to eu-west or us-east
+# spends 150-250ms on the round trip before the application does anything, and
+# the students this is for are already on slow connections.
+#
+# Deploy:
+#   fly launch --no-deploy
+#   fly postgres create --name sabi-db --region jnb
+#   fly postgres attach sabi-db
+#   fly secrets set SABI_ADMIN_TOKEN=... SABI_IP_HASH_SALT=... \
+#                   SABI_ANTHROPIC_API_KEY=... SABI_VOYAGE_API_KEY=...
+#   fly deploy
+#
+# `fly postgres attach` sets DATABASE_URL, so SABI_DATABASE_URL is set from it
+# below rather than duplicated as a secret.
+
+app = "sabi-waec"
+primary_region = "jnb"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  SABI_ENVIRONMENT = "production"
+  SABI_LLM_PROVIDER = "anthropic"
+  SABI_EMBEDDING_PROVIDER = "voyage"
+  SABI_EMBEDDING_DIM = "256"
+  PORT = "8000"
+  WEB_CONCURRENCY = "1"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  # Zero is wrong here: a cold start on a suspended machine adds seconds to the
+  # first question, and a student on 3G reads that as broken.
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 40
+    hard_limit = 60
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "20s"
+  method = "GET"
+  path = "/healthz"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

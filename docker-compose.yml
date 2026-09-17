@@ -1,0 +1,39 @@
+# Local development. `docker compose up` gives a working Sabi on
+# http://localhost:8000 with the corpus ingested.
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: sabi
+      POSTGRES_PASSWORD: sabi
+      POSTGRES_DB: sabi
+    ports:
+      - "5433:5432"
+    volumes:
+      - sabi-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sabi"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SABI_DATABASE_URL: postgresql+psycopg://sabi:sabi@db:5432/sabi
+      SABI_LLM_PROVIDER: ${SABI_LLM_PROVIDER:-offline}
+      SABI_EMBEDDING_PROVIDER: ${SABI_EMBEDDING_PROVIDER:-local_lsa}
+      SABI_ANTHROPIC_API_KEY: ${SABI_ANTHROPIC_API_KEY:-}
+      SABI_VOYAGE_API_KEY: ${SABI_VOYAGE_API_KEY:-}
+      # No default. With this unset the admin routes return 404.
+      SABI_ADMIN_TOKEN: ${SABI_ADMIN_TOKEN:-}
+      SABI_IP_HASH_SALT: ${SABI_IP_HASH_SALT:-change-me-in-production}
+      SABI_ENVIRONMENT: ${SABI_ENVIRONMENT:-dev}
+    ports:
+      - "8000:8000"
+
+volumes:
+  sabi-pgdata:
