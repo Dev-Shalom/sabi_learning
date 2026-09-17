@@ -14,12 +14,12 @@ The failure list at the bottom is the part worth reading.
 | Retrieval precision@1 | **0.936** |
 | Retrieval MRR | **0.959** |
 | Citation validity | **1.000** (0 invalid locators across 100 items) |
-| Groundedness, mean ratio | **0.965** |
-| Fully grounded answers | **0.821** |
+| Groundedness, mean ratio | **1.000** |
+| Fully grounded answers | **1.000** |
 | Answer correctness (deterministic value check, n=59) | **1.000** |
 | Unanswerable questions correctly refused | **0.909** |
 | Over-refusal rate on answerable questions | **0.026** |
-| Latency p50 / p95 | **44 ms / 78 ms** |
+| Latency p50 / p95 | **46 ms / 75 ms** |
 | Cost per question | **$0.00143** (estimated — see below) |
 
 **Read this before quoting any of it.** These numbers come from the *offline*
@@ -28,11 +28,13 @@ so the whole system runs with no API key, which is also what makes these numbers
 reproducible from a clean clone. It is not a language model, and three of the
 figures above mean less than they look like:
 
-- **Groundedness (0.965) is close to a tautology here.** The offline answerer
-  copies sentences out of the retrieved context by construction, so of course
-  they trace back to it. This number becomes meaningful the day it runs against
-  Claude. What it does prove today is that the *measurement* works and that the
-  context assembly is not dropping the sources out from under the answer.
+- **Groundedness is 1.000, and that is a tautology, not an achievement.** The
+  offline answerer copies sentences out of the retrieved context by
+  construction, so of course every one of them traces back to it. A perfect
+  score here should be read as "the measurement is wired up correctly and the
+  context assembly is not dropping sources out from under the answer" — nothing
+  more. The number only becomes informative the day it runs against Claude,
+  which can paraphrase, infer and invent.
 - **Correctness (1.000) is measuring retrieval, not reasoning.** The offline
   answerer quotes a worked solution verbatim; if the right solution was
   retrieved, the right number appears. A perfect score here means "retrieval
@@ -157,7 +159,7 @@ after the change rather than left stale.
 
 ## What it gets wrong
 
-Five failures out of 100. All five are listed, with the reason.
+Four failures out of 100. All four are listed, with the reason.
 
 | Item | Question | What happened |
 |---|---|---|
@@ -165,7 +167,17 @@ Five failures out of 100. All five are listed, with the reason.
 | `u-005` | "Expand (1 + x)^(−2) using the binomial theorem" | **Answered instead of refused.** Same root cause. "Binomial theorem" has no Core topic to be excluded from, and the question looks like an indices question (confidence 0.46). |
 | `g-009` | "What does a negative index mean?" | **Retrieval miss, then over-refusal.** The right chunk (SYL A3) is not in the top results at all; the question is four content words long and "negative" and "index" are common across the corpus. Confidence 0.43 falls below the threshold and it refuses. Correct behaviour given bad retrieval, but the retrieval is the bug. This is the single item dragging recall@k to 0.987. |
 | `g-037` | "What does the discriminant tell you?" | **Over-refused** at confidence 0.276. The syllabus text explains the discriminant under a heading about quadratic equations; the word "discriminant" appears three times in one chunk and nowhere else, so there is no support mass and the confidence formula punishes that. |
-| `g-077` | "What is the contrapositive of 'if p then q'?" | **Ungrounded.** The answer is assembled from the logical-reasoning syllabus text but scores 0.58 on term traceability, because single letters (`p`, `q`) dominate the sentence and the surrounding prose does not repeat them. A measurement artifact more than an answer defect, but it is counted as a failure rather than explained away. |
+
+A fifth item, `g-077` ("What is the contrapositive of 'if p then q'?"), was on
+this list until the last change and is not any more. It was never an answer
+defect: the groundedness scorer was counting the citation marker itself as an
+unsupported claim, because the tokens `ex` and `31` appear nowhere in the source
+the citation points at. Moving the marker from its own line to the end of the
+sentence it supports dropped the fully-grounded rate from 0.82 to 0.56 without
+changing a single answer, which is how the bug was noticed. Citations are now
+stripped before groundedness is scored. It is recorded here rather than quietly
+deleted because a metric that moves when only formatting changed is worth
+distrusting.
 
 Two patterns worth naming:
 
@@ -198,7 +210,7 @@ Progress across the run:
 
 | | First run | Now |
 |---|---|---|
-| Failures | 30 / 100 | 5 / 100 |
+| Failures | 30 / 100 | 4 / 100 |
 | Precision@1 | 0.859 | 0.936 |
 | Citation validity | 0.950 | 1.000 |
 | Value pass rate | 0.915 | 1.000 |
@@ -206,10 +218,10 @@ Progress across the run:
 
 ---
 
-## The three failures are kept as tests
+## The remaining misses are kept as tests
 
-`tests/test_behaviour.py` asserts that the remaining out-of-syllabus misses are
-*still* misses. Fixing one fails the build, which forces this file to be updated
+`tests/test_behaviour.py` asserts that the two remaining out-of-syllabus misses
+are *still* misses. Fixing one fails the build, which forces this file to be updated
 instead of quietly going stale. That test has already caught itself once: after
 the corpus edit, one of the three started refusing correctly and the build went
 red until the list and the numbers here were corrected.

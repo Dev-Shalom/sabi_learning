@@ -148,8 +148,16 @@ def score_groundedness(answer_text: str, source_texts: list[str]) -> Groundednes
         source_terms |= set(tokenize(t))
         source_numerals |= set(NUMERAL.findall(t))
 
+    # Strip citation markers before scoring. A citation is not a claim, and its
+    # tokens ("ex", "31") appear nowhere in the source text it points at -- so
+    # counting them drags the coverage of every cited sentence down. Moving the
+    # marker from its own line to the end of the sentence it supports dropped
+    # the fully-grounded rate from 0.82 to 0.56 without changing a single
+    # answer, which is how this was noticed.
+    scored_text = CITATION_IN_TEXT.sub("", answer_text)
+
     units: list[str] = []
-    for line in logical_lines(answer_text):
+    for line in logical_lines(scored_text):
         units.extend(x.strip() for x in SENTENCE.split(line) if x.strip())
 
     scored = 0

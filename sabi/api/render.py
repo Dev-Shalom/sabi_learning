@@ -30,7 +30,13 @@ def render_answer(text: str, known_locators: set[str]) -> str:
     if not text:
         return ""
 
-    blocks = re.split(r"\n\s*\n", text.strip())
+    # Reflow first. The corpus is hard-wrapped at 80 columns because it is
+    # written to be read as source files, and the extractive answerer quotes it
+    # verbatim. Rendering those wrap points as line breaks put a break in the
+    # middle of every second sentence on a 360px screen.
+    from sabi.textutil import reflow
+
+    blocks = re.split(r"\n\s*\n", reflow(text).strip())
     out: list[str] = []
 
     for block in blocks:
@@ -78,6 +84,10 @@ def render_source(text: str, highlight: str | None) -> str:
         needle = html.escape(highlight.strip(), quote=False)
         if needle and needle in escaped:
             escaped = escaped.replace(needle, f"<mark>{needle}</mark>", 1)
+
+    # The corpus is markdown, so "**Answer: 1800 degrees.**" is a bold run, not
+    # four asterisks a student should have to read past.
+    escaped = BOLD.sub(r"<strong>\1</strong>", escaped)
 
     blocks = re.split(r"\n\s*\n", escaped.strip())
     parts = []

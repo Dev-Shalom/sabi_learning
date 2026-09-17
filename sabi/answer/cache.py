@@ -38,7 +38,7 @@ from sabi.models import AnswerCache
 # validation or context assembly changes output without touching either the
 # prompt or the corpus. A cache that outlives the code that filled it serves
 # answers from a system that no longer exists.
-ANSWERER_REVISION = "r4"
+ANSWERER_REVISION = "r5"
 
 NUMBER = re.compile(r"\d+(?:\.\d+)?")
 WHITESPACE = re.compile(r"\s+")

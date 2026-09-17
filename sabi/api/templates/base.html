@@ -16,8 +16,9 @@
     <a class="wordmark" href="/">Sabi</a>
     <span class="subject">WAEC Maths</span>
     {% if cap %}
-    <a class="allowance" href="/privacy" title="How the free limit works">
-      <strong>{{ remaining }}</strong> of {{ cap }} left today
+    <a class="allowance" href="/privacy"
+       title="{{ remaining }} of {{ cap }} free questions left today">
+      <strong>{{ remaining }}</strong> left
     </a>
     {% endif %}
   </div>

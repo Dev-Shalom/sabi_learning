@@ -36,13 +36,14 @@ From the committed baseline (`eval/baselines/current.json`), 100 golden items:
 | Citation validity | 1.000 — zero invalid citations in 100 answers |
 | Unanswerable questions refused | 0.909 |
 | Over-refusal on answerable questions | 0.026 |
-| Latency p50 / p95 | 44 ms / 78 ms |
+| Latency p50 / p95 | 46 ms / 75 ms |
 | Projected cost per free user per month | $0.025 |
 
 **These come from the offline provider, not from a language model.** Groundedness
-and correctness scores are close to tautological under it, and the cost is a
-price-list estimate. [EVALUATION.md](EVALUATION.md) says exactly which numbers
-mean what, and lists all five remaining failures with their causes.
+scores 1.000 under it, which is a tautology rather than an achievement — the
+offline answerer copies its sentences out of the retrieved context. Correctness
+is measuring retrieval, and the cost is a price-list estimate. [EVALUATION.md](EVALUATION.md) says exactly which numbers
+mean what, and lists all four remaining failures with their causes.
 
 ---
 

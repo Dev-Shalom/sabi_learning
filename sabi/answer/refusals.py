@@ -28,14 +28,12 @@ class Refusal:
     evidence_locator: str | None = None
 
 
-def _suggestion_line(suggestions: list[str]) -> str:
+def _suggestion_line(suggestions: list[str], lead: str = "Try asking about") -> str:
     if not suggestions:
         return ""
     if len(suggestions) == 1:
-        return f'\n\nTry asking about "{suggestions[0]}".'
-    return (
-        f'\n\nTry asking about "{suggestions[0]}" or "{suggestions[1]}" instead.'
-    )
+        return f'\n\n{lead} "{suggestions[0]}".'
+    return f'\n\n{lead} "{suggestions[0]}" or "{suggestions[1]}".'
 
 
 def out_of_syllabus(
@@ -51,10 +49,15 @@ def out_of_syllabus(
             " It belongs to Further Mathematics, which is a separate subject and a "
             "separate paper."
         )
-    topic = f" You asked about {topic_hint}." if topic_hint else ""
+    # No "you asked about X" clause, and a different lead-in for the
+    # suggestions. The topic is usually still on this paper -- differentiating
+    # polynomials is, differentiating sin x is not -- so "this is not on the
+    # syllabus ... try asking about Differentiation" read as a contradiction.
+    # Naming what the paper *does* cover makes the same two suggestions cohere.
     return Refusal(
         "out_of_syllabus",
-        f"{lead}{where}{topic}{_suggestion_line(suggestions)}",
+        f"{lead}{where}"
+        + _suggestion_line(suggestions, lead="On this paper you can ask about"),
         suggestions,
         evidence_locator,
     )

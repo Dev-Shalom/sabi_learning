@@ -105,7 +105,10 @@ class OfflineLLM(LLMClient):
             if "solution" in heading:
                 # A method is quoted whole: trimming steps out of a worked
                 # solution is exactly the failure the chunker refuses to make.
-                paragraphs.append(f"{body}\n\n[{locator}]")
+                # The locator goes on the end of the last line, not on a line of
+                # its own: a citation floating in space under an answer reads as
+                # a footer rather than as the source of the claim above it.
+                paragraphs.append(f"{body.rstrip()} [{locator}]")
             else:
                 picked = _relevant_sentences(body, question)
                 paragraphs.append(" ".join(picked) + f" [{locator}]")
