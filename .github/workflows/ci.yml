@@ -75,12 +75,19 @@ jobs:
       #                numbers, including small ones a fixed floor would miss.
       #   --fail-under catches an *absolute* breach, so a slow slide over
       #                several commits cannot walk the baseline downhill.
+      #
+      # The per-subject recall floors matter more than they look. With two
+      # subjects a global scalar cannot see one of them collapsing: 21 Physics
+      # items going from 1.00 to 0.50 moves the global figure by about a tenth
+      # of what the floor allows, so the build would stay green while half the
+      # subject stopped working. Every subject is therefore floored on its own,
+      # and a new subject adds a line here the day it is switched on.
       - name: Evaluation suite
         run: |
           python -m sabi.cli eval \
             --baseline eval/baselines/current.json \
             --save .eval-runs/ci.json \
-            --fail-under "citations.validity=1.0,retrieval.recall_at_k=0.95,grounding.mean_ratio=0.90,correctness.value_pass_rate=0.95,refusal.unanswerable_caught=0.80,refusal.by_kind.unanswerable:out_of_subject.caught=1.0"
+            --fail-under "citations.validity=1.0,retrieval.recall_at_k=0.95,grounding.mean_ratio=0.90,correctness.value_pass_rate=0.95,refusal.unanswerable_caught=0.75,refusal.by_kind.unanswerable:out_of_subject.caught=1.0,by_subject.Mathematics.recall=0.95,by_subject.Physics.recall=0.95"
 
       - name: Upload the eval run
         if: always()

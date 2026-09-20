@@ -46,6 +46,7 @@ plans:
 syllabus:
   subjects:
     - Mathematics
+    - Physics
   exam_boards:
     - WAEC
 
@@ -74,7 +75,7 @@ retrieval:
   # Chosen by tools/sweep_thresholds.py over a 5x5 grid against the 100-item
   # golden set, under a selection rule fixed before the sweep ran. See
   # EVALUATION.md for the grid and the tradeoff that was rejected.
-  refusal_threshold: 0.46
+  refusal_threshold: 0.40
   # How strongly a question has to match a "Not on this syllabus" section
   # before the system refuses and cites that section as evidence.
   scope_exclusion_threshold: 0.42

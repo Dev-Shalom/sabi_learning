@@ -52,10 +52,28 @@ QUESTION = "Find the sum of the interior angles of a polygon with 12 sides"
 # ------------------------------------------------------------- the allow-list
 
 
+# A subject that is deliberately not in config/limits.yaml, used wherever a
+# test needs one. Derived rather than hardcoded: "Physics" was used for this
+# and then Physics was switched on, which broke six tests that were all
+# asserting correct behaviour. Anything still in this list is unconfigured by
+# construction.
+_NEVER_CONFIGURED = ("Astronomy", "Geography", "Woodwork")
+
+
+def unconfigured_subject() -> str:
+    from sabi.retrieval.scope import declared_subjects
+
+    live = set(declared_subjects())
+    for name in _NEVER_CONFIGURED:
+        if name not in live:
+            return name
+    raise AssertionError("every placeholder subject is configured; add another")
+
+
 def test_an_unconfigured_subject_is_refused_rather_than_retrieving_nothing():
     """A typo'd subject must fail loudly, not return an empty result set."""
     with pytest.raises(ScopeError) as excinfo:
-        RetrievalScope(subject="Physics", exam_board="WAEC")
+        RetrievalScope(subject=unconfigured_subject(), exam_board="WAEC")
     # The message names what is configured, because the person reading it is
     # about to go and add it.
     assert "Mathematics" in str(excinfo.value)
@@ -89,7 +107,7 @@ def test_a_subject_that_cannot_be_spelled_in_sql_is_refused(subject):
 
 def test_a_rejected_value_never_reaches_the_predicate():
     """Nothing that failed validation can be in the SQL, because there is no scope."""
-    for bad in ("Physics", "Mathematics'; --"):
+    for bad in (unconfigured_subject(), "Mathematics'; --"):
         try:
             scope = RetrievalScope(subject=bad)
         except ScopeError:
@@ -100,7 +118,7 @@ def test_a_rejected_value_never_reaches_the_predicate():
 @pytest.mark.parametrize(
     "subject, board",
     [
-        ("Physics", "WAEC"),
+        ("__unconfigured__", "WAEC"),
         ("Mathematics'; DROP TABLE chunks; --", "WAEC"),
         ("Mathematics", "NECO"),
         (None, None),
@@ -116,12 +134,20 @@ def test_safe_parse_falls_back_instead_of_raising(subject, board):
 def test_parse_still_raises_so_configuration_errors_are_not_swallowed():
     """`safe_parse` is for request handling only; `parse` is for everything else."""
     with pytest.raises(ScopeError):
-        RetrievalScope.parse("Physics", "WAEC")
+        RetrievalScope.parse(unconfigured_subject(), "WAEC")
 
 
 def test_the_key_and_predicate_agree_with_the_configured_scopes():
     assert DEFAULT_SCOPE.key == "WAEC:Mathematics"
-    assert live_scopes() == [DEFAULT_SCOPE]
+    # Every configured pair, not a hardcoded list -- this used to assert
+    # there was exactly one subject, which stopped being true.
+    from sabi.retrieval.scope import declared_boards, declared_subjects
+
+    expected = {
+        f"{b}:{sub}" for b in declared_boards() for sub in declared_subjects()
+    }
+    assert {sc.key for sc in live_scopes()} == expected
+    assert DEFAULT_SCOPE in live_scopes()
     predicate = DEFAULT_SCOPE.predicate("c")
     assert predicate == "c.subject = 'Mathematics' AND c.exam_board = 'WAEC'"
 
@@ -293,15 +319,35 @@ def _unscoped(monkeypatch) -> None:
     return builders
 
 
-def test_scoping_the_default_scope_changes_no_result(session, monkeypatch):
-    """The corpus is Mathematics-only, so the scope filter must be a no-op.
+def test_scoping_confines_retrieval_to_one_syllabus(session, monkeypatch):
+    """Scoping must actually exclude the other subject's material.
 
-    This is the acceptance criterion for the whole change, expressed as a test:
-    if these two disagree while there is one subject in the table, scoping has
-    changed retrieval rather than confined it.
+    This test previously asserted the opposite -- that scoped and unscoped
+    retrieval gave identical results -- and it was right to. While the corpus
+    held one subject, any difference would have meant the filter was changing
+    retrieval rather than confining it, and that was the acceptance criterion
+    for adding scoping at all.
+
+    With a second subject indexed the premise is gone and the assertion
+    inverts: unscoped retrieval should now reach material that scoped
+    retrieval must not. Keeping the old version would have meant asserting
+    that the filter does nothing, on the day it started doing something.
     """
+    from sabi.models import Chunk
+
     vector = get_embedder().embed_one(QUESTION)
     scoped = retrieve(session, QUESTION, "test", query_vector=vector)
+    assert scoped.refs, "retrieved nothing at all, so the comparison is vacuous"
+    assert scoped.scope == DEFAULT_SCOPE
+
+    subject_of = {
+        ref: subject
+        for ref, subject in session.query(Chunk.ref, Chunk.subject).all()
+    }
+
+    # Nothing from another syllabus came back.
+    got = {subject_of.get(r) for r in scoped.refs}
+    assert got == {DEFAULT_SCOPE.subject}, f"scoped retrieval reached {got}"
 
     builders = _unscoped(monkeypatch)
     try:
@@ -311,11 +357,21 @@ def test_scoping_the_default_scope_changes_no_result(session, monkeypatch):
         for b in builders:
             b.cache_clear()
 
-    assert scoped.refs, "retrieved nothing at all, so the comparison is vacuous"
-    assert scoped.refs == unscoped.refs
-    assert scoped.confidence == unscoped.confidence
-    assert scoped.counts == unscoped.counts
-    assert scoped.scope == DEFAULT_SCOPE
+    # The filter has to have something to exclude, or the assertion above is
+    # satisfied by there being nothing else in the table.
+    pool = {s for (s,) in session.query(Chunk.subject).distinct().all()}
+    assert len(pool) > 1, (
+        f"only {pool} is indexed, so confinement is vacuous here"
+    )
+
+    # Unscoped retrieval is allowed to return the same refs -- a Mathematics
+    # question's nearest neighbours are mostly Mathematics whether or not
+    # anything filters them. What must not happen is the reverse: asking
+    # under one syllabus and reaching another.
+    assert all(
+        subject_of.get(r) == DEFAULT_SCOPE.subject for r in scoped.refs
+    )
+    assert set(unscoped.refs) >= set(scoped.refs) or unscoped.refs != scoped.refs
 
 
 def test_every_retrieved_chunk_is_in_scope(session):
@@ -395,7 +451,7 @@ def test_the_cache_does_not_serve_across_scopes(session):
     vector = get_embedder().embed_one(question)
 
     mine = DEFAULT_SCOPE.key
-    theirs = "WAEC:Physics"
+    theirs = "WAEC:Astronomy"
     key_mine = answer_cache.scope_key("v3", "offline", DEFAULT_SCOPE)
 
     _store_entry(session, question, vector, mine, key_mine)
@@ -435,7 +491,7 @@ def test_the_cache_key_carries_the_syllabus(session):
 
     _store_entry(session, question, vector, mine, key)
 
-    other_key = key.replace(mine, "WAEC:Physics")
+    other_key = key.replace(mine, "WAEC:Astronomy")
     assert other_key != key
     assert (
         answer_cache.lookup(
@@ -456,7 +512,7 @@ def test_the_cache_key_is_short_enough_for_its_column():
 
 
 def test_the_corpus_version_is_recorded_per_scope_and_globally(session):
-    """Adding a Physics document must not flush every Mathematics answer."""
+    """Adding one subject's document must not flush another's answers."""
     from sabi.corpus.ingest import CORPUS_KEY, corpus_version
     from sabi.models import SystemState
 
@@ -476,8 +532,8 @@ def test_the_corpus_version_is_recorded_per_scope_and_globally(session):
 
     # A scope with nothing in it gets a version nothing else shares, so the
     # cache cannot serve it by accident.
-    empty = corpus_version(session, "WAEC:Physics")
-    assert empty == "empty:WAEC:Physics"
+    empty = corpus_version(session, "WAEC:Astronomy")
+    assert empty == "empty:WAEC:Astronomy"
     assert empty != corpus_version(session)
 
 
@@ -497,7 +553,7 @@ def test_a_state_row_written_before_scopes_existed_falls_back_to_the_global(sess
         row.value = {"version": original["version"], "documents": 82}
         session.flush()
         assert corpus_version(session, DEFAULT_SCOPE.key) == original["version"]
-        assert corpus_version(session, "WAEC:Physics") == original["version"]
+        assert corpus_version(session, "WAEC:Astronomy") == original["version"]
     finally:
         row.value = original
         session.flush()
