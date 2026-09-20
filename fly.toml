@@ -8,7 +8,17 @@
 #   fly launch --no-deploy
 #   fly postgres create --name sabi-db --region jnb
 #   fly postgres attach sabi-db
-#   fly secrets set SABI_ADMIN_TOKEN=... SABI_IP_HASH_SALT=... \
+#   # Generate each of these separately. SABI_SECRET_KEY signs the anonymous
+#   # id cookie and derives every CSRF token, and SABI_IP_HASH_SALT is what
+#   # stops a stored IP hash being reversed by a rainbow table -- so a deploy
+#   # that skips them ships forgeable tokens and reversible addresses.
+#   #
+#   # The app refuses to start in production with a development default, a
+#   # value under 32 characters, or anything beginning "dev"/"test"/"change",
+#   # so getting this wrong fails loudly at boot rather than quietly.
+#   #   python -c "import secrets; print(secrets.token_urlsafe(48))"
+#   fly secrets set SABI_SECRET_KEY=... SABI_IP_HASH_SALT=... \
+#                   SABI_ADMIN_TOKEN=... \
 #                   SABI_ANTHROPIC_API_KEY=... SABI_VOYAGE_API_KEY=...
 #   fly deploy
 #

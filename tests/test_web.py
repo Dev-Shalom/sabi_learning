@@ -236,3 +236,28 @@ def test_privacy_page_states_what_is_stored(client):
     # And the claims that accounts falsified are gone.
     assert "no sign-up" not in text
     assert "never required" not in text
+
+
+def test_a_client_cannot_choose_its_own_address(client):
+    """The IP cap is the backstop, so it must not be spoofable.
+
+    `X-Forwarded-For` is appended to by each proxy, so the leftmost entry is
+    whatever the client sent. Reading that one lets a caller pick their own
+    identity and walk straight past the per-address limit -- the limit that
+    exists precisely because the anonymous id is resettable.
+    """
+    from starlette.datastructures import Headers
+
+    from sabi.api.deps import client_ip
+
+    class FakeRequest:
+        def __init__(self, header, peer):
+            self.headers = Headers({"x-forwarded-for": header} if header else {})
+            self.client = type("C", (), {"host": peer})()
+
+    # A spoofed entry on the left, the proxy's observation on the right.
+    assert client_ip(FakeRequest("1.2.3.4, 41.58.0.9", "10.0.0.1")) == "41.58.0.9"
+    # A single hop is still the proxy's.
+    assert client_ip(FakeRequest("41.58.0.9", "10.0.0.1")) == "41.58.0.9"
+    # No proxy at all: the socket.
+    assert client_ip(FakeRequest(None, "41.58.0.9")) == "41.58.0.9"

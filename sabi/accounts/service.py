@@ -103,7 +103,21 @@ def sign_up(
             field_name="email",
         )
 
+    # Signing up was the one unthrottled path that costs real work. Each
+    # attempt hashes a password, which holds 16 MiB and a worker for about
+    # 100ms, so an unthrottled endpoint is both an account-spam vector and a
+    # way to exhaust a small machine. The IP limit is what bites here, since
+    # an attacker picks a fresh address each time.
+    gate = throttle.check(s, email, ip_hash)
+    if not gate.allowed:
+        return AuthResult(
+            False,
+            error="Too many attempts from here. Wait fifteen minutes and try again.",
+            field_name="email",
+        )
+
     if find_by_email(s, email) is not None:
+        throttle.record(s, email, ip_hash, ok=False)
         # Says an account exists, which is unavoidable on a signup form: the
         # address either can or cannot be used, and hiding that would mean
         # taking a password for an account that will not be created.
@@ -122,6 +136,7 @@ def sign_up(
     s.flush()
 
     codes = recovery.issue(s, user)
+    throttle.record(s, email, ip_hash, ok=True)
     row, token = sessions.start(s, user, ip_hash=ip_hash, user_agent=user_agent)
     return AuthResult(True, user=user, session=row, token=token, recovery_codes=codes)
 

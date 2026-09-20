@@ -90,9 +90,74 @@ class Settings(BaseSettings):
     environment: str = "dev"
 
 
+# Values that work perfectly in development and are a vulnerability in
+# production. They are real defaults on purpose -- a clone of this repository
+# should run without a setup ritual -- which is exactly why deploying with
+# them still set has to be impossible rather than merely discouraged.
+INSECURE_DEFAULTS = {
+    "secret_key": "dev-secret-change-me",
+    "ip_hash_salt": "dev-salt-change-me",
+}
+
+
+# Long enough that guessing is not a strategy. 32 characters of urlsafe
+# base64 is 192 bits.
+MIN_SECRET_LENGTH = 32
+
+
+class InsecureConfiguration(RuntimeError):
+    """Raised at startup rather than discovered from an incident."""
+
+
+def check_production_secrets(cfg: Settings) -> list[str]:
+    """What is still at its development default. Empty means safe."""
+    if cfg.environment != "production":
+        return []
+
+    problems = []
+
+    # Two checks, because either alone lets something through. Matching the
+    # committed default catches the obvious case; a length floor catches the
+    # more likely one, where somebody has "changed" it to `dev-local-salt` or
+    # `changeme` and moved on. A short salt is a rainbow table away from
+    # turning every stored IP hash back into an address.
+    for name, dev_value in INSECURE_DEFAULTS.items():
+        value = getattr(cfg, name, None) or ""
+        if value == dev_value:
+            problems.append(f"{name} is still the development default")
+        elif len(value) < MIN_SECRET_LENGTH:
+            problems.append(
+                f"{name} is only {len(value)} characters "
+                f"(needs at least {MIN_SECRET_LENGTH})"
+            )
+        elif value.lower().startswith(("dev", "test", "change", "example")):
+            problems.append(f"{name} looks like a placeholder: {value[:12]}...")
+
+    # The admin surface returns 404 when this is unset, which is a deliberate
+    # design and fine. A *short* one is not -- it is a brute-forceable door
+    # that looks closed.
+    if cfg.admin_token and len(cfg.admin_token) < MIN_SECRET_LENGTH:
+        problems.append(
+            f"admin_token is only {len(cfg.admin_token)} characters"
+        )
+
+    return problems
+
+
 @lru_cache(maxsize=1)
 def settings() -> Settings:
-    return Settings()
+    cfg = Settings()
+
+    problems = check_production_secrets(cfg)
+    if problems:
+        raise InsecureConfiguration(
+            "refusing to start in production with development secrets: "
+            + ", ".join(problems)
+            + ". Generate one with: "
+            'python -c "import secrets; print(secrets.token_urlsafe(48))"'
+        )
+
+    return cfg
 
 
 @dataclass(frozen=True)

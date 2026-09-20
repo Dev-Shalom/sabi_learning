@@ -15,6 +15,8 @@ limiter enforced.
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import uuid
 from datetime import date
 from pathlib import Path
@@ -24,6 +26,7 @@ from fastapi import Depends, FastAPI, Form, HTTPException, Request as Req
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
@@ -40,12 +43,13 @@ from sabi.api.deps import (
     require_admin,
     require_csrf,
     require_login,
+    require_login_csrf,
     set_session_cookie,
     viewer,
 )
 from sabi.api.render import anchor_id, attribution_label, render_answer, render_source
 from sabi.answer.service import answer_question
-from sabi.config import runtime
+from sabi.config import runtime, settings
 from sabi.db import get_session
 from sabi.limits import limiter
 from sabi.models import Feedback, GoldenItem, Request as RequestRow, WaitlistEntry
@@ -72,6 +76,98 @@ EXAMPLES = [
     "A bag has 5 red, 3 blue and 2 green balls. What is P(both red) without replacement?",
     "Simplify 27^(2/3) x 16^(-1/2)",
 ]
+
+
+# --------------------------------------------------------------- hardening
+
+# A strict policy is affordable here because the product was built to need it:
+# no CDN, no third-party fonts, no analytics, no inline event handlers. The
+# only inline script is the two-line one in <head> that sets the motion flags
+# before first paint, and it is allowed by hash rather than by opening the
+# policy up to every inline script on the page.
+# The one inline script in the product, defined here rather than in the
+# template so that the CSP hash below is computed from the exact bytes that
+# get served. Putting it in the template and the hash in Python would be two
+# copies of one thing, and they would drift the first time either changed --
+# silently, because the only symptom is a script the browser refuses to run.
+#
+# It must be inline and synchronous: it sets the motion flags before the first
+# paint, and an external file would cost a round trip on a 3G connection to do
+# something that takes a microsecond.
+BOOT_SCRIPT = """
+  /* Two flags, set before the first paint so there is no flicker. Both are
+     opt-in: with JavaScript off neither is ever set, the opening cover never
+     renders, and content is visible immediately. A student on a slow
+     connection is never made to wait for a flourish. */
+  (function () {
+    try {
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    } catch (e) { return; }
+    document.documentElement.setAttribute("data-loading", "");
+    document.documentElement.setAttribute("data-reveal", "");
+  })();
+"""
+
+INLINE_BOOT_SCRIPT_HASH = (
+    "sha256-"
+    + base64.b64encode(hashlib.sha256(BOOT_SCRIPT.encode("utf-8")).digest()).decode()
+)
+
+# Marked safe because it is a constant in this file, never user input, and
+# because escaping it would both break the script and change the bytes the
+# hash above was computed from.
+templates.env.globals["boot_script"] = Markup(BOOT_SCRIPT)
+
+SECURITY_HEADERS = {
+    # No plugins, no framing, no MIME sniffing.
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    # A referrer to another site would leak the question a student asked, in
+    # the URL of whatever they clicked next.
+    "Referrer-Policy": "no-referrer",
+    # Nothing here needs a camera, a microphone or a location.
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
+}
+
+
+def _content_security_policy() -> str:
+    parts = [
+        "default-src 'self'",
+        # Fonts and styles are served from this origin and nowhere else.
+        "font-src 'self'",
+        "style-src 'self'",
+        "img-src 'self' data:",
+        f"script-src 'self' '{INLINE_BOOT_SCRIPT_HASH}'"
+        if INLINE_BOOT_SCRIPT_HASH
+        else "script-src 'self'",
+        # No form on this site posts anywhere else, and nothing embeds
+        # anything.
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+        "base-uri 'none'",
+        "object-src 'none'",
+        # Anything that did slip through should not be able to phone home.
+        "connect-src 'self'",
+        "upgrade-insecure-requests",
+    ]
+    return "; ".join(parts)
+
+
+@app.middleware("http")
+async def security_headers(request: Req, call_next):
+    response = await call_next(request)
+    for header, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(header, value)
+    response.headers.setdefault("Content-Security-Policy", _content_security_policy())
+    # HSTS only where the connection is already TLS, so a local http run is
+    # not permanently pinned in the developer's browser.
+    if settings().environment == "production":
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
+    return response
 
 
 @app.exception_handler(LoginRequired)
@@ -421,7 +517,7 @@ def notebook_save(
     request_id: str = Form(...),
     note: str = Form(""),
     s: Session = Depends(get_session),
-    v: Viewer = Depends(require_login),
+    v: Viewer = Depends(require_login_csrf),
 ):
     """Keep an answer.
 
@@ -475,7 +571,7 @@ def notebook_remove(
     request: Req,
     entry_id: int,
     s: Session = Depends(get_session),
-    v: Viewer = Depends(require_login),
+    v: Viewer = Depends(require_login_csrf),
 ):
     notebook.remove(s, user=v.user, entry_id=entry_id)
     return RedirectResponse("/notebook?saved=removed", status_code=303)
@@ -510,7 +606,7 @@ def set_exam_date(
     request: Req,
     exam_date: str = Form(""),
     s: Session = Depends(get_session),
-    v: Viewer = Depends(require_login),
+    v: Viewer = Depends(require_login_csrf),
 ):
     """The countdown. Volunteered, and clearable -- so it can be removed too."""
     raw = (exam_date or "").strip()
@@ -528,7 +624,7 @@ def set_exam_date(
 def logout_everywhere(
     request: Req,
     s: Session = Depends(get_session),
-    v: Viewer = Depends(require_login),
+    v: Viewer = Depends(require_login_csrf),
 ):
     sessions_mod.revoke_all(s, v.user.id, keep=v.session)
     return RedirectResponse("/dashboard?saved=logged-out", status_code=303)

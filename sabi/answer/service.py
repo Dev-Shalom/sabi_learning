@@ -304,6 +304,14 @@ def _persist(
     )
 
 
+# A question longer than this is not a question. The limit is generous --
+# a wordy multi-part WAEC question is comfortably under it -- and it exists
+# because nothing else bounded the input: an unbounded string is tokenised,
+# embedded and then stored in an unbounded Text column, once per request,
+# by anyone.
+MAX_QUESTION_CHARS = 2000
+
+
 def answer_question(
     question: str,
     anon_id: str,
@@ -326,7 +334,11 @@ def answer_question(
     """
     request_id = uuid.uuid4()
     started = time.perf_counter()
-    question = (question or "").strip()
+    # Truncated rather than rejected. A student who pasted a whole past paper
+    # in by accident gets an answer to the first part of it, which is more
+    # use than an error -- and the cap is what stops an unbounded string being
+    # tokenised, embedded and stored in an unbounded column once per request.
+    question = (question or "").strip()[:MAX_QUESTION_CHARS]
     ip_hash = limiter.hash_ip(ip) if ip else None
     cfg = runtime()
 

@@ -58,10 +58,28 @@ class Viewer:
 
 
 def client_ip(request: Req) -> str | None:
-    """Real client address behind a proxy, if the proxy told us."""
+    """The client address, taken from the end of the chain rather than the start.
+
+    `X-Forwarded-For` is a list that each proxy appends to, so the leftmost
+    entry is whatever the *client* sent and the rightmost is what the last
+    proxy observed. Reading the leftmost is the common mistake and it was the
+    one here: a request carrying `X-Forwarded-For: 1.2.3.4` arrives at the
+    proxy, which appends the real address, and the header becomes
+    `1.2.3.4, <real>`. Trusting the first entry means the caller picks their
+    own identity.
+
+    That matters because this value feeds the IP rate limit -- the backstop
+    that stops one person using up a whole school's free questions, precisely
+    because the anonymous id is resettable. A spoofable backstop is not one.
+
+    So: the last entry, which only a proxy can have written. With no proxy in
+    front, the header is absent and the socket address is used.
+    """
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        hops = [p.strip() for p in forwarded.split(",") if p.strip()]
+        if hops:
+            return hops[-1]
     return request.client.host if request.client else None
 
 
@@ -114,6 +132,38 @@ def require_csrf(
     if not tokens.csrf_ok(secret, csrf_token):
         raise HTTPException(status_code=400, detail="stale form; reload and try again")
     return v
+
+
+def require_login_csrf(
+    request: Req,
+    csrf_token: str = Form(""),
+    v: Viewer = Depends(viewer),
+) -> Viewer:
+    """Signed in AND carrying a valid token. For authenticated POSTs.
+
+    `require_login` alone is not enough on a state-changing route, and the
+    difference is easy to miss because the form looks right either way: the
+    hidden field is rendered, it is submitted, and nothing checks it. Four
+    routes shipped like that -- saving and removing notebook entries, setting
+    an exam date, signing out everywhere -- so a page on another site could
+    have made a signed-in student delete their own revision notes.
+
+    `tests/test_assets.py` now enumerates every POST route and asserts it
+    depends on something that verifies the token, so this cannot be
+    reintroduced by adding a route and forgetting.
+    """
+    if not v.is_authenticated:
+        raise LoginRequired()
+    secret = v.session.csrf_secret if v.session else v.anon_id
+    if not tokens.csrf_ok(secret, csrf_token):
+        raise HTTPException(status_code=400, detail="stale form; reload and try again")
+    return v
+
+
+# Every dependency that verifies a CSRF token. The test that enumerates POST
+# routes checks each one against this, so a new guard has to be added here to
+# count -- which is the point.
+CSRF_GUARDS = ("require_csrf", "require_login_csrf", "require_admin")
 
 
 def csrf_input(v: Viewer) -> Markup:

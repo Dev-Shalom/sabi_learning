@@ -157,3 +157,127 @@ def test_no_form_uses_get_to_change_state(client):
                 assert "action=" not in tag.lower() or "/ask" not in tag, (
                     f"{where} has a form with no method posting to /ask"
                 )
+
+
+# ------------------------------------------------------------------- security
+
+
+def test_every_state_changing_route_verifies_a_csrf_token():
+    """The check that stops the hole coming back.
+
+    Four routes shipped with `require_login` and no token check -- saving and
+    removing notebook entries, setting an exam date, signing out everywhere.
+    The forms rendered a hidden field, submitted it, and nothing read it, so
+    a page on another site could have made a signed-in student delete their
+    own revision notes.
+
+    The form-enumeration test above did not catch it, because it checks where
+    forms post rather than what the handler does with the token. This one
+    reads the route signatures.
+    """
+    import re
+    from pathlib import Path
+
+    from sabi.api.deps import CSRF_GUARDS
+
+    source = (
+        Path(__file__).resolve().parent.parent / "sabi" / "api" / "app.py"
+    ).read_text(encoding="utf-8")
+
+    routes = re.findall(
+        r'@app\.post\("([^"]+)"[^)]*\)\s*\ndef (\w+)\((.*?)\n\):', source, re.S
+    )
+    assert routes, "no POST routes found -- has the app moved?"
+
+    unguarded = [
+        f"{path} ({fn})"
+        for path, fn, args in routes
+        if not any(guard in args for guard in CSRF_GUARDS)
+    ]
+    assert not unguarded, (
+        "POST routes with no CSRF verification: " + ", ".join(unguarded)
+    )
+
+
+def test_the_responses_carry_the_security_headers(client):
+    r = client.get("/")
+    assert r.status_code == 200
+
+    expected = {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "no-referrer",
+    }
+    for header, value in expected.items():
+        assert r.headers.get(header) == value, f"{header} missing or wrong"
+
+    csp = r.headers.get("Content-Security-Policy", "")
+    for directive in (
+        "default-src 'self'",
+        "frame-ancestors 'none'",
+        "base-uri 'none'",
+        "object-src 'none'",
+        "form-action 'self'",
+    ):
+        assert directive in csp, f"CSP is missing {directive!r}"
+
+
+def test_the_one_inline_script_matches_the_hash_the_policy_allows(client):
+    """Two copies of one script would drift, and silently.
+
+    The only symptom of a mismatch is a script the browser quietly refuses to
+    run, so the script is defined once in Python and the hash is computed from
+    those exact bytes.
+    """
+    import re
+
+    from sabi.api.app import BOOT_SCRIPT, INLINE_BOOT_SCRIPT_HASH
+
+    page = client.get("/").text
+    served = re.findall(r"<script>(.*?)</script>", page, re.S)
+    assert len(served) == 1, f"expected one inline script, found {len(served)}"
+    assert served[0] == BOOT_SCRIPT, "the served script is not the hashed one"
+    assert INLINE_BOOT_SCRIPT_HASH in client.get("/").headers[
+        "Content-Security-Policy"
+    ]
+
+
+def test_production_refuses_to_start_on_a_development_secret():
+    """A dev default that works is exactly why this has to be enforced."""
+    import secrets
+
+    from sabi.config import Settings, check_production_secrets
+
+    # Development is deliberately unbothered: a clone should just run.
+    assert not check_production_secrets(Settings(environment="dev"))
+
+    # Production is not.
+    assert check_production_secrets(Settings(environment="production"))
+
+    # Nor is a value somebody "changed" without making it a secret.
+    weak = Settings(
+        environment="production",
+        secret_key=secrets.token_urlsafe(48),
+        ip_hash_salt="dev-local-salt",
+    )
+    assert check_production_secrets(weak)
+
+    # A short admin token is a brute-forceable door that looks closed. The
+    # test environment happens to set a 16-character one, which is how this
+    # case got written: the check caught it.
+    short_admin = Settings(
+        environment="production",
+        secret_key=secrets.token_urlsafe(48),
+        ip_hash_salt=secrets.token_urlsafe(32),
+        admin_token="test-admin-token",
+    )
+    assert check_production_secrets(short_admin)
+
+    # Real secrets pass.
+    good = Settings(
+        environment="production",
+        secret_key=secrets.token_urlsafe(48),
+        ip_hash_salt=secrets.token_urlsafe(32),
+        admin_token=secrets.token_urlsafe(32),
+    )
+    assert not check_production_secrets(good), check_production_secrets(good)

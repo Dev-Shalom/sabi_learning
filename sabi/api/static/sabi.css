@@ -277,6 +277,9 @@ img, svg { max-width: 100%; height: auto; }
   left: var(--s-4);
   top: -3rem;
   z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   padding: var(--s-2) var(--s-4);
   background: var(--accent);
   color: var(--on-accent);
@@ -682,6 +685,10 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 }
 
 .wordmark {
+  display: inline-flex;
+  align-items: center;
+  /* A 44px target, like everything else that can be tapped. */
+  min-height: 44px;
   font-family: var(--display);
   font-size: var(--step-2);
   font-weight: 600;
@@ -1235,7 +1242,16 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 .site-footer h4 { color: var(--cotton); margin-bottom: var(--s-2); }
 .site-footer ul { list-style: none; margin: 0; padding: 0; }
-.site-footer li + li { margin-top: var(--s-2); }
+
+/* Footer links are navigation, not prose, so they need a real target. At
+ * 16px tall they were the hardest thing to hit in the product, on the
+ * device the product is for. The inline-block plus padding gives 44px
+ * without changing how the column looks. */
+.site-footer li a {
+  display: inline-block;
+  min-height: 44px;
+  line-height: 44px;
+}
 .site-footer a { color: var(--indigo-2); text-decoration-color: var(--indigo-5); }
 .site-footer a:hover { color: var(--cotton); }
 

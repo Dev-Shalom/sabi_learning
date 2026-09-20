@@ -12,19 +12,8 @@
 <link rel="preload" href="/static/fonts/fraunces-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/sabi.css">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<script>
-  /* Two flags, set before the first paint so there is no flicker. Both are
-     opt-in: with JavaScript off neither is ever set, the opening cover never
-     renders, and content is visible immediately. A student on a slow
-     connection is never made to wait for a flourish. */
-  (function () {
-    try {
-      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    } catch (e) { return; }
-    document.documentElement.setAttribute("data-loading", "");
-    document.documentElement.setAttribute("data-reveal", "");
-  })();
-</script>
+{# Defined in app.py so the CSP hash is taken from the exact bytes served. #}
+<script>{{ boot_script }}</script>
 {% block head_extra %}{% endblock %}
 </head>
 <body{% block body_class %}{% endblock %}>
