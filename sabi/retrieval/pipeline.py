@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from sabi.config import runtime
 from sabi.retrieval.embeddings import get_embedder, tokenize
 from sabi.retrieval.rerank import Scored, confidence, get_reranker
+from sabi.retrieval.scope import DEFAULT_SCOPE, RetrievalScope
 from sabi.retrieval.store import (
     Candidate,
     lexical_candidates,
@@ -36,6 +37,10 @@ class RetrievalResult:
     confidence_parts: dict[str, float]
     retrieval_ms: int
     counts: dict[str, int] = field(default_factory=dict)
+    # Which syllabus this was retrieved from. Carried on the result so the
+    # request row, the refusal copy and the cache key all agree without the
+    # caller having to remember to pass it on separately.
+    scope: RetrievalScope = DEFAULT_SCOPE
 
     @property
     def refs(self) -> list[str]:
@@ -101,24 +106,42 @@ def _df_cache_key() -> int:
     return 0
 
 
-_df_state: dict[str, Any] = {"df": {}, "n": 0, "loaded_for": None}
+# Keyed by (scope, corpus_version): idf is a property of one syllabus, and
+# applying Mathematics term frequencies to a Physics question would rank by the
+# wrong notion of which words are rare.
+_df_state: dict[tuple[str, str], tuple[dict[str, int], int]] = {}
 
 
-def corpus_document_frequencies(s: Session, corpus_version: str) -> tuple[dict[str, int], int]:
-    """Term document-frequencies for the reranker's idf, cached per corpus version."""
-    if _df_state["loaded_for"] == corpus_version:
-        return _df_state["df"], _df_state["n"]
+def corpus_document_frequencies(
+    s: Session,
+    corpus_version: str,
+    scope: RetrievalScope = DEFAULT_SCOPE,
+) -> tuple[dict[str, int], int]:
+    """Term document-frequencies for the reranker's idf, cached per scope."""
+    key = (scope.key, corpus_version)
+    cached = _df_state.get(key)
+    if cached is not None:
+        return cached
 
     from sabi.models import Chunk
 
     df: Counter[str] = Counter()
     n = 0
-    for (text_value,) in s.execute(select(Chunk.text)).all():
+    rows = s.execute(
+        select(Chunk.text).where(
+            Chunk.subject == scope.subject, Chunk.exam_board == scope.exam_board
+        )
+    ).all()
+    for (text_value,) in rows:
         n += 1
         df.update(set(tokenize(text_value)))
 
-    _df_state.update({"df": dict(df), "n": n, "loaded_for": corpus_version})
-    return _df_state["df"], n
+    # Bounded: one entry per live scope per corpus version, and a version
+    # change is a deploy or an ingest, not a request.
+    if len(_df_state) > 32:
+        _df_state.clear()
+    _df_state[key] = (dict(df), n)
+    return _df_state[key]
 
 
 def retrieve(
@@ -126,7 +149,13 @@ def retrieve(
     query: str,
     corpus_version: str = "",
     query_vector: list[float] | None = None,
+    scope: RetrievalScope = DEFAULT_SCOPE,
 ) -> RetrievalResult:
+    """Retrieve within exactly one syllabus.
+
+    `scope` defaults, and every parameter stays keyword-compatible, so the CLI,
+    the eval harness and every existing test call this unchanged.
+    """
     cfg = runtime()
     started = time.perf_counter()
 
@@ -136,16 +165,16 @@ def retrieve(
     rerank_n = int(cfg.get("retrieval.rerank_top_n", 8))
     final_n = int(cfg.get("retrieval.final_context_chunks", 4))
 
-    lexical = lexical_candidates(s, query, k_lex)
+    lexical = lexical_candidates(s, query, k_lex, scope=scope)
     # The caller has usually embedded the question already for the cache lookup.
     # Re-embedding here would double the only per-request cost a cache hit has.
     vector = query_vector if query_vector is not None else get_embedder().embed_one(query)
-    semantic = vector_candidates(s, vector, k_vec)
+    semantic = vector_candidates(s, vector, k_vec, scope=scope)
 
     fused = reciprocal_rank_fusion([lexical, semantic], k=rrf_k)
     shortlist = fused[:rerank_n]
 
-    df, n_docs = corpus_document_frequencies(s, corpus_version)
+    df, n_docs = corpus_document_frequencies(s, corpus_version, scope=scope)
     reranker = get_reranker(df, n_docs)
     scored = reranker.rerank(query, shortlist)
 
@@ -156,11 +185,12 @@ def retrieve(
     )
 
     selected = scored[:final_n]
-    selected = _expand_siblings(s, selected)
+    selected = _expand_siblings(s, selected, scope=scope)
 
     elapsed = int((time.perf_counter() - started) * 1000)
     return RetrievalResult(
         query=query,
+        scope=scope,
         chunks=selected,
         confidence=conf,
         confidence_parts=parts,
@@ -175,7 +205,9 @@ def retrieve(
     )
 
 
-def _expand_siblings(s: Session, selected: list[Scored]) -> list[Scored]:
+def _expand_siblings(
+    s: Session, selected: list[Scored], scope: RetrievalScope = DEFAULT_SCOPE
+) -> list[Scored]:
     """Pull in the rest of a matched worked example, keeping order sensible."""
     if not selected:
         return selected
@@ -189,7 +221,7 @@ def _expand_siblings(s: Session, selected: list[Scored]) -> list[Scored]:
         return selected
 
     have = [sc.candidate.ref for sc in selected]
-    extras = sibling_chunks(s, list(dict.fromkeys(doc_ids)), have)
+    extras = sibling_chunks(s, list(dict.fromkeys(doc_ids)), have, scope=scope)
     if not extras:
         return selected
 

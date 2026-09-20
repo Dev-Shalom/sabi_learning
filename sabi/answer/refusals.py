@@ -4,11 +4,18 @@ Written in the interface's own voice: plain, short, no legalese, no apology
 spiral, and never implying the student asked a bad question. A refusal always
 does three things -- says what is missing, says what Sabi does have, and gives
 two specific things to try instead. A dead end is a product failure.
+
+Every template takes the `SyllabusVoice` of the syllabus the question was asked
+under, so "not on the WAEC Core Mathematics syllabus" is a sentence about one
+scope rather than a sentence this module believes. `voice` defaults, so a
+caller that has no scope to hand still gets the default syllabus's wording.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+
+from sabi.answer.voice import DEFAULT_VOICE, SyllabusVoice, names_other_subject
 
 REFUSAL_KINDS = {
     "out_of_syllabus",
@@ -38,15 +45,19 @@ def _suggestion_line(suggestions: list[str], lead: str = "Try asking about") -> 
 
 def out_of_syllabus(
     topic_hint: str | None, evidence_text: str, evidence_locator: str,
-    suggestions: list[str],
+    suggestions: list[str], voice: SyllabusVoice = DEFAULT_VOICE,
 ) -> Refusal:
     """The strongest refusal: the syllabus itself says this is out of scope."""
-    lead = "This is not on the WAEC Core Mathematics syllabus, so I do not have material for it."
+    lead = f"This is not on the {voice.syllabus_name}, so I do not have material for it."
     where = ""
-    low = evidence_text.lower()
-    if "further mathematics" in low:
+    # Where the topic went, if the exclusion section says. Read out of the
+    # evidence rather than matched against a subject name compiled in here, so
+    # a syllabus that hands a topic to some other subject says so by being
+    # written that way.
+    elsewhere = names_other_subject(evidence_text, voice)
+    if elsewhere:
         where = (
-            " It belongs to Further Mathematics, which is a separate subject and a "
+            f" It belongs to {elsewhere}, which is a separate subject and a "
             "separate paper."
         )
     # No "you asked about X" clause, and a different lead-in for the
@@ -63,12 +74,13 @@ def out_of_syllabus(
     )
 
 
-def no_material(suggestions: list[str]) -> Refusal:
+def no_material(
+    suggestions: list[str], voice: SyllabusVoice = DEFAULT_VOICE
+) -> Refusal:
     return Refusal(
         "no_material",
-        "I do not have anything on this. What I have is the WAEC Core Mathematics "
-        "syllabus for SS3 and worked examples for it, and nothing in there covers "
-        "your question." + _suggestion_line(suggestions),
+        f"I do not have anything on this. What I have is {voice.corpus_summary}, "
+        "and nothing in there covers your question." + _suggestion_line(suggestions),
         suggestions,
     )
 

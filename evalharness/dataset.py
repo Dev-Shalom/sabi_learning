@@ -35,6 +35,15 @@ class GoldenItem:
     difficulty: str = ""
     notes: str | None = None
     origin: str = "seed"
+    # Which syllabus this item is asked under. Defaulted, so an older seed file
+    # or a promoted row written before the columns existed still loads as the
+    # subject the set started as.
+    subject: str = "Mathematics"
+    exam_board: str = "WAEC"
+
+    @property
+    def scope_name(self) -> str:
+        return f"{self.exam_board}:{self.subject}"
 
     @property
     def slice_name(self) -> str:
@@ -54,6 +63,8 @@ def _from_dict(d: dict[str, Any]) -> GoldenItem:
         difficulty=d.get("difficulty") or "",
         notes=d.get("notes"),
         origin=d.get("origin") or "seed",
+        subject=d.get("subject") or "Mathematics",
+        exam_board=d.get("exam_board") or "WAEC",
     )
     if not item.answerable and item.unanswerable_kind not in UNANSWERABLE_KINDS:
         raise ValueError(
@@ -97,6 +108,8 @@ def load_promoted() -> list[GoldenItem]:
                     difficulty=r.difficulty or "",
                     notes=r.notes,
                     origin=r.origin,
+                    subject=r.subject or "Mathematics",
+                    exam_board=r.exam_board or "WAEC",
                 )
                 for r in rows
             ]
@@ -115,14 +128,17 @@ def load_all(include_promoted: bool = True) -> list[GoldenItem]:
 def summarise(items: Iterable[GoldenItem]) -> dict[str, Any]:
     items = list(items)
     kinds: dict[str, int] = {}
+    subjects: dict[str, int] = {}
     for i in items:
         if not i.answerable:
             kinds[i.unanswerable_kind or "?"] = kinds.get(i.unanswerable_kind or "?", 0) + 1
+        subjects[i.subject] = subjects.get(i.subject, 0) + 1
     return {
         "total": len(items),
         "answerable": sum(1 for i in items if i.answerable),
         "unanswerable": sum(1 for i in items if not i.answerable),
         "unanswerable_kinds": kinds,
+        "subjects": dict(sorted(subjects.items())),
         "with_value_check": sum(1 for i in items if i.expected_value),
         "promoted": sum(1 for i in items if i.origin == "feedback"),
     }

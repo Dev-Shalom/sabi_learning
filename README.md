@@ -49,17 +49,32 @@ mean what, and lists all four remaining failures with their causes.
 
 ## What it looks like
 
-Captured at 360px, the width of the phones this is for.
+Captured at 360px, the width of the phones this is for, and at 1440px.
+Regenerate with `python tools/shots.py`.
 
-| Answer, with a source open | A refusal |
+| The landing page | An answer, with its source open |
 |---|---|
-| ![An answer with its source panel open](docs/screenshots/answer-with-source-open.png) | ![A refusal](docs/screenshots/refusal.png) |
+| ![The landing page](docs/screenshots/landing-360-light.png) | ![An answer with its source panel open](docs/screenshots/answer-360-light.png) |
 
-The opened source panel is the hero element: a red margin rule down the left
-like the ruled margin of a marked script, the provenance in mono at the top, and
-the sentence the answer leans on underlined in pen rather than highlighted. The
+| A refusal | The dashboard |
+|---|---|
+| ![A refusal](docs/screenshots/refusal-360-light.png) | ![The dashboard](docs/screenshots/dashboard-360-light.png) |
+
+The palette comes from **adire eleko**, Yoruba indigo resist-dyed cloth: the
+tonal indigo scale is a real material fact, each step a further dip, and the
+boundaries between sections are the irregular edge the dye leaves rather than a
+ruled line. Type is Fraunces for display and Outfit for everything read or
+operated, both self-hosted, 99.6 KB for every weight in the product.
+
+The opened source panel is still the hero element, and the landing page opens
+with one rather than describing it: a saffron margin rule down the left like the
+ruled margin of a marked script, the provenance in mono at the top, and the
+sentence the answer leans on underlined in pen rather than highlighted. The
 locator in the answer (`EX 31`) and the locator in the panel header are the same
-string in the same colour — that is the academic-footnote link, made literal.
+string in the same colour — the academic-footnote link, made literal.
+
+Full reasoning, and the AI-design clichés the first draft was caught making, in
+**[DESIGN_PLAN.md](DESIGN_PLAN.md)**.
 
 ---
 
@@ -154,14 +169,34 @@ sabi/
   retrieval/     embeddings, pgvector + FTS store, RRF fusion, reranking
   answer/        prompts, guardrail, refusals, cache, routing, the request path
   llm/           provider interface, Anthropic client, offline extractor, pricing
+  accounts/      passwords, sessions, recovery codes, login throttle, identity
   limits/        metering, rate limiting, budget kill switch
   billing/       the payment seam. Unimplemented on purpose.
-  obs/           structured logging and the cost report
-  api/           FastAPI app, templates, 8KB of CSS
+  obs/           structured logging, the cost report, the dashboard queries
+  api/           FastAPI app, deps, templates, one stylesheet, two webfonts
 evalharness/     the evaluation suite
 eval/            golden dataset, rubric, committed baseline, threshold sweep
-tools/           threshold sweep, contrast checker
+tools/           threshold sweep, contrast checker, schema drift, screenshots
 ```
+
+### Accounts
+
+Optional, and the design decision worth knowing is that **signing up does not
+create a user**. It sets credentials on the identity the device already had, so
+the questions asked beforehand are already yours with no migration, and the
+daily allowance cannot be reset by making an account — the cap rises instead,
+which is a row in `plans` rather than a schema change.
+
+Logging in on a second device deliberately does *not* absorb that device's
+history. It may belong to a sibling or a cybercafé, and importing a stranger's
+questions into your notebook is a real leak. There is an explicit merge, and it
+defaults to no.
+
+Passwords are `hashlib.scrypt` with the parameters stored inside the hash, so
+they can be raised later without invalidating anyone. Sessions are rows, not
+signed cookies, so they can be revoked. Every state-changing POST carries a CSRF
+token — including anonymous ones, because asking a question spends an allowance
+and writes a row.
 
 ---
 
@@ -193,10 +228,14 @@ The interface, written before any code: **[DESIGN_PLAN.md](DESIGN_PLAN.md)**.
 
 The users are minors, so the rule is to collect as little as possible:
 
-- No account, no name, no phone number. A random device-scoped id in a cookie.
+- **Accounts are optional.** Asking with no account still works, still costs
+  nothing, and is still the default — that has not changed.
+- If you make one: an email address, and a password stored as a scrypt hash.
+  No name, no phone number, no school. Nothing is ever sent to the address,
+  because there is no email transport; recovery codes are the way back in.
+- Anonymous visitors keep the same random device-scoped id in a signed cookie.
 - IP addresses are stored only as a salted one-way hash, only for the rate
   limiter.
-- Email only if someone types one into the waitlist themselves.
 - No adverts, no third-party trackers, nothing sold.
 
 Said in plain words to students at `/privacy`, not buried in a policy.
@@ -212,7 +251,9 @@ What is real, and what is not:
 | Corpus, retrieval, refusal, citations | **Working**, measured, tested |
 | Evaluation harness, CI gate | **Working** — 100 items, runs with no API key |
 | Cost, metering, budget kill switch | **Working**, exercised by the suite |
-| Web interface | **Working** locally; 3.2KB home, 4.8KB answer page |
+| Web interface | **Working** locally. Landing page, study surface, accounts, dashboard. 22KB landing, 5KB study, 8KB answer |
+| Accounts, sessions, CSRF, throttling | **Working**, 19 tests, no new dependencies |
+| Dashboard: stats, streak, topics, countdown | **Working**, all reads over the existing request log |
 | Feedback loop and review queue | **Working**, promotion into the golden set tested |
 | Run against Claude or Voyage | **Never done.** No API key was available. The clients are written and the seams are tested against fakes, but no real inference call has been made. |
 | LLM-as-judge | **Never run.** Rubric written and wired; the numbers in EVALUATION.md come from the heuristic stand-in. |
@@ -220,7 +261,12 @@ What is real, and what is not:
 | Demo video | **Not recorded.** The brief asked for a two-minute walkthrough; there are screenshots above instead. A video needs a deployed URL to walk through. |
 | Real users | **None.** The brief asked for a shipped tool with real students; this is a complete system that has not been put in front of anyone. |
 
-The last three are the honest gap between this and the brief. They need an API
+**Still to come, and scoped in the plan:** subject and exam-board scoping
+through retrieval, three more subjects, timed practice, the notebook, and photo
+input. NECO ships as code rather than content — `exam_board` is threaded
+everywhere, so adding it is authoring documents, not changing the system.
+
+The last three rows are the honest gap between this and the brief. They need an API
 key, a Fly.io account and a link handed to actual students — decisions and
 credentials that belong to whoever owns this, not to the build.
 

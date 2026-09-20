@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import delete, select
+from sqlalchemy.orm import Session
 
 from sabi.config import settings
 from sabi.corpus.chunker import ChunkDraft, chunk_document, chunk_ref
@@ -62,17 +63,59 @@ class IngestPlan:
         return out
 
 
+# The section heading that marks what a syllabus does NOT cover. A corpus-wide
+# convention: without such a section a subject has no grounded refusals at all,
+# only a confidence threshold. Named here rather than repeated as a default
+# argument in two query helpers, which is where it used to live.
+EXCLUSION_HEADING = "not on this syllabus"
+
+
 def _corpus_version(doc_hashes: list[str]) -> str:
     return hashlib.sha256("".join(sorted(doc_hashes)).encode()).hexdigest()[:16]
 
 
-def collect(paths: list[Path] | None = None) -> list[SourceDocument]:
+def configured_only(docs: list[SourceDocument]) -> list[SourceDocument]:
+    """Drop documents belonging to a syllabus that is not switched on.
+
+    A subject is authored in `corpus/` long before it is ready to answer
+    anybody. Without this filter the loader's `rglob` sweeps those drafts
+    into the index the next time anyone runs `sabi ingest` -- which is
+    exactly what happened with a half-written Physics corpus: seven
+    documents landed in the live index, changed the global corpus version
+    and so invalidated the answer cache, while being unreachable because
+    `config/limits.yaml` had not declared the subject.
+
+    Turning a subject on is one line of configuration. Until that line
+    exists, its documents are drafts and ingest leaves them alone.
+    """
+    from sabi.retrieval.scope import declared_boards, declared_subjects
+
+    subjects = set(declared_subjects())
+    boards = set(declared_boards())
+    keep: list[SourceDocument] = []
+    for d in docs:
+        subject = d.meta.get("subject", "Mathematics")
+        board = d.meta.get("exam_board", "WAEC")
+        if subject in subjects and board in boards:
+            keep.append(d)
+    return keep
+
+
+def collect(
+    paths: list[Path] | None = None, include_unconfigured: bool = False
+) -> list[SourceDocument]:
+    """Documents to ingest.
+
+    `include_unconfigured` is for tooling that wants to look at drafts --
+    a linter, a word count. The ingest path never sets it.
+    """
     if not paths:
-        return load_dir(CORPUS_ROOT)
-    docs: list[SourceDocument] = []
-    for p in paths:
-        docs.extend(load_dir(p) if p.is_dir() else [load_file(p)])
-    return docs
+        docs = load_dir(CORPUS_ROOT)
+    else:
+        docs = []
+        for p in paths:
+            docs.extend(load_dir(p) if p.is_dir() else [load_file(p)])
+    return docs if include_unconfigured else configured_only(docs)
 
 
 def plan_ingest(
@@ -216,6 +259,12 @@ def apply_ingest(
                         text=c.rendered(doc),
                         token_estimate=int(c.word_count * 1.3),
                         locator=doc.locator,
+                        # Denormalised onto the chunk so retrieval can be
+                        # scoped without a join. Taken from the row just
+                        # written, so the two can never disagree.
+                        subject=row.subject,
+                        exam_board=row.exam_board,
+                        is_exclusion=EXCLUSION_HEADING in (c.heading or "").lower(),
                         provenance=provenance | {"heading": c.heading, "atomic": c.atomic},
                         embedding=[float(x) for x in vec],
                         embedding_model=embedder.identity,
@@ -227,14 +276,31 @@ def apply_ingest(
         for doc_id in plan.removed_doc_ids:
             s.execute(delete(Document).where(Document.doc_id == doc_id))
 
-        all_hashes = [
-            h for (h,) in s.execute(select(Document.content_hash)).all()
-        ]
+        rows = s.execute(
+            select(Document.exam_board, Document.subject, Document.content_hash)
+        ).all()
+        all_hashes = [h for (_, _, h) in rows]
+        # The global version stays: the embedder is fitted over the whole
+        # corpus, so a change anywhere still invalidates every vector.
         version = _corpus_version(all_hashes)
+
+        # And one version per syllabus, which is what the answer cache keys
+        # on. With only a global version, adding one Physics document flushed
+        # every cached Mathematics answer -- and the cache is the cost lever.
+        by_scope: dict[str, list[str]] = {}
+        for board, subject, h in rows:
+            by_scope.setdefault(f"{board}:{subject}", []).append(h)
+        scopes = {
+            key: {"version": _corpus_version(hashes), "documents": len(hashes)}
+            for key, hashes in sorted(by_scope.items())
+        }
 
         for key, value in (
             (EMBEDDER_KEY, {"identity": embedder.identity, "provider": settings().embedding_provider}),
-            (CORPUS_KEY, {"version": version, "documents": len(all_hashes)}),
+            (
+                CORPUS_KEY,
+                {"version": version, "documents": len(all_hashes), "scopes": scopes},
+            ),
         ):
             row = s.get(SystemState, key)
             if row is None:
@@ -257,7 +323,37 @@ def reindex() -> dict[str, object]:
     return apply_ingest(None, prune=True, refit=True)
 
 
-def corpus_version() -> str:
-    with session_scope() as s:
-        row = s.get(SystemState, CORPUS_KEY)
-        return str(row.value.get("version")) if row else "unindexed"
+def corpus_version(s: Session | None = None, scope_key: str | None = None) -> str:
+    """The corpus version, globally or for one syllabus.
+
+    Pass the session you already have. The request path used to call this with
+    no session, which opened a second connection per request against a pool of
+    five -- and a second connection is what the request-path deadlock was made
+    of. With no session it still works, for the CLI.
+    """
+    if s is None:
+        with session_scope() as own:
+            return corpus_version(own, scope_key)
+
+    row = s.get(SystemState, CORPUS_KEY)
+    if row is None:
+        return "unindexed"
+
+    version = str(row.value.get("version"))
+    if scope_key is None:
+        return version
+
+    scopes = row.value.get("scopes")
+    if not scopes:
+        # The row predates per-scope versions: written by an ingest that ran
+        # before this existed, and not yet replaced. Fall back to the global
+        # version rather than the sentinel below, so that deploying this code
+        # does not throw away a warm cache before the next ingest has run.
+        return version
+
+    scoped = scopes.get(scope_key)
+    # A scope that is configured but has no documents gets a version of its
+    # own that nothing else shares, so nothing can be served from the cache
+    # for it by accident. That is a different case from the one above: here we
+    # know what every scope's version is, and this one's corpus is empty.
+    return str(scoped["version"]) if scoped else f"empty:{scope_key}"

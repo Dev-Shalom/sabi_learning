@@ -255,3 +255,39 @@ python -m sabi.cli eval
 
 The run writes a full JSON record to `.eval-runs/`, including every item's
 answer, retrieved refs, scores and judge verdict.
+
+### How closely it reproduces, measured
+
+Run-to-run on one machine: **exactly.** Deleting `var/lsa_model.npz` and
+re-ingesting three times produced byte-identical embeddings each time, and the
+ANN index returns the same neighbours as an exact scan, so the numbers do not
+drift between runs.
+
+Across machines: **close, but not identical.** A run here against the committed
+baseline gives
+
+| | baseline | here |
+|---|---|---|
+| retrieval recall@k | 0.987 | **1.000** |
+| MRR | 0.959 | **0.963** |
+
+every other metric matching to four decimal places, and the same four items
+failing. The difference is one item, `g-009`: the baseline records a retrieval
+miss on it and here the right chunk is found at rank 3. It is *better* here,
+which is why the gate passes — the baseline check only flags regressions — but
+better is not the point. The point is that it moved at all.
+
+It is not the ANN index (an exact scan finds the same chunk at the same rank)
+and not the corpus (`corpus_version` is `117d25bfed0da7ba` in both). What is
+left is the embedder: `LocalLSAEmbedder.fit` runs `np.linalg.svd` over a dense
+term matrix, and a full SVD is only bit-identical across machines if the
+underlying LAPACK is. A different BLAS build gives a slightly different basis,
+and one borderline item lands on the other side of a threshold.
+
+So the honest version of "anyone can reproduce these numbers from a clean
+clone" is: anyone can reproduce them **to within about one borderline item out
+of a hundred**, and can reproduce them exactly on the machine that produced the
+baseline. Closing that gap means a seeded, deterministic decomposition rather
+than a library call whose output depends on the host — which is the same change
+the corpus will force anyway, because a dense full SVD does not survive a
+corpus several times this size.

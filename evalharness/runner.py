@@ -52,6 +52,8 @@ class ItemResult:
     question: str
     slice: str
     topic: str
+    subject: str
+    exam_board: str
     answerable: bool
     refused: bool
     refusal_kind: str | None
@@ -80,6 +82,8 @@ def run_item(item: GoldenItem, judge: Judge, anon_id: str) -> ItemResult:
         client="eval",
         plan_hint="internal",
         use_cache=False,
+        subject=item.subject,
+        exam_board=item.exam_board,
     )
 
     citation_locators = [c.locator for c in result.citations]
@@ -134,6 +138,8 @@ def run_item(item: GoldenItem, judge: Judge, anon_id: str) -> ItemResult:
         question=item.question,
         slice=item.slice_name,
         topic=item.topic,
+        subject=item.subject,
+        exam_board=item.exam_board,
         answerable=item.answerable,
         refused=result.refused,
         refusal_kind=result.refusal_kind,
@@ -255,6 +261,21 @@ def aggregate(results: list[ItemResult]) -> dict[str, Any]:
             "caught": rate(sum(1 for r in v if r.refusal["correct"]), len(v)),
         }
         for k, v in sorted(kinds.items())
+    }
+
+    # Sliced per subject as well as per topic. A single global number cannot
+    # show one subject regressing while another improves, and with a second
+    # subject in the corpus that is the first thing this report has to be able
+    # to say. Same shape as `by_topic`, so the two read the same way.
+    by_subject: dict[str, dict[str, Any]] = {}
+    for r in answerable:
+        b = by_subject.setdefault(r.subject or "?", {"n": 0, "retrieval_hits": 0, "failures": 0})
+        b["n"] += 1
+        b["retrieval_hits"] += 1 if r.retrieval["hit_at_k"] else 0
+        b["failures"] += 1 if r.failures else 0
+    metrics["by_subject"] = {
+        k: v | {"recall": rate(v["retrieval_hits"], v["n"])}
+        for k, v in sorted(by_subject.items())
     }
 
     by_topic: dict[str, dict[str, Any]] = {}
@@ -389,6 +410,14 @@ def render(run: dict[str, Any], regressions: list[dict[str, Any]], gate_failures
     add(f"  recall@k         {m['retrieval']['recall_at_k']:.3f}")
     add(f"  precision@1      {m['retrieval']['precision_at_1']:.3f}")
     add(f"  MRR              {m['retrieval']['mrr']:.3f}")
+    # Printed only once there is more than one subject: with a single syllabus
+    # the per-subject slice is the global number restated.
+    if len(m.get("by_subject") or {}) > 1:
+        add("")
+        add("By subject")
+        for subject, v in m["by_subject"].items():
+            add(f"  {subject:<20} recall {v['recall']:.3f}   "
+                f"{v['failures']} failing of {v['n']}")
     add("")
     add("Citations")
     add(f"  validity         {m['citations']['validity']:.3f}  "

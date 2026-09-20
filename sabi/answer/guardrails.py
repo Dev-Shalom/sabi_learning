@@ -22,6 +22,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from sabi.answer.voice import DEFAULT_VOICE, SyllabusVoice
+
 # Narrow on purpose. Each pattern is a phrase a student would have to go out of
 # their way to type; none of them appear in a maths question.
 WELFARE_PATTERNS = [
@@ -42,15 +44,25 @@ WELFARE_PATTERNS = [
 
 _COMPILED = [re.compile(p, re.IGNORECASE) for p in WELFARE_PATTERNS]
 
-WELFARE_RESPONSE = (
-    "I can only help with WAEC Mathematics, so I am not the right one to answer "
-    "this, and I do not want to give you a poor answer on something that matters.\n\n"
-    "Please talk to someone you trust about it today: a teacher you get on with, "
-    "a school counsellor, a parent, or another adult in your family. If you are "
-    "in danger right now, tell an adult near you straight away.\n\n"
-    "When you want to come back to maths, ask me anything on the WAEC syllabus "
-    "and I will work through it with you."
-)
+def welfare_response(voice: SyllabusVoice = DEFAULT_VOICE) -> str:
+    """The one thing Sabi says here. Built per syllabus, worded identically.
+
+    The subject is named twice, and both are the scope's own words: a student
+    who asked a Physics question should not be told Sabi only does maths.
+    """
+    return (
+        f"I can only help with {voice.label}, so I am not the right one to answer "
+        "this, and I do not want to give you a poor answer on something that matters.\n\n"
+        "Please talk to someone you trust about it today: a teacher you get on with, "
+        "a school counsellor, a parent, or another adult in your family. If you are "
+        "in danger right now, tell an adult near you straight away.\n\n"
+        f"When you want to come back to {voice.casual_noun}, ask me anything on the "
+        f"{voice.syllabus_short} and I will work through it with you."
+    )
+
+
+# The default syllabus's wording, for callers that only want to read the copy.
+WELFARE_RESPONSE = welfare_response()
 
 
 @dataclass(frozen=True)
@@ -60,8 +72,10 @@ class GuardrailVerdict:
     response: str | None = None
 
 
-def check(question: str) -> GuardrailVerdict:
+def check(
+    question: str, voice: SyllabusVoice = DEFAULT_VOICE
+) -> GuardrailVerdict:
     for pattern in _COMPILED:
         if pattern.search(question):
-            return GuardrailVerdict(True, "welfare", WELFARE_RESPONSE)
+            return GuardrailVerdict(True, "welfare", welfare_response(voice))
     return GuardrailVerdict(False)

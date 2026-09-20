@@ -320,17 +320,36 @@ students say, not from a number guessed before anyone has used it.
 Full reasoning in `DESIGN_PLAN.md`, written before any code. The decisions with
 engineering consequences:
 
-- **No webfonts.** System stack resolves to Roboto on the target device: already
-  present, hinted for low-density screens, zero bytes over metered data. A design
-  that needs 400KB of font to feel warm has failed this audience. Home page 3.2KB,
-  answer page 4.8KB.
+- **Two self-hosted webfonts**, reversing the original "no webfonts" position.
+  The first design was for a prototype whose job was to prove the measurement;
+  the interface only had to stay out of the way. This is now a product a student
+  has to choose, on a phone, against alternatives that will happily guess, and a
+  first impression decides whether the careful part is ever used. Fraunces and
+  Outfit, latin subset, variable, **99.6 KB for every weight in the product**,
+  self-hosted rather than from a font CDN — no extra DNS and TLS on a slow
+  connection, and no third party on a page a 16-year-old loads. The budget moved
+  rather than disappearing: `tests/test_assets.py` now measures fonts, CSS and
+  JS, none of which any test measured before.
+- **The palette is adire indigo**, not the original warm paper and red. The first
+  proposal for the redesign was cream, a high-contrast serif and a terracotta
+  accent, which is precisely the commonest tell of a generated page — and the
+  terracotta family sits on Claude's own interaction accent. Reasoning and the
+  full self-critique are in `DESIGN_PLAN.md`.
 - **Server-rendered, works without JavaScript.** The composer is a real form POST
   and source panels are `<details>`. JS only adds a visible working state, an
   in-place down-vote reason, and an honest message on timeout.
-- **One accent, one meaning.** Red is a citation, a refusal or a correction —
-  never decoration, never a button fill.
+- **One accent, one meaning.** Saffron on dark, bronze on paper: a citation, a
+  refusal or a correction. Never decoration. Two tokens rather than one because
+  saffron on cotton is 1.9:1 — a contrast requirement, not a flourish.
 - **Contrast is checked in CI** from the real stylesheet (`tools/contrast_check.py`),
-  so the claim cannot drift from the CSS.
+  now in **both themes**, and the checker also fails on any colour literal
+  outside the token block. That second check is the one that keeps a system a
+  system: a ratio table can only vouch for colours it knows the names of.
+- **Sessions are rows, not signed cookies.** A new table costs nothing under
+  `create_all`, every route already holds a database session, and revocation
+  becomes possible. Passwords are `hashlib.scrypt` from the standard library
+  with the parameters stored inside the hash — no new dependency, and they can
+  be raised later without invalidating anyone.
 
 ---
 
@@ -344,7 +363,20 @@ engineering consequences:
 - **Streaming answers.** Answers are short and the wait is dominated by retrieval
   plus one model call. Streaming adds a failure mode (a half-written answer with
   half its citations) for little gain at this length.
-- **User accounts, history, saved questions.** Every one is more PII about
-  minors. None is needed to answer a question.
+- ~~**User accounts, history, saved questions.**~~ **Reversed.** The original
+  reasoning — every one is more PII about minors, and none is needed to answer a
+  question — is still true of the *first* clause and still shapes the result:
+  asking without an account works, is the default, and stays. What changed is
+  that a student revising over weeks has a real use for their own history, and
+  refusing them one to keep a slogan would be putting the slogan first. So:
+  accounts are optional, hold an address and a scrypt hash and nothing else, and
+  signing up claims the identity already on the device rather than creating a
+  second one. `privacy.html` and its test were rewritten in the same change,
+  because two of the things that page promised had become false.
 - **A moderation system.** One guardrail rule, as the brief asks. A classifier
   for a 22-item risk surface would be more code than judgement.
+- **A password-reset email.** There is no email transport here, and a reset link
+  that reports success and delivers nothing is the most damaging kind of
+  working-looking feature. Five one-time recovery codes instead, shown once at
+  signup and hashed the way a password is. The sending interface exists in
+  `sabi/accounts/mail.py` and raises rather than pretending.

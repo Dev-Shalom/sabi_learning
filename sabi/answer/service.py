@@ -27,6 +27,7 @@ from sabi.answer import cache as answer_cache
 from sabi.answer import guardrails, refusals
 from sabi.answer.generator import Generated, generate
 from sabi.answer.router import choose_model
+from sabi.answer.voice import SyllabusVoice, voice_for
 from sabi.config import runtime, settings
 from sabi.corpus.ingest import corpus_version
 from sabi.db import session_scope
@@ -36,11 +37,22 @@ from sabi.obs.logging import build_record, log_request
 from sabi.models import Request
 from sabi.retrieval.embeddings import get_embedder, tokenize
 from sabi.retrieval.pipeline import RetrievalResult, retrieve
+from sabi.retrieval.scope import DEFAULT_SCOPE, RetrievalScope
 
-DISCLOSURE = (
-    "Sabi can be wrong. Check with your teacher or the WAEC syllabus before you "
-    "trust it in an exam."
-)
+def disclosure(voice: SyllabusVoice) -> str:
+    """Shown under every answer, including cached ones.
+
+    Named per syllabus, because "check with the WAEC syllabus" is only useful
+    advice to a student who was asking about WAEC.
+    """
+    return (
+        f"Sabi can be wrong. Check with your teacher or the {voice.syllabus_short} "
+        "before you trust it in an exam."
+    )
+
+
+# The default syllabus's wording, for the dataclass default below.
+DISCLOSURE = disclosure(voice_for())
 
 
 @dataclass
@@ -209,6 +221,7 @@ def _persist(
     ip_hash: str | None,
     client: str,
     event_type: str,
+    scope: RetrievalScope = DEFAULT_SCOPE,
 ) -> None:
     s.add(
         Request(
@@ -236,6 +249,13 @@ def _persist(
             cache_hit=result.cache_hit,
             ip_hash=ip_hash,
             client=client,
+            # Recorded on every row, including the ones that never reached
+            # retrieval. A guardrail refusal or a capped request still belongs
+            # to a syllabus, and the review queue and the per-subject slices in
+            # the eval report both group on these two columns -- a null there
+            # would quietly drop the request out of every subject's numbers.
+            subject=scope.subject,
+            exam_board=scope.exam_board,
         )
     )
     limiter.record_usage(s, user, request_id, event_type, result.cost_usd, plan_name)
@@ -273,17 +293,29 @@ def answer_question(
     plan_hint: str = "free",
     llm: LLMClient | None = None,
     use_cache: bool = True,
+    subject: str | None = None,
+    exam_board: str | None = None,
 ) -> AnswerResult:
-    """Answer one question.
+    """Answer one question, within exactly one syllabus.
 
     `use_cache=False` is for the eval harness: a suite that answers from the
     cache measures the cache, not the system. Cache behaviour has its own tests.
+
+    `subject` and `exam_board` are keyword parameters with defaults, added after
+    every existing one, so the CLI, the eval harness and the web app keep
+    calling this unchanged and get the default syllabus.
     """
     request_id = uuid.uuid4()
     started = time.perf_counter()
     question = (question or "").strip()
     ip_hash = limiter.hash_ip(ip) if ip else None
     cfg = runtime()
+
+    # `safe_parse`, not `parse`: these arrive from a query string or a cookie.
+    # A student who bookmarked a subject that has since been retired should get
+    # the default syllabus, not a 500.
+    scope = RetrievalScope.safe_parse(subject, exam_board)
+    voice = voice_for(scope)
 
     with session_scope() as s:
         user = limiter.get_or_create_user(s, anon_id, plan_hint)
@@ -296,10 +328,13 @@ def answer_question(
             refused=False,
             refusal_kind=None,
             daily_cap=plan.daily_question_cap,
+            disclosure=disclosure(voice),
         )
 
         if not question:
-            result.text = "Ask me a WAEC maths question and I will work through it."
+            result.text = (
+                f"Ask me a {voice.question_noun} and I will work through it."
+            )
             result.refused = True
             result.refusal_kind = "empty"
             result.route = "refusal"
@@ -309,7 +344,7 @@ def answer_question(
             return result
 
         # 1. Guardrail, before anything else.
-        guard = guardrails.check(question)
+        guard = guardrails.check(question, voice)
         if guard.triggered:
             result.text = guard.response or ""
             result.refused = True
@@ -323,7 +358,7 @@ def answer_question(
                 s, request_id=request_id, user=user, plan_name=plan.name,
                 question=question, result=result, retrieved_refs=[], cited_refs=[],
                 tokens_in=0, tokens_out=0, retrieval_ms=0, generation_ms=0,
-                ip_hash=ip_hash, client=client, event_type="refusal",
+                ip_hash=ip_hash, client=client, scope=scope, event_type="refusal",
             )
             return result
 
@@ -342,20 +377,32 @@ def answer_question(
                 s, request_id=request_id, user=user, plan_name=plan.name,
                 question=question, result=result, retrieved_refs=[], cited_refs=[],
                 tokens_in=0, tokens_out=0, retrieval_ms=0, generation_ms=0,
-                ip_hash=ip_hash, client=client, event_type="capped",
+                ip_hash=ip_hash, client=client, scope=scope, event_type="capped",
             )
             return result
 
-        # 3. Budget kill switch.
+        # 3. Budget kill switch. Called as a module attribute on purpose --
+        # `limiter.budget_state`, never a from-import -- because that is how the
+        # behaviour tests monkeypatch the degraded state.
         budget = limiter.budget_state(s)
-        version = corpus_version()
+
+        # The version of *this* syllabus, read from the session already open.
+        # This used to call `corpus_version()` with no session, which opened a
+        # second connection per request against a pool of five -- two
+        # connections held at once by every in-flight request, for a value that
+        # was sitting in a table the open session could read.
+        version = corpus_version(s, scope.key)
 
         # 4. Cache.
         embedder = get_embedder()
         query_vector = embedder.embed_one(question)
-        scope = answer_cache.scope_key(cfg.prompt_version, settings().llm_provider)
+        cache_scope = answer_cache.scope_key(
+            cfg.prompt_version, settings().llm_provider, scope
+        )
         hit = (
-            answer_cache.lookup(s, question, query_vector, scope, version)
+            answer_cache.lookup(
+                s, question, query_vector, cache_scope, version, syllabus=scope.key
+            )
             if use_cache
             else None
         )
@@ -379,7 +426,7 @@ def answer_question(
                 retrieved_refs=payload.get("retrieved_refs", []),
                 cited_refs=[c.ref for c in result.citations],
                 tokens_in=0, tokens_out=0, retrieval_ms=0, generation_ms=0,
-                ip_hash=ip_hash, client=client, event_type="cache_hit",
+                ip_hash=ip_hash, client=client, scope=scope, event_type="cache_hit",
             )
             return result
 
@@ -396,12 +443,14 @@ def answer_question(
                 s, request_id=request_id, user=user, plan_name=plan.name,
                 question=question, result=result, retrieved_refs=[], cited_refs=[],
                 tokens_in=0, tokens_out=0, retrieval_ms=0, generation_ms=0,
-                ip_hash=ip_hash, client=client, event_type="refusal",
+                ip_hash=ip_hash, client=client, scope=scope, event_type="refusal",
             )
             return result
 
         # 5. Retrieve, route, generate.
-        retrieval = retrieve(s, question, version, query_vector=query_vector)
+        retrieval = retrieve(
+            s, question, version, query_vector=query_vector, scope=scope
+        )
         result.confidence = retrieval.confidence
 
         decision = choose_model(question, retrieval.confidence, budget.cheap_only)
@@ -434,7 +483,7 @@ def answer_question(
                 retrieved_refs=retrieval.refs, cited_refs=[],
                 tokens_in=0, tokens_out=0, retrieval_ms=retrieval.retrieval_ms,
                 generation_ms=generation_ms, ip_hash=ip_hash, client=client,
-                event_type="error",
+                scope=scope, event_type="error",
             )
             return result
 
@@ -483,8 +532,9 @@ def answer_question(
                     "retrieved_refs": retrieval.refs,
                 },
                 result.model or "unknown",
-                scope,
+                cache_scope,
                 version,
+                syllabus=scope.key,
             )
 
         _persist(
@@ -495,6 +545,6 @@ def answer_question(
             tokens_in=tokens_in, tokens_out=tokens_out,
             retrieval_ms=retrieval.retrieval_ms, generation_ms=generation_ms,
             ip_hash=ip_hash, client=client,
-            event_type="refusal" if result.refused else "question",
+            scope=scope, event_type="refusal" if result.refused else "question",
         )
         return result

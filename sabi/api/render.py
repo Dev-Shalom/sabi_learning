@@ -98,8 +98,17 @@ def render_source(text: str, highlight: str | None) -> str:
 
 
 def attribution_label(attribution: str) -> str:
-    return {
-        "syllabus": "WAEC syllabus",
-        "worked_example": "Worked example",
-        "past_question": "Past question",
-    }.get(attribution, "Source")
+    """What the citation panel calls a source.
+
+    The table lives in `sabi.answer.voice`, next to the rest of the per-syllabus
+    vocabulary, because this used to be a second copy of it and the two had
+    already drifted: one said "WAEC syllabus" while naming a subject the other
+    did not. Here it is title-cased for a panel heading; the prompt takes the
+    same labels mid-sentence.
+
+    The default syllabus's wording: a rendered answer carries its citations but
+    not its scope, and the template calls this with one argument.
+    """
+    from sabi.answer.voice import attribution_label as label
+
+    return label(attribution, title=True)

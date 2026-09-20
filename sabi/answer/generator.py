@@ -3,9 +3,10 @@
 The decision order is deliberate. Cheapest and most certain checks first, model
 call last:
 
-1. Grounded out-of-scope. If the syllabus text itself says the topic belongs to
-   Further Mathematics, refuse and cite that line. This is the only refusal that
-   can point at evidence, so it is tried first.
+1. Grounded out-of-scope. If the syllabus text itself says the topic is not on
+   this syllabus, refuse and cite that line -- naming the subject it hands the
+   topic to, if the section names one. This is the only refusal that can point
+   at evidence, so it is tried first.
 2. Nothing retrieved at all.
 3. Retrieval confidence below the tuned threshold.
 4. Otherwise generate -- then validate the citations before showing anything.
@@ -28,6 +29,7 @@ from sabi.answer.prompts import get_prompts, render_sources
 from sabi.config import runtime
 from sabi.llm.base import LLMClient, LLMResponse, LLMUnavailable
 from sabi.retrieval.pipeline import RetrievalResult
+from sabi.retrieval.scope import DEFAULT_SCOPE, RetrievalScope
 from sabi.retrieval.store import exclusion_match
 
 CITATION = re.compile(r"\[([A-Z]{2,3}\s?[A-Z]?\d{1,3}(?:\.\d+)?)\]")
@@ -81,15 +83,23 @@ def suggestions_from(retrieval: RetrievalResult, limit: int = 2) -> list[str]:
 
 
 def scope_exclusion(
-    s: Session, question: str, query_vector: list[float] | None
+    s: Session,
+    question: str,
+    query_vector: list[float] | None,
+    scope: RetrievalScope = DEFAULT_SCOPE,
 ) -> tuple[float, object | None]:
-    """Score the question against the 'Not on this syllabus' sections."""
+    """Score the question against *this syllabus's* 'Not on this syllabus' sections.
+
+    Scoped because "not on this syllabus" is only true of one syllabus. Left
+    global, a topic that Core Mathematics excludes would be refused even under
+    a subject whose corpus answers it.
+    """
     if query_vector is None:
         from sabi.retrieval.embeddings import get_embedder
 
         query_vector = get_embedder().embed_one(question)
 
-    candidates = exclusion_match(s, question, query_vector)
+    candidates = exclusion_match(s, question, query_vector, scope=scope)
     if not candidates:
         return 0.0, None
     return candidates[0].score, candidates[0]
@@ -104,12 +114,17 @@ def generate(
     query_vector: list[float] | None = None,
 ) -> Generated:
     cfg = runtime()
-    prompts = get_prompts(cfg.prompt_version)
+    # Both the prompt and the refusal copy speak as the syllabus this retrieval
+    # ran under, not as whatever subject shipped first.
+    prompts = get_prompts(cfg.prompt_version, retrieval.scope)
+    voice = prompts.voice
     suggestions = suggestions_from(retrieval)
 
     # 1. Grounded out-of-scope.
     scope_threshold = float(cfg.get("retrieval.scope_exclusion_threshold", 0.42))
-    exc_score, exc_chunk = scope_exclusion(s, question, query_vector)
+    exc_score, exc_chunk = scope_exclusion(
+        s, question, query_vector, scope=retrieval.scope
+    )
     # An earlier version also required the exclusion evidence to outscore the
     # best in-scope chunk. That guard never fired: an out-of-syllabus question
     # shares most of its vocabulary with in-scope material ("integration by
@@ -123,13 +138,14 @@ def generate(
             exc_chunk.text,
             exc_chunk.locator,
             suggestions,
+            voice,
         )
         return Generated(r.text, True, r.kind, [], evidence_locator=exc_chunk.locator,
                          suggestions=suggestions)
 
     # 2. Nothing retrieved.
     if not retrieval.chunks:
-        r = refusals.no_material(suggestions)
+        r = refusals.no_material(suggestions, voice)
         return Generated(r.text, True, r.kind, [], suggestions=suggestions)
 
     # 3. Below the tuned confidence threshold.

@@ -157,3 +157,53 @@ def test_worked_example_arithmetic(label):
 def test_worked_example_exact_fractions(label):
     computed, claimed = EXACT[label]
     assert computed == claimed, label
+
+
+# --------------------------------------------------------- draft syllabuses
+
+
+def test_ingest_ignores_a_syllabus_that_is_not_switched_on():
+    """A subject being authored must not leak into the live index.
+
+    This is a regression test for something that actually happened. A Physics
+    corpus was part-written under `corpus/`, and because the loader globs the
+    whole tree, the next `sabi ingest` swept seven of those documents into the
+    index. They were unreachable -- `config/limits.yaml` had not declared the
+    subject, so no `RetrievalScope` could be built for them -- but they still
+    changed the global corpus version, which invalidates the entire answer
+    cache, the main cost lever in the system.
+
+    Authoring a subject and switching it on are separate acts. Until the
+    second one happens, its documents are drafts.
+    """
+    from sabi.corpus.ingest import collect, configured_only
+    from sabi.retrieval.scope import declared_subjects
+
+    configured = set(declared_subjects())
+
+    drafts = collect(include_unconfigured=True)
+    live = collect()
+
+    assert live, "nothing would be ingested at all"
+    assert len(live) <= len(drafts)
+
+    for doc in live:
+        subject = doc.meta.get("subject", "Mathematics")
+        assert subject in configured, (
+            f"{doc.doc_id} belongs to {subject!r}, which is not in "
+            f"config/limits.yaml -- it should not be ingested"
+        )
+
+    # And the filter is doing something rather than passing everything
+    # through. The default matters: the Mathematics corpus does not state
+    # `subject` in its front matter and relies on it, so reading the key
+    # without the default marks all 82 as unconfigured.
+    unconfigured = [
+        d for d in drafts
+        if d.meta.get("subject", "Mathematics") not in configured
+    ]
+    if unconfigured:
+        kept = {d.doc_id for d in configured_only(unconfigured)}
+        assert not kept, f"unconfigured documents survived the filter: {kept}"
+        # Which also means the drafts on disk are genuinely being excluded.
+        assert len(live) == len(drafts) - len(unconfigured)

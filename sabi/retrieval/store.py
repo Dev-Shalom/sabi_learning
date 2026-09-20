@@ -17,10 +17,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from functools import lru_cache
+
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from sabi.retrieval.embeddings import tokenize
+from sabi.retrieval.scope import DEFAULT_SCOPE, RetrievalScope
 
 
 @dataclass
@@ -49,46 +52,67 @@ def _tsquery_terms(query: str) -> str:
     return " | ".join(terms[:24])
 
 
-LEXICAL_SQL = text(
-    """
-    SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
-           ts_rank_cd(c.tsv, query, 32) AS score
-    FROM chunks c
-    JOIN documents d ON d.id = c.document_id
-    CROSS JOIN to_tsquery('english', :q) AS query
-    WHERE d.active AND c.tsv @@ query
-    ORDER BY score DESC
-    LIMIT :lim
-    """
-)
+# Every statement below is built per scope, because the scope predicate has to
+# be a literal for a partial index to match it. `sabi/retrieval/scope.py`
+# explains why, and guarantees the literal is safe. Statements are cached so
+# the string work happens once per scope rather than once per request.
 
-TRIGRAM_SQL = text(
-    """
-    SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
-           similarity(c.text, :raw) AS score
-    FROM chunks c
-    JOIN documents d ON d.id = c.document_id
-    -- An explicit threshold rather than the `%` operator: a literal percent
-    -- sign does not survive the driver's parameter escaping, and `%` depends on
-    -- a session GUC anyway, so spelling the threshold out is both safer and
-    -- clearer about what "similar enough" means.
-    WHERE d.active AND similarity(c.text, :raw) > 0.08
-    ORDER BY score DESC
-    LIMIT :lim
-    """
-)
 
-VECTOR_SQL = text(
+@lru_cache(maxsize=64)
+def _lexical_sql(scope: RetrievalScope):
+    return text(
+        f"""
+        SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
+               ts_rank_cd(c.tsv, query, 32) AS score
+        FROM chunks c
+        JOIN documents d ON d.id = c.document_id
+        CROSS JOIN to_tsquery('english', :q) AS query
+        WHERE d.active AND {scope.predicate('c')} AND c.tsv @@ query
+        ORDER BY score DESC
+        LIMIT :lim
+        """
+    )
+
+
+@lru_cache(maxsize=64)
+def _trigram_sql(scope: RetrievalScope):
+    return text(
+        f"""
+        SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
+               similarity(c.text, :raw) AS score
+        FROM chunks c
+        JOIN documents d ON d.id = c.document_id
+        -- An explicit threshold rather than the `%` operator: a literal percent
+        -- sign does not survive the driver's parameter escaping, and `%` depends
+        -- on a session GUC anyway, so spelling the threshold out is both safer
+        -- and clearer about what "similar enough" means.
+        WHERE d.active AND {scope.predicate('c')} AND similarity(c.text, :raw) > 0.08
+        ORDER BY score DESC
+        LIMIT :lim
+        """
+    )
+
+
+@lru_cache(maxsize=64)
+def _vector_sql(scope: RetrievalScope):
+    """The one that most needs the partial index.
+
+    `ORDER BY embedding <=> :vec LIMIT n` walks the HNSW graph. With a filter
+    the graph cannot satisfy, the walk exhausts `ef_search` and returns fewer
+    than `n` rows -- silently. The predicate here matches
+    `ix_chunks_hnsw_<scope>`, so the walk only ever visits in-scope nodes.
     """
-    SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
-           1 - (c.embedding <=> CAST(:vec AS vector)) AS score
-    FROM chunks c
-    JOIN documents d ON d.id = c.document_id
-    WHERE d.active AND c.embedding IS NOT NULL
-    ORDER BY c.embedding <=> CAST(:vec AS vector)
-    LIMIT :lim
-    """
-)
+    return text(
+        f"""
+        SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
+               1 - (c.embedding <=> CAST(:vec AS vector)) AS score
+        FROM chunks c
+        JOIN documents d ON d.id = c.document_id
+        WHERE d.active AND {scope.predicate('c')} AND c.embedding IS NOT NULL
+        ORDER BY c.embedding <=> CAST(:vec AS vector)
+        LIMIT :lim
+        """
+    )
 
 
 def _rows_to_candidates(rows, source: str) -> list[Candidate]:
@@ -111,28 +135,44 @@ def _rows_to_candidates(rows, source: str) -> list[Candidate]:
     return out
 
 
-def lexical_candidates(s: Session, query: str, limit: int = 24) -> list[Candidate]:
+def lexical_candidates(
+    s: Session,
+    query: str,
+    limit: int = 24,
+    scope: RetrievalScope = DEFAULT_SCOPE,
+) -> list[Candidate]:
     q = _tsquery_terms(query)
     rows: list[Any] = []
     if q:
-        rows = s.execute(LEXICAL_SQL, {"q": q, "lim": limit}).all()
+        rows = s.execute(_lexical_sql(scope), {"q": q, "lim": limit}).all()
     if rows:
         return _rows_to_candidates(rows, "lexical")
 
     # Nothing matched the dictionary: fall back to fuzzy string similarity so a
     # query made entirely of symbols still produces candidates.
-    rows = s.execute(TRIGRAM_SQL, {"raw": query, "lim": limit}).all()
+    rows = s.execute(_trigram_sql(scope), {"raw": query, "lim": limit}).all()
     return _rows_to_candidates(rows, "trigram")
 
 
-def vector_candidates(s: Session, vector: list[float], limit: int = 24) -> list[Candidate]:
+def vector_candidates(
+    s: Session,
+    vector: list[float],
+    limit: int = 24,
+    scope: RetrievalScope = DEFAULT_SCOPE,
+) -> list[Candidate]:
     vec = "[" + ",".join(f"{x:.6f}" for x in vector) + "]"
-    rows = s.execute(VECTOR_SQL, {"vec": vec, "lim": limit}).all()
+    rows = s.execute(_vector_sql(scope), {"vec": vec, "lim": limit}).all()
     return _rows_to_candidates(rows, "semantic")
 
 
-def chunk_count(s: Session) -> int:
-    return int(s.execute(text("SELECT count(*) FROM chunks")).scalar_one())
+def chunk_count(s: Session, scope: RetrievalScope | None = None) -> int:
+    if scope is None:
+        return int(s.execute(text("SELECT count(*) FROM chunks")).scalar_one())
+    return int(
+        s.execute(
+            text(f"SELECT count(*) FROM chunks c WHERE {scope.predicate('c')}")
+        ).scalar_one()
+    )
 
 
 def fetch_chunks_by_ref(s: Session, refs: list[str]) -> dict[str, Candidate]:
@@ -152,20 +192,26 @@ def fetch_chunks_by_ref(s: Session, refs: list[str]) -> dict[str, Candidate]:
     return {c.ref: c for c in _rows_to_candidates(rows, "direct")}
 
 
-SIBLINGS_SQL = text(
-    """
-    SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
-           0.0 AS score
-    FROM chunks c
-    JOIN documents d ON d.id = c.document_id
-    WHERE d.active AND d.doc_id = ANY(:doc_ids) AND NOT (c.ref = ANY(:exclude))
-    ORDER BY d.doc_id, c.chunk_index
-    """
-)
+@lru_cache(maxsize=64)
+def _siblings_sql(scope: RetrievalScope):
+    return text(
+        f"""
+        SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
+               0.0 AS score
+        FROM chunks c
+        JOIN documents d ON d.id = c.document_id
+        WHERE d.active AND {scope.predicate('c')}
+          AND d.doc_id = ANY(:doc_ids) AND NOT (c.ref = ANY(:exclude))
+        ORDER BY d.doc_id, c.chunk_index
+        """
+    )
 
 
 def sibling_chunks(
-    s: Session, doc_ids: list[str], exclude_refs: list[str]
+    s: Session,
+    doc_ids: list[str],
+    exclude_refs: list[str],
+    scope: RetrievalScope = DEFAULT_SCOPE,
 ) -> list[Candidate]:
     """Other chunks belonging to documents we already matched.
 
@@ -178,35 +224,51 @@ def sibling_chunks(
     if not doc_ids:
         return []
     rows = s.execute(
-        SIBLINGS_SQL, {"doc_ids": doc_ids, "exclude": exclude_refs or [""]}
+        _siblings_sql(scope), {"doc_ids": doc_ids, "exclude": exclude_refs or [""]}
     ).all()
     return _rows_to_candidates(rows, "sibling")
 
 
-EXCLUSION_SQL = text(
-    """
-    SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
-           0.0 AS score
-    FROM chunks c
-    JOIN documents d ON d.id = c.document_id
-    WHERE d.active AND c.heading ILIKE :pattern
-    """
-)
+# `c.is_exclusion`, set at ingest, replaces an unindexed
+# `heading ILIKE '%not on this syllabus%'` over every chunk on every request --
+# with the pattern hardcoded as a default argument in two separate functions.
+#
+# Scoping these is the single highest-risk part of adding a second syllabus.
+# "Not on this syllabus" is only meaningful about one syllabus: unscoped, a
+# question that Further Maths excludes would be refused even when the Physics
+# corpus answers it, and a subject with no exclusion sections of its own would
+# borrow another's.
 
 
-EXCLUSION_MATCH_SQL = text(
-    """
-    SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
-           (0.5 * COALESCE(ts_rank_cd(c.tsv, query, 32), 0)
-            + 0.5 * (1 - (c.embedding <=> CAST(:vec AS vector)))) AS score
-    FROM chunks c
-    JOIN documents d ON d.id = c.document_id
-    LEFT JOIN LATERAL to_tsquery('english', :q) AS query ON true
-    WHERE d.active AND c.heading ILIKE :pattern AND c.embedding IS NOT NULL
-    ORDER BY score DESC
-    LIMIT :lim
-    """
-)
+@lru_cache(maxsize=64)
+def _exclusion_sql(scope: RetrievalScope):
+    return text(
+        f"""
+        SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
+               0.0 AS score
+        FROM chunks c
+        JOIN documents d ON d.id = c.document_id
+        WHERE d.active AND c.is_exclusion AND {scope.predicate('c')}
+        """
+    )
+
+
+@lru_cache(maxsize=64)
+def _exclusion_match_sql(scope: RetrievalScope):
+    return text(
+        f"""
+        SELECT c.id, c.ref, d.doc_id, c.locator, c.heading, c.text, c.provenance,
+               (0.5 * COALESCE(ts_rank_cd(c.tsv, query, 32), 0)
+                + 0.5 * (1 - (c.embedding <=> CAST(:vec AS vector)))) AS score
+        FROM chunks c
+        JOIN documents d ON d.id = c.document_id
+        LEFT JOIN LATERAL to_tsquery('english', :q) AS query ON true
+        WHERE d.active AND c.is_exclusion AND {scope.predicate('c')}
+          AND c.embedding IS NOT NULL
+        ORDER BY score DESC
+        LIMIT :lim
+        """
+    )
 
 
 def exclusion_match(
@@ -214,7 +276,7 @@ def exclusion_match(
     query: str,
     vector: list[float],
     limit: int = 3,
-    pattern: str = "%not on this syllabus%",
+    scope: RetrievalScope = DEFAULT_SCOPE,
 ) -> list[Candidate]:
     """Score a question against the out-of-scope sections, lexically and semantically.
 
@@ -230,13 +292,15 @@ def exclusion_match(
     q = _tsquery_terms(query)
     vec = "[" + ",".join(f"{x:.6f}" for x in vector) + "]"
     rows = s.execute(
-        EXCLUSION_MATCH_SQL,
-        {"q": q or "nothing", "vec": vec, "pattern": pattern, "lim": limit},
+        _exclusion_match_sql(scope),
+        {"q": q or "nothing", "vec": vec, "lim": limit},
     ).all()
     return _rows_to_candidates(rows, "exclusion")
 
 
-def exclusion_chunks(s: Session, pattern: str = "%not on this syllabus%") -> list[Candidate]:
+def exclusion_chunks(
+    s: Session, scope: RetrievalScope = DEFAULT_SCOPE
+) -> list[Candidate]:
     """Chunks that say what the syllabus does NOT cover.
 
     Every syllabus document ends with a section naming what belongs to Further
@@ -244,5 +308,5 @@ def exclusion_chunks(s: Session, pattern: str = "%not on this syllabus%") -> lis
     can cite the line that says differentiating sin x is not on this paper,
     rather than refusing because a similarity score fell below a number.
     """
-    rows = s.execute(EXCLUSION_SQL, {"pattern": pattern}).all()
+    rows = s.execute(_exclusion_sql(scope)).all()
     return _rows_to_candidates(rows, "exclusion")

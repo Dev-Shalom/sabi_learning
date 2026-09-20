@@ -31,6 +31,7 @@ from sqlalchemy.orm import Session
 
 from sabi.config import runtime
 from sabi.models import AnswerCache
+from sabi.retrieval.scope import DEFAULT_SCOPE, RetrievalScope
 
 # Bumped by hand whenever the answering code changes in a way that would
 # produce a different answer from the same sources. The prompt version does not
@@ -38,7 +39,11 @@ from sabi.models import AnswerCache
 # validation or context assembly changes output without touching either the
 # prompt or the corpus. A cache that outlives the code that filled it serves
 # answers from a system that no longer exists.
-ANSWERER_REVISION = "r5"
+# r6: retrieval became scoped to one syllabus, which changes which chunks an
+# answer can be built from even when nothing else moved.
+ANSWERER_REVISION = "r6"
+
+DEFAULT_SYLLABUS = DEFAULT_SCOPE.key
 
 NUMBER = re.compile(r"\d+(?:\.\d+)?")
 WHITESPACE = re.compile(r"\s+")
@@ -50,9 +55,20 @@ def normalise(question: str) -> str:
     return q.rstrip("?. ")
 
 
-def scope_key(prompt_version: str, provider: str) -> str:
-    """What a cache entry is valid for."""
-    return f"{prompt_version}:{provider}:{ANSWERER_REVISION}"
+def scope_key(
+    prompt_version: str,
+    provider: str,
+    scope: RetrievalScope = DEFAULT_SCOPE,
+) -> str:
+    """What a cache entry is valid for.
+
+    The syllabus is part of it as well as being its own column. The column is
+    what the lookup filters and indexes on; carrying it in the key too means an
+    entry written before scoping existed cannot match a scoped lookup at all,
+    rather than matching and being filtered out by a default that happens to
+    agree with it.
+    """
+    return f"{prompt_version}:{provider}:{ANSWERER_REVISION}:{scope.key}"
 
 
 def question_hash(question: str) -> str:
@@ -72,11 +88,22 @@ class CacheHit:
     original_question: str
 
 
+# Filtered by syllabus first. Two subjects can share a question's wording, and
+# a hit across them would be the worst kind of cache hit: confidently answered,
+# cited, and from the wrong syllabus.
+#
+# There is deliberately no ANN index behind this any more. With a scope filter
+# in front of an HNSW `ORDER BY ... LIMIT`, the walk runs out of candidates and
+# returns fewer than it was asked for -- which in a cache means a miss nobody
+# notices, and the cache is the main cost lever. `ix_answer_cache_scope_hash`
+# narrows the scan to one syllabus, and a 256-dimension dot product over what
+# is left is sub-millisecond.
 LOOKUP_SQL = text(
     """
     SELECT id, question, payload, 1 - (embedding <=> CAST(:vec AS vector)) AS sim
     FROM answer_cache
-    WHERE prompt_version = :pv
+    WHERE scope = :syllabus
+      AND prompt_version = :pv
       AND corpus_version = :cv
       AND created_at > :cutoff
       AND embedding IS NOT NULL
@@ -92,6 +119,7 @@ def lookup(
     vector: list[float],
     prompt_version: str,
     corpus_version: str,
+    syllabus: str = DEFAULT_SYLLABUS,
 ) -> CacheHit | None:
     cfg = runtime()
     if not cfg.get("cache.enabled", True):
@@ -104,7 +132,13 @@ def lookup(
 
     rows = s.execute(
         LOOKUP_SQL,
-        {"vec": vec, "pv": prompt_version, "cv": corpus_version, "cutoff": cutoff},
+        {
+            "vec": vec,
+            "pv": prompt_version,
+            "cv": corpus_version,
+            "cutoff": cutoff,
+            "syllabus": syllabus,
+        },
     ).all()
 
     want_numbers = number_signature(question)
@@ -135,11 +169,13 @@ def store(
     model: str,
     prompt_version: str,
     corpus_version: str,
+    syllabus: str = DEFAULT_SYLLABUS,
 ) -> None:
     if not runtime().get("cache.enabled", True):
         return
     s.add(
         AnswerCache(
+            scope=syllabus,
             question_norm_hash=question_hash(question),
             question=question,
             embedding=[float(x) for x in vector],
