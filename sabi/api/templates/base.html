@@ -3,38 +3,127 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}Sabi — WAEC Maths{% endblock %}</title>
-<meta name="description" content="Answers to WAEC Core Mathematics questions that show you where they came from.">
-<meta name="color-scheme" content="light">
+<title>{% block title %}Sabi — WAEC and NECO study, with its working shown{% endblock %}</title>
+<meta name="description" content="{% block description %}Answers to WAEC and NECO questions that open up to the syllabus line they came from — and say &quot;I don't have that&quot; instead of guessing.{% endblock %}">
+<meta name="color-scheme" content="light dark">
+{# Self-hosted and preloaded: no font CDN, so no extra DNS and TLS on a slow
+   connection, and no third party on a page a 16-year-old loads. #}
+<link rel="preload" href="/static/fonts/outfit-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/fonts/fraunces-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/sabi.css">
-<link rel="icon" href="data:,">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<script>
+  /* Two flags, set before the first paint so there is no flicker. Both are
+     opt-in: with JavaScript off neither is ever set, the opening cover never
+     renders, and content is visible immediately. A student on a slow
+     connection is never made to wait for a flourish. */
+  (function () {
+    try {
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    } catch (e) { return; }
+    document.documentElement.setAttribute("data-loading", "");
+    document.documentElement.setAttribute("data-reveal", "");
+  })();
+</script>
+{% block head_extra %}{% endblock %}
 </head>
-<body>
+<body{% block body_class %}{% endblock %}>
 
+<div class="opening" aria-hidden="true">
+  {% include "_adire.html" %}
+  <div>
+    <p class="opening-mark">Sabi</p>
+    <div class="opening-rule"></div>
+    <p class="opening-word">Show your working</p>
+  </div>
+</div>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+{% block masthead %}
 <header class="masthead">
   <div class="wrap masthead-inner">
     <a class="wordmark" href="/">Sabi</a>
-    <span class="subject">WAEC Maths</span>
-    {% if cap %}
-    <a class="allowance" href="/privacy"
-       title="{{ remaining }} of {{ cap }} free questions left today">
-      <strong>{{ remaining }}</strong> left
-    </a>
-    {% endif %}
+
+    <ul class="nav-links nav-wide">
+      <li><a href="/app"{% if nav == 'app' %} aria-current="page"{% endif %}>Ask</a></li>
+      {% if viewer and viewer.is_authenticated %}
+      <li><a href="/dashboard"{% if nav == 'dashboard' %} aria-current="page"{% endif %}>Dashboard</a></li>
+      {% endif %}
+      <li><a href="/privacy"{% if nav == 'privacy' %} aria-current="page"{% endif %}>Privacy</a></li>
+    </ul>
+
+    <ul class="nav-links">
+      {% if cap %}
+      <li>
+        <a class="allowance" href="/app"
+           title="{{ remaining }} of {{ cap }} free questions left today">
+          <strong>{{ remaining }}</strong> left
+        </a>
+      </li>
+      {% endif %}
+      {% if viewer and viewer.is_authenticated %}
+      <li>
+        <form method="post" action="/logout">{{ csrf_input | safe }}<button class="btn-plain" type="submit">Log out</button></form>
+      </li>
+      {% else %}
+      <li><a href="/login">Log in</a></li>
+      <li><a class="btn btn-on-dark" href="/signup">Sign up</a></li>
+      {% endif %}
+    </ul>
   </div>
 </header>
+{% endblock %}
 
-<main class="wrap">
+<main id="main" class="{% block main_class %}wrap app-main{% endblock %}">
 {% block content %}{% endblock %}
 </main>
 
-<footer>
+{% block footer %}
+<footer class="site-footer">
   <div class="wrap">
-    Sabi answers only WAEC Core Mathematics, and only from the syllabus and
-    worked examples it holds.
-    <a href="/privacy">What it stores about you</a>
+    <div class="footer-grid">
+      <div>
+        <h4>Sabi</h4>
+        <p>Study help for WAEC and NECO that shows you where every answer came
+           from, and tells you when it does not know.</p>
+      </div>
+      <div>
+        <h4>Study</h4>
+        <ul>
+          <li><a href="/app">Ask a question</a></li>
+          <li><a href="/#subjects">Subjects</a></li>
+          <li><a href="/#how">How it works</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Account</h4>
+        <ul>
+          {% if viewer and viewer.is_authenticated %}
+          <li><a href="/dashboard">Dashboard</a></li>
+          {% else %}
+          <li><a href="/signup">Create an account</a></li>
+          <li><a href="/login">Log in</a></li>
+          {% endif %}
+          <li><a href="/waitlist">Join the waitlist</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>About</h4>
+        <ul>
+          <li><a href="/privacy">What it stores</a></li>
+          <li><a href="/#limits">What it cannot do</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-note">
+      Sabi answers only from the syllabus documents and worked examples it holds.
+      It can be wrong. Check with your teacher or the syllabus before you trust
+      anything here in an exam.
+    </p>
   </div>
 </footer>
+{% endblock %}
 
 <script src="/static/sabi.js" defer></script>
 </body>

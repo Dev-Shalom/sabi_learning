@@ -2,21 +2,22 @@
 {% block title %}Sabi — that's today's questions{% endblock %}
 
 {% block content %}
-<h1>That's your questions for today.</h1>
+<div class="page-head">
+  <h1>That's your questions for today.</h1>
+</div>
 
 <div class="answer">
   <p>{{ result.text }}</p>
 </div>
 
-<p>
-  <a class="btn-plain" href="/waitlist" style="display:inline-block;text-decoration:none">
-    Ask for more questions a day
-  </a>
-</p>
+<div class="hero-actions">
+  <a class="btn" href="/signup">Create a free account</a>
+  <a class="btn btn-quiet" href="/waitlist">Ask for a higher limit</a>
+</div>
 
-<p class="composer-help">
+<p class="composer-help mt-5">
   Nothing you asked has been lost. Come back {{ result.reset_phrase }} and the
-  counter starts again.
+  counter starts again. An account raises the daily limit straight away.
 </p>
 
 <div class="disclosure">

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Sabi — save your recovery codes{% endblock %}
+{% block description %}Your recovery codes, shown once. They are the only way back into your Sabi account if you forget your password.{% endblock %}
+
+{% block main_class %}wrap app-main measure{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+  <h1>Your account is ready. Copy these codes first.</h1>
+  <p class="lede">
+    This is the only time these codes are ever shown. Sabi stores a scrambled
+    version of them and keeps no readable copy, so it cannot show them to you
+    again, and neither can anyone else.
+  </p>
+</div>
+
+<ul class="codes">
+  {% for code in codes %}
+  <li>{{ code }}</li>
+  {% endfor %}
+</ul>
+
+<div class="stack mt-5">
+  <p>
+    Take a screenshot of this page now, or write the codes on the inside cover
+    of a notebook you will still have in June. Each code works once.
+  </p>
+
+  <h2 class="label-heading">Why the codes matter</h2>
+  <p>
+    Sabi cannot send email. There is no address behind it and nothing in this
+    deployment can post a message to you, so there is no reset link and no
+    forgotten-password mail. If you forget your password, one of these codes is
+    the only way back into your account. Without one, the account and everything
+    you have asked stay locked.
+  </p>
+
+  <h2 class="label-heading">Keeping them safe</h2>
+  <p>
+    Anyone holding a code can get into your account, so keep them where a
+    classmate borrowing your phone will not scroll past them. If you use one,
+    your dashboard tells you how many are left.
+  </p>
+</div>
+
+<p class="mt-6">
+  <a class="btn" href="{{ next_url }}">Continue to Sabi</a>
+</p>
+
+<div class="disclosure mt-5">
+  Sabi can be wrong. It is a study aid, not a teacher and not the exam board.
+  For anything that matters, your teacher and the official WAEC syllabus are the
+  authority.
+</div>
+
+{% endblock %}

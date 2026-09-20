@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Sabi — exam study that shows its working{% endblock %}
+{% block description %}Study help for WAEC and NECO. Every answer opens up to the syllabus line or worked example it came from, and Sabi says "I don't have that" instead of guessing.{% endblock %}
+
+{% block main_class %}{% endblock %}
+
+{% from "_glyphs.html" import glyph %}
+
+{% block content %}
+
+{# ------------------------------------------------------------------ hero
+   The hero is not a claim about the product, it is the product: a real
+   question, already answered, with its source open and the cited sentence
+   underlined. Nothing a headline could promise is as convincing. #}
+<section class="hero">
+  {% include "_adire.html" %}
+  <div class="wrap hero-grid">
+    <div>
+      {# Each word masked by its own box so it rises out rather than fading
+         in. Written out rather than split by script, so it works with
+         JavaScript off and there is no flash of unstyled text. #}
+      <h1 class="words"><span class="word"><b>Show</b></span>
+        <span class="word"><b>your</b></span>
+        <span class="word"><b>working.</b></span></h1>
+      <p class="lede rise rise-2">
+        Every maths teacher asks you to. Sabi holds itself to the same rule:
+        open any answer and you see the exact syllabus line or worked example
+        it came from.
+      </p>
+      <div class="hero-actions rise rise-3">
+        <a class="btn btn-on-dark" href="/app">Ask a question</a>
+        <a class="btn btn-quiet" href="#how">See how it works</a>
+      </div>
+      <p class="hero-note rise rise-3">
+        15 questions a day, free. No card, and no account needed to start.
+      </p>
+
+      {# Real figures from the real corpus, as a sentence rather than three
+         tiles -- the numbers are the claim, so they should be read, not
+         glanced at. They count up once, which is the only place a number
+         moves on this page. #}
+      <p class="hero-figures rise rise-4">
+        Built from <b data-count-to="32">32</b> syllabus documents and
+        <b data-count-to="50">50</b> worked examples, and measured against
+        <b data-count-to="100">100</b> test questions — with every failure
+        published rather than quietly dropped.
+      </p>
+    </div>
+
+    <div class="rise rise-4">
+      {% include "_hero_cards.html" %}
+    </div>
+  </div>
+</section>
+
+{# ---------------------------------------------------------------- ticker
+   Real locators from the real corpus. The most honest ornament this page
+   could carry: seeing forty of them says "these are genuine references"
+   faster than a sentence would. Duplicated once so the loop is seamless;
+   the copy is hidden from assistive technology. #}
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    {% for pass_no in [1, 2] %}
+    {% for loc, name in [
+        ("SYL A1", "Number bases"), ("EX 14", "Arithmetic progression"),
+        ("SYL B3", "Quadratic equations"), ("EX 31", "Interior angles"),
+        ("SYL D1", "Mensuration"), ("EX 29", "Completing the square"),
+        ("SYL E1", "Trigonometric ratios"), ("EX 46", "Grouped mean"),
+        ("SYL A5", "Surds"), ("EX 13", "Rationalising"),
+        ("SYL G1", "Statistics"), ("EX 41", "Bearings"),
+        ("SYL F1", "Differentiation"), ("EX 18", "Simultaneous equations"),
+        ("SYL A6", "Sequences and series"), ("EX 10", "Two-set Venn"),
+    ] %}
+    <span class="ticker-item"><b>{{ loc }}</b> {{ name }}</span>
+    {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+
+{# ------------------------------------------------------------ how it works
+   Numbered, because a question really does pass through these four steps in
+   this order. There are no numbers anywhere else on the page. #}
+<section class="band" id="how">
+  {% with variant = "dye-from-deep" %}{% include "_dye_edge.html" %}{% endwith %}
+  <div class="wrap band-split">
+    <div class="band-intro reveal">
+      <h2>What happens when you ask</h2>
+      <p class="lede">
+        Sabi has no general knowledge of any subject. It can only use documents
+        it holds, which is what makes the citation worth something.
+      </p>
+    </div>
+    <ol class="sequence">
+      <li>
+        <div>
+          <h3>You ask in your own words</h3>
+          <p>Type it the way you would say it to a classmate. No special
+             phrasing, and no need to name the topic.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>Sabi searches only its own documents</h3>
+          <p>Syllabus text and worked examples, searched two ways at once — by
+             the words you used and by what you meant — then ranked.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>It answers, and every claim carries its source</h3>
+          <p>A locator like <span class="cite">SYL B3</span> opens the exact
+             passage, with the sentence the answer leans on underlined. If Sabi
+             invents a source that does not exist, the answer is thrown away
+             rather than shown to you.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>If it is not sure, it says so</h3>
+          <p>A wrong answer you trust is worse than no answer. When the
+             documents do not support a confident answer, Sabi tells you, and
+             points you at what it does have.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+{# -------------------------------------------------------------- subjects #}
+<section class="band band-quiet" id="subjects">
+  <div class="wrap band-split">
+    <div class="band-intro reveal">
+      <h2>Subjects</h2>
+      <p class="lede">
+        Core Mathematics is ready now. The rest are being written to the same
+        standard, which means real syllabus documents and worked examples, not
+        a model guessing from memory.
+      </p>
+      <p class="field-help mt-4">
+        Sabi is built for both WAEC and NECO. The syllabuses overlap heavily,
+        and where they differ the answer tells you which board the source came
+        from.
+      </p>
+    </div>
+    <ul class="subjects">
+      <li class="subject subject-live">
+        {{ glyph('maths') }}
+        <span class="subject-name">Core Mathematics</span>
+        <span class="subject-state">82 documents, ready to ask</span>
+      </li>
+      <li class="subject">
+        {{ glyph('physics') }}
+        <span class="subject-name">Physics</span>
+        <span class="subject-state">Being written</span>
+      </li>
+      <li class="subject">
+        {{ glyph('chemistry') }}
+        <span class="subject-name">Chemistry</span>
+        <span class="subject-state">Being written</span>
+      </li>
+      <li class="subject">
+        {{ glyph('biology') }}
+        <span class="subject-name">Biology</span>
+        <span class="subject-state">Being written</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+{# ---------------------------------------------------------------- limits
+   A landing page that only lists strengths is the kind of page this product
+   exists to be the opposite of. #}
+<section class="band band-dark" id="limits">
+  {% with variant = "dye-from-quiet" %}{% include "_dye_edge.html" %}{% endwith %}
+  {% include "_adire.html" %}
+  <div class="wrap band-split">
+    <div class="band-intro reveal">
+      <h2>What Sabi will not do</h2>
+      <p class="lede">
+        Worth knowing before you rely on it two weeks before a paper.
+      </p>
+    </div>
+    <table class="limits">
+      <tbody>
+        <tr>
+          <th>Answer from outside its documents</th>
+          <td>If the syllabus material is not there, you get a refusal, not a
+              guess. That includes topics on other syllabuses, like Further
+              Maths.</td>
+        </tr>
+        <tr>
+          <th>Quote a real past paper</th>
+          <td>Sabi does not hold licensed WAEC or NECO papers, so it never
+              claims a year or a question number. Worked examples are labelled
+              as worked examples.</td>
+        </tr>
+        <tr>
+          <th>Replace your teacher</th>
+          <td>It can be wrong. The reason every answer shows its source is so
+              that you can check it in about five seconds.</td>
+        </tr>
+        <tr>
+          <th>Write your essay or your exam</th>
+          <td>It explains method and shows where the method is written down.
+              That is the part that helps you in the hall.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{# ------------------------------------------------------------------- faq #}
+<section class="band" id="faq">
+  {% with variant = "dye-from-dark" %}{% include "_dye_edge.html" %}{% endwith %}
+  <div class="wrap band-split">
+    <div class="band-intro reveal">
+      <h2>Questions</h2>
+      <p class="lede">
+        The ones students and their parents actually ask first.
+      </p>
+    </div>
+    <div class="faq reveal">
+      <details>
+        <summary>Is it really free?</summary>
+        <p>Fifteen questions a day without an account, and twenty-five with a
+           free one. There is no card and no trial that quietly ends. The
+           number left today is in the corner of every page, from your first
+           question rather than your fifteenth.</p>
+      </details>
+      <details>
+        <summary>Do I need an account?</summary>
+        <p>No. You can ask straight away. An account raises your daily limit,
+           remembers what you have asked, keeps a notebook of answers you save,
+           and tracks which topics you are weakest on. If you sign up later,
+           the questions you already asked come with you.</p>
+      </details>
+      <details>
+        <summary>Can Sabi be wrong?</summary>
+        <p>Yes, and pretending otherwise would be the most dangerous thing this
+           product could do. What it will not do is hide it: every claim opens
+           to the passage it came from, so checking is quick. When the documents
+           do not support an answer, it refuses instead of guessing.</p>
+      </details>
+      <details>
+        <summary>Will it use up my data?</summary>
+        <p>A page is a few kilobytes of text. The two typefaces together are
+           about 100 KB, downloaded once and then cached. There is no video, no
+           advert and no tracker, and every page works with JavaScript turned
+           off.</p>
+      </details>
+      <details>
+        <summary>Is using this cheating?</summary>
+        <p>It shows you the method and the exact place the method is written
+           down, the way a textbook and a worked-solutions booklet do. It does
+           not sit the exam for you. Ask it to explain a step you did not
+           follow in class, then do the next one yourself.</p>
+      </details>
+      <details>
+        <summary>What do you store about me?</summary>
+        <p>As little as possible, because most people using this are under 18.
+           No name and no phone number. Your address is stored only as a
+           one-way scramble, and only to stop one person using up everyone's
+           free questions. There are no adverts and nothing is sold.
+           <a href="/privacy">The full version, in plain words</a>.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+{# -------------------------------------------------------------- final cta #}
+<section class="band band-deep">
+  {% with variant = "dye-from-paper" %}{% include "_dye_edge.html" %}{% endwith %}
+  {% include "_adire.html" %}
+  <div class="wrap">
+    <h2>Ask it something you got wrong last week</h2>
+    <p class="lede">
+      That is the fastest way to see whether this is any use to you. If Sabi
+      does not have the material, it will tell you so.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-on-dark" href="/app">Ask a question</a>
+      <a class="btn btn-quiet" href="/signup">Create a free account</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

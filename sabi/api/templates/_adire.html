@@ -1,0 +1,45 @@
+{#
+  The adire ground.
+
+  Four resist-dye motifs from Yoruba adire eleko, tiled behind a dark band:
+  bundled parallel lines, concentric rings, a dotted grid, and small crosses.
+  Stroked rather than filled, and deliberately not perfectly regular -- resisted
+  cloth is drawn by hand with a feather, and a machine-exact repeat reads as
+  wallpaper.
+
+  It inherits `currentColor` from `.adire`, so the theme decides its colour, and
+  it is always behind a solid content surface -- never under body text.
+#}
+<svg class="adire" aria-hidden="true" focusable="false"
+     xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <pattern id="adire-tile" width="168" height="168" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="currentColor" stroke-width="1.25"
+         stroke-linecap="round" vector-effect="non-scaling-stroke">
+
+        {# bundled lines -- the comb, drawn in an uneven group of five #}
+        <path d="M14 12 L14 70 M25 10 L25 72 M36 13 L36 69 M47 11 L47 71 M58 12 L58 70"/>
+
+        {# concentric rings, slightly off-centre from one another #}
+        <circle cx="122" cy="42" r="9"/>
+        <circle cx="122.5" cy="42" r="17"/>
+        <circle cx="121.5" cy="41.5" r="25"/>
+
+        {# a dotted grid, the paste applied in points #}
+        <g stroke-width="2.5">
+          <path d="M18 106 h0 M40 106 h0 M62 106 h0 M18 128 h0 M40 128 h0
+                   M62 128 h0 M18 150 h0 M40 150 h0 M62 150 h0"/>
+        </g>
+
+        {# small crosses, the fourth motif #}
+        <path d="M108 104 l14 14 M122 104 l-14 14
+                 M140 132 l14 14 M154 132 l-14 14
+                 M108 146 l10 10 M118 146 l-10 10"/>
+
+        {# a single hairline seam, so the tile edge reads as cloth #}
+        <path d="M0 88 H168" stroke-width="0.75" opacity="0.6"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#adire-tile)"/>
+</svg>

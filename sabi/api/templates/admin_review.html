@@ -36,15 +36,13 @@
         <span class="mono">{{ (fb.snapshot.get('cited_refs') or []) | join(', ') }}</span>
         <details>
           <summary class="mono">answer as shown</summary>
-          <pre style="white-space:pre-wrap;font-size:13px">{{ fb.snapshot.get('answer', '') }}</pre>
+          <pre>{{ fb.snapshot.get('answer', '') }}</pre>
         </details>
       </td>
       <td>
         <form method="post" action="/admin/review/{{ fb.id }}/promote">
-          <textarea name="corrected_answer" rows="3" placeholder="corrected answer"
-                    style="width:100%;font:inherit;font-size:13px"></textarea>
-          <input name="expected_value" placeholder="expected value"
-                 style="width:100%;font:inherit;font-size:13px">
+          <textarea name="corrected_answer" rows="3" placeholder="corrected answer"></textarea>
+          <input name="expected_value" placeholder="expected value">
           <label class="mono"><input type="checkbox" name="answerable" value="yes" checked> answerable</label>
           <button class="btn-plain" type="submit">Promote</button>
         </form>

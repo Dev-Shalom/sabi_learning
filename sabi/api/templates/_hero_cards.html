@@ -1,0 +1,174 @@
+{#
+  The hero deck.
+
+  Four sheets on a desk, one face up, cycling. Each is the same object the
+  product actually produces: a worked answer whose every claim opens to the
+  syllabus line behind it.
+
+  Honesty, because this is the one page where it would be easiest to cheat:
+  only Mathematics is in the corpus today, so only that card is a real answer
+  and it says so. The other three are marked "being written" and are showing
+  the *format*, not claiming to be answers Sabi can currently give. When their
+  documents land the badge changes and nothing else has to.
+
+  Without JavaScript only the first card is rendered at all, so the hero is a
+  single worked answer -- a deck that cannot deal itself should not show four
+  cards piled on one another.
+
+  With JavaScript every card occupies the same grid cell, including the ones
+  you cannot see. That is deliberate: the window is then as tall as the
+  tallest card and dealing a new one cannot change the height of the page.
+  Hiding them with `hidden` took them out of the grid and made the whole page
+  jump each time the deck turned over.
+#}
+
+<div class="deck" id="hero-deck" data-deck>
+
+  <div class="deck-window">
+
+    {# ------------------------------------------------------- mathematics #}
+    <figure class="artifact deck-card is-current" data-card="0"
+            aria-roledescription="slide" aria-label="Mathematics, 1 of 4">
+      <figcaption class="artifact-head">
+        <span class="artifact-subject">Core Mathematics</span>
+        <span class="artifact-state is-ready">A real answer</span>
+      </figcaption>
+      <div class="artifact-body">
+        <p><strong>Solve 2x² + 5x − 3 = 0 by completing the square.</strong></p>
+        <ol>
+          <li>Divide through by 2: x² + 2.5x − 1.5 = 0.</li>
+          <li>Move the constant across: x² + 2.5x = 1.5.</li>
+          <li>Add the square of half the coefficient of x, (1.25)² = 1.5625,
+              to both sides. <span class="cite">SYL B3</span></li>
+          <li>(x + 1.25)² = 3.0625, so x + 1.25 = ±1.75.</li>
+        </ol>
+        <p><strong>x = 0.5 or x = −3.</strong></p>
+
+        <div class="artifact-source">
+          <span class="loc">SYL B3 · WAEC syllabus</span>
+          <p>
+            Quadratic equations and their graphs.
+            <u>Solve quadratic equations by factorisation, by completing the
+            square and by formula.</u> Form a quadratic equation from given
+            roots. Use the sum and product of roots.
+          </p>
+        </div>
+      </div>
+    </figure>
+
+    {# ----------------------------------------------------------- physics #}
+    <figure class="artifact deck-card" data-card="1"
+            aria-roledescription="slide" aria-label="Physics, 2 of 4">
+      <figcaption class="artifact-head">
+        <span class="artifact-subject">Physics</span>
+        <span class="artifact-state">Being written</span>
+      </figcaption>
+      <div class="artifact-body">
+        <p><strong>A car starts from rest and reaches 20 m/s in 8 s. Find its
+           acceleration and the distance covered.</strong></p>
+        <ol>
+          <li>a = (v − u) / t = (20 − 0) / 8. <span class="cite">PHY C2</span></li>
+          <li>a = 2.5 m/s².</li>
+          <li>s = ut + ½at² = 0 + ½ × 2.5 × 8².</li>
+          <li>s = ½ × 2.5 × 64 = 80 m.</li>
+        </ol>
+        <p><strong>a = 2.5 m/s², distance = 80 m.</strong></p>
+
+        <div class="artifact-source">
+          <span class="loc">PHY C2 · WAEC syllabus</span>
+          <p>
+            Motion in a straight line.
+            <u>Use the equations of uniformly accelerated motion to solve
+            problems.</u> Distinguish between distance and displacement, and
+            between speed and velocity.
+          </p>
+        </div>
+      </div>
+    </figure>
+
+    {# --------------------------------------------------------- chemistry #}
+    <figure class="artifact deck-card" data-card="2"
+            aria-roledescription="slide" aria-label="Chemistry, 3 of 4">
+      <figcaption class="artifact-head">
+        <span class="artifact-subject">Chemistry</span>
+        <span class="artifact-state">Being written</span>
+      </figcaption>
+      <div class="artifact-body">
+        <p><strong>How many moles are there in 8 g of oxygen gas, O₂?</strong></p>
+        <ol>
+          <li>Find the molar mass: O₂ = 2 × 16 = 32 g/mol.
+              <span class="cite">CHM A4</span></li>
+          <li>Number of moles n = mass ÷ molar mass.</li>
+          <li>n = 8 ÷ 32.</li>
+        </ol>
+        <p><strong>n = 0.25 mol.</strong></p>
+
+        <div class="artifact-source">
+          <span class="loc">CHM A4 · WAEC syllabus</span>
+          <p>
+            The mole concept.
+            <u>Calculate the number of moles from mass and molar mass.</u>
+            Relate the mole to the Avogadro constant and to the volume of a gas
+            at s.t.p.
+          </p>
+        </div>
+      </div>
+    </figure>
+
+    {# ----------------------------------------------------------- biology #}
+    <figure class="artifact deck-card" data-card="3"
+            aria-roledescription="slide" aria-label="Biology, 4 of 4">
+      <figcaption class="artifact-head">
+        <span class="artifact-subject">Biology</span>
+        <span class="artifact-state">Being written</span>
+      </figcaption>
+      <div class="artifact-body">
+        <p><strong>Why does a plant cell placed in distilled water not
+           burst?</strong></p>
+        <ol>
+          <li>Water enters the cell by osmosis, moving from the higher water
+              potential outside to the lower potential inside.
+              <span class="cite">BIO B1</span></li>
+          <li>The cell swells and presses outward on the cellulose cell wall.</li>
+          <li>The wall is rigid, so it pushes back and the pressure stops the
+              inflow.</li>
+        </ol>
+        <p><strong>The cell becomes turgid rather than bursting, because the
+           cellulose wall resists further expansion.</strong></p>
+
+        <div class="artifact-source">
+          <span class="loc">BIO B1 · WAEC syllabus</span>
+          <p>
+            Cell structure and function.
+            <u>Explain turgidity and plasmolysis in terms of osmosis and the
+            cell wall.</u> Compare the structure of plant and animal cells.
+          </p>
+        </div>
+      </div>
+    </figure>
+
+  </div>
+
+  {# Real buttons, so the deck is operable by keyboard and by a screen
+     reader rather than only by waiting. Hidden until JS takes over, because
+     without it they would control nothing. #}
+  <div class="deck-controls" hidden data-deck-controls>
+    <button type="button" class="deck-dot is-current" data-go="0">
+      <span class="visually-hidden">Show the Mathematics example</span>
+    </button>
+    <button type="button" class="deck-dot" data-go="1">
+      <span class="visually-hidden">Show the Physics example</span>
+    </button>
+    <button type="button" class="deck-dot" data-go="2">
+      <span class="visually-hidden">Show the Chemistry example</span>
+    </button>
+    <button type="button" class="deck-dot" data-go="3">
+      <span class="visually-hidden">Show the Biology example</span>
+    </button>
+  </div>
+
+  <p class="deck-note">
+    Mathematics is answerable now. The other three show the shape an answer
+    takes; their syllabus documents are still being written.
+  </p>
+</div>

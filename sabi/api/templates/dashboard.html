@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Sabi — your dashboard{% endblock %}
+{% block description %}What you have asked Sabi, the topics you keep coming back to, and how long you have until your exam.{% endblock %}
+
+{% block main_class %}wrap app-main{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+  <h1>Your studying so far</h1>
+  <p>
+    Signed in as {{ viewer.email }}. You have {{ viewer.verdict.remaining }} of
+    {{ viewer.verdict.cap }} questions left today, and the count starts again
+    {{ viewer.verdict.reset_phrase }}.
+  </p>
+</div>
+
+{% if saved %}
+<p class="{% if saved == 'bad-date' %}field-error{% else %}field-help{% endif %}" role="status">
+  {% if saved == 'exam-date' %}
+  Exam date saved. The countdown below now works from it.
+  {% elif saved == 'bad-date' %}
+  That date could not be read, so nothing was changed. Pick the day from the
+  date box and save again.
+  {% elif saved == 'logged-out' %}
+  Every other device has been signed out. You are still signed in here.
+  {% endif %}
+</p>
+{% endif %}
+
+<div class="stat-grid reveal mt-5">
+
+  <div class="stat">
+    <span class="stat-figure">{{ summary.asked_total }}</span>
+    <span class="stat-label">
+      Questions asked{% if summary.asked_today %}, {{ summary.asked_today }} of them today{% endif %}
+    </span>
+  </div>
+
+  <div class="stat">
+    <span class="stat-figure">{{ summary.streak }}</span>
+    <span class="stat-label">
+      Day streak.
+      {% if summary.best_streak > summary.streak %}
+      Your best run is {{ summary.best_streak }} days.
+      {% else %}
+      This is your best run so far.
+      {% endif %}
+    </span>
+  </div>
+
+  <div class="stat">
+    <span class="stat-figure">{{ viewer.verdict.remaining }}</span>
+    <span class="stat-label">Questions left today, out of {{ viewer.verdict.cap }}</span>
+  </div>
+
+  <div class="stat">
+    {% if summary.days_to_exam is none %}
+    <span class="stat-figure" aria-hidden="true">—</span>
+    <span class="stat-label">Days to your exam, once you set the date below</span>
+    {% elif summary.days_to_exam < 0 %}
+    <span class="stat-figure">0</span>
+    <span class="stat-label">Your exam is {{ exam_phrase(summary.days_to_exam) }}. Well done for getting there.</span>
+    {% else %}
+    <span class="stat-figure">{{ summary.days_to_exam }}</span>
+    <span class="stat-label">Days to your exam, so it is {{ exam_phrase(summary.days_to_exam) }}</span>
+    {% endif %}
+  </div>
+
+</div>
+
+{% if summary.asked_total %}
+<p class="field-help mt-4">
+  You have studied on {{ summary.days_studied }}
+  {{ 'day' if summary.days_studied == 1 else 'days' }}{% if summary.first_day %},
+  the first of them on {{ summary.first_day.strftime('%d %b %Y') }}{% endif %}.
+  Sabi found an answer for {{ summary.answered_share }}% of what you asked, and
+  said it did not have the rest.
+</p>
+{% endif %}
+
+<section class="mt-6 reveal">
+  <h2 class="label-heading">Topics you have been answered on</h2>
+
+  {% if topics %}
+  <p class="field-help mt-4">
+    The bar shows how often Sabi had something to give you on that topic. A
+    short bar is not your fault; it usually means the syllabus notes behind it
+    are thin.
+  </p>
+  <div class="mt-4">
+    {% for t in topics %}
+    <div class="meter-row">
+      <div class="meter-head">
+        <span>{{ t.topic }}</span>
+        <span>{{ t.answered }} of {{ t.asked }}</span>
+      </div>
+      <div class="meter"><i style="width:{{ t.share }}%"></i></div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty mt-4">
+    <h3>No topics yet</h3>
+    <p>
+      Topics fill in on their own as Sabi answers you, grouped by the part of
+      the syllabus each answer came from.
+    </p>
+    <p class="mt-4"><a class="btn" href="/app">Ask your first question</a></p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="mt-6 reveal">
+  <h2 class="label-heading">What you asked recently</h2>
+
+  {% if recent %}
+  <ul class="recent mt-4">
+    {% for r in recent %}
+    <li>
+      {{ r.question }}
+      <p class="meta">
+        {{ relative_day(r.created_at, today) }}
+        {%- if r.refused %} · Sabi did not have this one
+        {%- elif r.locators %} ·
+          {% for loc in r.locators %}<span class="locator">{{ loc }}</span>{% if not loop.last %} {% endif %}{% endfor %}
+        {%- endif %}
+      </p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="empty mt-4">
+    <h3>Nothing asked yet</h3>
+    <p>
+      Every question you ask while signed in shows up here, with the syllabus
+      lines the answer came from.
+    </p>
+    <p class="mt-4"><a class="btn" href="/app">Ask your first question</a></p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="mt-6 measure">
+  <h2 class="label-heading">Your account</h2>
+
+  <form method="post" action="/dashboard/exam-date" class="stack mt-4">
+    {{ csrf_input | safe }}
+    <div>
+      <label for="exam-date">Your first exam paper</label>
+      <input type="date" id="exam-date" name="exam_date"
+             value="{{ viewer.user.exam_date.isoformat() if viewer.user and viewer.user.exam_date else '' }}">
+      <p class="field-help">
+        Only you see this, and it is only used for the countdown above. Clear
+        the box and save to remove it.
+      </p>
+    </div>
+    <button class="btn" type="submit">Save exam date</button>
+  </form>
+
+  <p class="mt-6">
+    You have {{ codes_left }} recovery {{ 'code' if codes_left == 1 else 'codes' }}
+    left, and you are signed in on {{ devices }}
+    {{ 'device' if devices == 1 else 'devices' }}. Recovery codes are the only
+    way back in if you forget your password, because nothing here can send you
+    an email.
+  </p>
+
+  <form method="post" action="/dashboard/logout-everywhere" class="mt-4">
+    {{ csrf_input | safe }}
+    <button class="btn btn-quiet" type="submit">Sign out on every other device</button>
+    <p class="field-help mt-4">
+      Use this if you logged in on a school or cyber cafe computer and walked
+      away. This device stays signed in.
+    </p>
+  </form>
+</section>
+
+{% endblock %}

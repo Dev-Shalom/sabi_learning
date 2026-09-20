@@ -1,17 +1,21 @@
 {% extends "base.html" %}
+{% block title %}Sabi — ask a question{% endblock %}
 
 {% block content %}
-<h1>Every answer shows you where it came from.</h1>
-<p class="lede">
-  Sabi works through WAEC Core Maths questions using the syllabus and worked
-  examples. If it does not have the material, it says so instead of guessing.
-</p>
+<div class="page-head">
+  <h1>Ask a question</h1>
+  <p>
+    Type it however you would say it. Sabi answers from the syllabus and worked
+    examples it holds, and shows you which one.
+  </p>
+</div>
 
-<h2>Try one of these</h2>
-<ul class="examples">
+<h2 class="label-heading">Or try one of these</h2>
+<ul class="examples mt-4">
   {% for example in examples %}
   <li>
     <form method="post" action="/ask">
+      {{ csrf_input | safe }}
       <input type="hidden" name="question" value="{{ example }}">
       <button type="submit">{{ example }}</button>
     </form>
@@ -20,8 +24,8 @@
 </ul>
 
 <div class="disclosure">
-  Sabi can be wrong. Check with your teacher or the WAEC syllabus before you
-  trust it in an exam.
+  Sabi can be wrong. Check with your teacher or the syllabus before you trust it
+  in an exam.
 </div>
 
 {% include "_composer.html" %}

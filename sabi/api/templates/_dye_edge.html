@@ -1,0 +1,39 @@
+{#
+  A resist-dye edge.
+
+  Where adire cloth comes out of the indigo vat, the boundary is never a
+  straight line: the paste holds the dye back unevenly and it bleeds a little
+  past the edge, leaving speckles in the undyed ground. This is that boundary,
+  and it is the reason the sections of this page do not simply butt together
+  along a ruled line.
+
+  It sits at the top of the lower band and is filled with the colour of the
+  band ABOVE it, so the upper ground reads as having run down into this one.
+  The caller sets which colour that is with a `.dye-*` class.
+
+  Purely decorative, so it is hidden from assistive technology.
+#}
+<svg class="dye-edge {{ variant | default('') }}" aria-hidden="true" focusable="false"
+     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 56"
+     preserveAspectRatio="none">
+  <path fill="currentColor" d="M0 0h1440v22.4c-26.6 3.1-53.1 7.8-79.7 8.6-31.2.9-62.4-3.2-93.6-5.4-38.8-2.7-77.6-1.4-116.3 1.9-29.4 2.5-58.7 6.4-88.2 7.1-34.1.8-68.1-3.4-102.2-5.1-31.5-1.6-63.1-.9-94.5 2.2-26.3 2.6-52.4 6.9-78.8 8-28.9 1.2-57.8-2.2-86.6-4.6-36.7-3-73.4-4.3-110.1-1.2-30.2 2.6-60.2 7.8-90.4 9.1-31.4 1.3-62.8-2.1-94.1-4.8-37.9-3.2-75.8-4.6-113.7-1.5-25.6 2.1-51 6.1-76.6 7.4-31.3 1.6-62.6-1.2-93.9-3.6-4.4-.3-8.8-.7-13.3-1V0Z"/>
+  {# The bleed: dye that got past the resist, thinning out as it goes. #}
+  <g fill="currentColor">
+    <circle cx="92" cy="40" r="2.6" opacity=".55"/>
+    <circle cx="163" cy="47" r="1.5" opacity=".35"/>
+    <circle cx="258" cy="43" r="2.1" opacity=".45"/>
+    <circle cx="331" cy="51" r="1.2" opacity=".28"/>
+    <circle cx="437" cy="41" r="2.8" opacity=".5"/>
+    <circle cx="524" cy="48" r="1.6" opacity=".3"/>
+    <circle cx="619" cy="44" r="2.2" opacity=".42"/>
+    <circle cx="706" cy="50" r="1.3" opacity=".26"/>
+    <circle cx="795" cy="42" r="2.5" opacity=".48"/>
+    <circle cx="884" cy="49" r="1.4" opacity=".3"/>
+    <circle cx="971" cy="45" r="2.3" opacity=".44"/>
+    <circle cx="1063" cy="52" r="1.1" opacity=".24"/>
+    <circle cx="1148" cy="43" r="2.7" opacity=".5"/>
+    <circle cx="1235" cy="48" r="1.5" opacity=".32"/>
+    <circle cx="1327" cy="45" r="2" opacity=".4"/>
+    <circle cx="1402" cy="51" r="1.2" opacity=".26"/>
+  </g>
+</svg>

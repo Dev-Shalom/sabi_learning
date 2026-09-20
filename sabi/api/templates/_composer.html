@@ -1,10 +1,30 @@
 <form class="composer" method="post" action="/ask" id="ask-form">
+  {{ csrf_input | safe }}
+  {# Carried on every ask so the choice survives the round trip. Hidden when
+     there is only one syllabus, which is the case until the other subjects
+     have documents -- a picker with one option is furniture. #}
+  {% if scopes and scopes | length > 1 %}
+  <div class="composer-scope">
+    <label for="subject">Subject</label>
+    <select id="subject" name="subject">
+      {% for sc in scopes %}
+      <option value="{{ sc.subject }}"
+              {% if scope and sc.subject == scope.subject %}selected{% endif %}>
+        {{ sc.label }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  {% elif scope %}
+  <input type="hidden" name="subject" value="{{ scope.subject }}">
+  <input type="hidden" name="exam_board" value="{{ scope.exam_board }}">
+  {% endif %}
   <div class="composer-row">
-    <label for="question" class="visually-hidden" hidden>Your question</label>
+    <label for="question" class="visually-hidden">Your question</label>
     <textarea id="question" name="question" rows="1"
-              placeholder="Ask a WAEC maths question…"
+              placeholder="Ask a question…"
               autocomplete="off" required></textarea>
-    <button type="submit">Ask</button>
+    <button class="btn" type="submit">Ask</button>
   </div>
   <p class="working" id="working">Working on it. On a slow connection this can take a few seconds.</p>
   <p class="composer-help">

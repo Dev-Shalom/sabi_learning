@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Sabi — {% if panel == 'signup' %}create an account{% else %}log in{% endif %}{% endblock %}
+{% block description %}Log in to Sabi, or create a free account to raise your daily limit and keep what you have asked.{% endblock %}
+
+{% block main_class %}{% endblock %}
+
+{# A short masthead: this page is a full-height layout of its own, and a nav
+   full of links is not what somebody halfway through logging in needs. #}
+{% block masthead %}
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="wordmark" href="/">Sabi</a>
+    <ul class="nav-links">
+      <li><a href="/app">Ask without an account</a></li>
+    </ul>
+  </div>
+</header>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="auth" id="auth" data-panel="{{ panel }}">
+
+  <aside class="auth-aside">
+    {% include "_adire.html" %}
+    <h2>Every answer opens up to where it came from.</h2>
+    <p>
+      An account raises your daily questions from {{ cap or 15 }} to
+      {{ 25 }}, keeps the ones you have already asked, and tracks which topics
+      you keep getting stuck on.
+    </p>
+    <p>You can also just ask without one. That has always worked and still does.</p>
+  </aside>
+
+  <div class="auth-card">
+    <div class="auth-inner auth-panels">
+
+      {# ---------------------------------------------------------- log in #}
+      <section class="auth-panel" id="panel-login"
+               {% if panel != 'login' %}hidden{% endif %}>
+        <h1>Log in</h1>
+
+        {% if error and panel == 'login' %}
+        <p class="field-error mt-4" role="alert">{{ error }}</p>
+        {% endif %}
+
+        <form method="post" action="/login" class="stack mt-5">
+          {{ csrf_input | safe }}
+          <input type="hidden" name="next" value="{{ next_url }}">
+          <div>
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" name="email" required
+                   autocomplete="email" value="{{ email if panel == 'login' else '' }}"
+                   {% if panel == 'login' and error_field == 'email' %}aria-invalid="true"{% endif %}>
+          </div>
+          <div>
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" name="password" required
+                   autocomplete="current-password"
+                   {% if panel == 'login' and error_field == 'password' %}aria-invalid="true"{% endif %}>
+          </div>
+          <button class="btn btn-block" type="submit">Log in</button>
+        </form>
+
+        <p class="auth-switch">
+          No account yet?
+          <a class="auth-switch-link" href="/signup" data-panel="signup">Create one</a>
+        </p>
+        <p class="field-help mt-4">
+          Lost your password? Use one of the recovery codes you saved when you
+          signed up. There is no reset email — nothing here can send one, and
+          saying otherwise would be a lie.
+        </p>
+      </section>
+
+      {# --------------------------------------------------------- sign up #}
+      <section class="auth-panel" id="panel-signup"
+               {% if panel != 'signup' %}hidden{% endif %}>
+        <h1>Create an account</h1>
+        <p class="field-help mt-4">
+          {% if viewer and viewer.verdict and viewer.verdict.used_today %}
+          The {{ viewer.verdict.used_today }} question{{ '' if viewer.verdict.used_today == 1 else 's' }}
+          you have already asked on this device will come with you.
+          {% else %}
+          Anything you have already asked on this device comes with you.
+          {% endif %}
+        </p>
+
+        {% if error and panel == 'signup' %}
+        <p class="field-error mt-4" role="alert">{{ error }}</p>
+        {% endif %}
+
+        <form method="post" action="/signup" class="stack mt-5">
+          {{ csrf_input | safe }}
+          <input type="hidden" name="next" value="{{ next_url }}">
+          <div>
+            <label for="signup-email">Email</label>
+            <input type="email" id="signup-email" name="email" required
+                   autocomplete="email" value="{{ email if panel == 'signup' else '' }}"
+                   {% if panel == 'signup' and error_field == 'email' %}aria-invalid="true"{% endif %}>
+            <p class="field-help">Used to log in and nothing else. No mail is ever sent to it.</p>
+          </div>
+          <div>
+            <label for="signup-password">Password</label>
+            <input type="password" id="signup-password" name="password" required
+                   autocomplete="new-password" minlength="{{ min_password }}"
+                   {% if panel == 'signup' and error_field == 'password' %}aria-invalid="true"{% endif %}>
+            <p class="field-help">
+              At least {{ min_password }} characters. A phrase you will remember
+              beats a short one you will not.
+            </p>
+          </div>
+          <button class="btn btn-block" type="submit">Create account</button>
+        </form>
+
+        <p class="auth-switch">
+          Already have one?
+          <a class="auth-switch-link" href="/login" data-panel="login">Log in</a>
+        </p>
+      </section>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,455 +1,1994 @@
-/* Sabi — see DESIGN_PLAN.md. Six colour tokens, one type family plus mono for
-   locators, no webfonts, no shadows, no gradients. Paper, not chrome. */
+/* Sabi — see DESIGN_PLAN.md.
+ *
+ * Adire indigo and undyed cotton. Two self-hosted variable webfonts. One
+ * orchestrated page-load moment and nothing else that moves unasked.
+ *
+ * Every colour in this file is a token declared in the two blocks below.
+ * tools/contrast_check.py fails CI on a stray literal, because a ratio table
+ * can only vouch for colours it knows the names of.
+ */
+
+/* ============================================================ tokens */
 
 :root {
-  --paper: #FBF9F4;
-  --rule: #DCD4C4;
-  --ink: #2E3338;
-  --ink-soft: #565E66;
-  --mark: #8C2F2F;
-  --wash: #F6EAE6;
+  /* -- adire: each dip takes the cloth a step deeper ------------------ */
+  --indigo-9: #0A1230;
+  --indigo-8: #101A3C;
+  --indigo-7: #182654;
+  --indigo-5: #26386F;
+  --indigo-3: #4A5F9E;
+  --indigo-2: #7A8CC0;
 
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+  /* -- undyed cotton, where the paste resisted the dye --------------- */
+  --cotton: #F7F3EA;
+  --cotton-2: #EDE7DA;
+  --cotton-3: #DDD4C2;
+
+  /* -- evidence. Saffron on dark, bronze on paper: saffron on cotton
+   *    lands at 1.9:1, so the accent has two tokens rather than one. -- */
+  --saffron: #E5A72C;
+  --bronze: #8A5A0B;
+
+  /* -- semantic layer. Only these are used in rules; swapping the
+   *    theme reassigns them and nothing below has to know. ------------ */
+  --surface: #F7F3EA;
+  --surface-2: #EDE7DA;
+  --surface-3: #DDD4C2;
+  --ink: #111A38;
+  --ink-soft: #4C5675;
+  --rule: #DDD4C2;
+  --evidence: #8A5A0B;
+  --accent: #101A3C;
+  --on-accent: #F7F3EA;
+  --focus: #8A5A0B;
+
+  /* -- type ---------------------------------------------------------- */
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --sans: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           "Helvetica Neue", Arial, sans-serif;
+  /* Locators only. A syllabus code is a fixed-width reference, like an
+   * ISBN -- this face is carrying information, not labelling a field. */
   --mono: ui-monospace, "Roboto Mono", "DejaVu Sans Mono", Consolas, monospace;
 
-  --gutter: 16px;
+  /* Modular scale, ratio 1.2 at 360px widening to 1.25 on a large
+   * viewport, so a headline grows with the page instead of stepping. */
+  --step--1: clamp(0.83rem, 0.81rem + 0.1vw, 0.88rem);
+  --step-0: clamp(1.0625rem, 1.04rem + 0.12vw, 1.125rem);
+  --step-1: clamp(1.28rem, 1.22rem + 0.28vw, 1.4rem);
+  --step-2: clamp(1.53rem, 1.42rem + 0.55vw, 1.75rem);
+  --step-3: clamp(1.84rem, 1.63rem + 1vw, 2.2rem);
+  --step-4: clamp(2.2rem, 1.83rem + 1.8vw, 2.75rem);
+  --step-5: clamp(2.65rem, 1.95rem + 3.3vw, 3.9rem);
+  --step-6: clamp(3.1rem, 1.9rem + 5.6vw, 5.2rem);
+
+  /* -- space: a 4px base, named by use rather than by number --------- */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: 6rem;
+
+  --gutter: 1rem;
   --measure: 34rem;
+  --wide: 72rem;
+
+  /* -- radius by role, not one value everywhere ---------------------- */
+  --r-control: 4px;
+  --r-panel: 10px;
+  --r-pill: 999px;
+
+  /* -- motion -------------------------------------------------------- */
+  /* -- motion ---------------------------------------------------------
+   * One vocabulary for the whole product. Three curves and five
+   * durations; anything that invents its own is a bug.
+   *
+   * The durations are short on purpose. Motion that explains a change
+   * should be over before it is consciously noticed -- a 600ms fade on a
+   * button is something you wait for, and waiting is the opposite of
+   * responsive. Only the two page-level moments run long.
+   */
+  --t-tap: 100ms;    /* pressed, hovered: must feel instant */
+  --t-fast: 180ms;   /* a control changing state */
+  --t-mid: 280ms;    /* something appearing or moving */
+  --t-slow: 420ms;   /* a whole region changing */
+  --t-deal: 560ms;   /* the deck, the opening cover */
+
+  /* Decelerate hard and settle flat. Almost all of its travel happens in
+   * the first third, so a movement reads as already arriving. This is the
+   * curve doing most of the work in this product. */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* The same, with a little overshoot, for things with physical weight:
+   * a sheet of paper landing, a dot growing. Never on text. */
+  --ease-settle: cubic-bezier(0.34, 1.35, 0.64, 1);
+
+  /* Accelerating away. Used only for exits, so leaving and arriving are
+   * not the same gesture played backwards. */
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Ink spreading into cloth: slow to start, then it takes. Page-level
+   * moments only. */
+  --ease-ink: cubic-bezier(0.65, 0, 0.2, 1);
+
+  --shadow-lift: 0 1px 2px rgba(10, 18, 48, 0.08),
+                 0 12px 28px -8px rgba(10, 18, 48, 0.22);
+
+  color-scheme: light dark;
 }
+
+/* The dark theme deepens the cloth rather than inverting it. Tokens the
+ * dark theme leaves alone keep their light values. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface: #101A3C;
+    --surface-2: #182654;
+    --surface-3: #26386F;
+    --ink: #F7F3EA;
+    --ink-soft: #7A8CC0;
+    --rule: #26386F;
+    --evidence: #E5A72C;
+    --accent: #E5A72C;
+    --on-accent: #0A1230;
+    --focus: #E5A72C;
+    --shadow-lift: 0 1px 2px rgba(10, 18, 48, 0.5),
+                   0 14px 30px -8px rgba(10, 18, 48, 0.7);
+  }
+}
+
+:root[data-theme="dark"] {
+  --surface: #101A3C;
+  --surface-2: #182654;
+  --surface-3: #26386F;
+  --ink: #F7F3EA;
+  --ink-soft: #7A8CC0;
+  --rule: #26386F;
+  --evidence: #E5A72C;
+  --accent: #E5A72C;
+  --on-accent: #0A1230;
+  --focus: #E5A72C;
+  --shadow-lift: 0 1px 2px rgba(10, 18, 48, 0.5),
+                 0 14px 30px -8px rgba(10, 18, 48, 0.7);
+}
+
+/* ============================================================ fonts */
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("/static/fonts/fraunces-latin-var.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Outfit";
+  src: url("/static/fonts/outfit-latin-var.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================================ motion layer
+ *
+ * Applied once, to everything, rather than remembered per component.
+ * Transform and opacity only: both are composited, so none of this
+ * touches layout and none of it can cost a frame on a cheap handset.
+ */
+
+/* `interpolate-size` is what lets a <details> panel animate open instead
+ * of snapping. Without it `height: auto` is not an animatable value and
+ * the rule below simply does nothing -- which is the correct fallback. */
+:root { interpolate-size: allow-keywords; }
+
+a, button, summary, input, textarea, select, .btn, .btn-plain, .deck-dot {
+  transition:
+    color var(--t-fast) var(--ease),
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease),
+    transform var(--t-fast) var(--ease-settle),
+    opacity var(--t-fast) var(--ease);
+}
+
+/* Focus is the one ring that must never animate its position -- a ring
+ * that slides in lags behind the key that summoned it. */
+:focus-visible { transition: none; }
+
+/* A pressed control gives, then comes back. 100ms so it tracks the
+ * finger rather than trailing it. */
+.btn:active, .btn-plain:active, .examples button:active, .deck-dot:active {
+  transition-duration: var(--t-tap);
+}
+
+/* ============================================================ base */
 
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
-  -webkit-text-size-adjust: 100%;
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  overflow-wrap: break-word;
-  background: var(--paper);
+  background: var(--surface);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 17px;
+  font-size: var(--step-0);
+  font-weight: 400;
   line-height: 1.6;
-  /* Paper has a grain, not a gradient: a single hairline baseline rule at the
-     top edge and nothing else. */
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
+
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  /* Fraunces' optical-size axis: large settings sharpen the detail that
+   * only reads at display sizes, small ones keep a heading sturdy. */
+  font-variation-settings: "opsz" 48;
+  margin: 0;
+  text-wrap: balance;
+}
+
+h1 { font-size: var(--step-5); font-variation-settings: "opsz" 144; }
+h2 { font-size: var(--step-3); font-variation-settings: "opsz" 72; }
+h3 { font-size: var(--step-1); font-variation-settings: "opsz" 24; }
+h4 { font-size: var(--step-0); font-variation-settings: "opsz" 14; }
+
+p { margin: 0; }
+
+a {
+  color: inherit;
+  text-decoration-color: var(--evidence);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover { text-decoration-thickness: 2px; }
+
+img, svg { max-width: 100%; height: auto; }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--s-4);
+  top: -3rem;
+  z-index: 50;
+  padding: var(--s-2) var(--s-4);
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: var(--r-control);
+  transition: top var(--t-fast) var(--ease);
+}
+
+.skip-link:focus { top: var(--s-4); }
+
+/* ============================================================ navigation
+ *
+ * Moving between pages, in browsers that support it. One line turns every
+ * same-origin navigation into a transition instead of a white flash; the
+ * rest shapes it so it reads as a page being laid down rather than a
+ * generic cross-fade. Browsers without it navigate exactly as before, so
+ * this costs nothing where it is not supported.
+ */
+
+@view-transition { navigation: auto; }
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: page-out var(--t-mid) var(--ease-ink) both;
+  }
+  ::view-transition-new(root) {
+    animation: page-in var(--t-slow) var(--ease-settle) both;
+  }
+}
+
+@keyframes page-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The masthead is on every page and does not move between them, so it is
+ * held still while the body changes underneath it. */
+.masthead { view-transition-name: masthead; }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation: none; }
+}
+
+/* ============================================================ opening
+ *
+ * The page arriving, as dye taking to cloth: the ground is already there,
+ * a saffron line draws across it, and then the whole sheet lifts away.
+ *
+ * It only exists when `data-loading` is on <html>, which a two-line inline
+ * script in the head sets. So with JavaScript off it never appears and
+ * never delays a single byte of content -- which matters more here than
+ * the flourish does.
+ */
+
+.opening {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  place-items: center;
+  background: var(--indigo-9);
+  color: var(--cotton);
+  isolation: isolate;
+}
+
+:root[data-loading] .opening { display: grid; }
+
+/* Content underneath is held back only while the cover is up, so what is
+ * revealed is a finished page rather than a half-painted one. */
+:root[data-loading] body > *:not(.opening) { opacity: 0; }
+
+:root[data-loading] { overflow: hidden; }
+
+.opening .adire { opacity: 0.18; }
+
+.opening-mark {
+  font-family: var(--display);
+  font-size: var(--step-5);
+  font-weight: 600;
+  font-variation-settings: "opsz" 144;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* The dye line. Scales from the left, because that is how a brush moves. */
+.opening-rule {
+  width: min(14rem, 44vw);
+  height: 3px;
+  margin-top: var(--s-4);
+  background: var(--saffron);
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: take var(--t-slow) var(--ease-ink) forwards;
+}
+
+.opening-word {
+  margin-top: var(--s-3);
+  font-size: var(--step--1);
+  color: var(--indigo-2);
+}
+
+@keyframes take {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Lifting: the cover goes up and off, and the page is already behind it. */
+.opening.is-done {
+  animation: lift var(--t-slow) var(--ease-ink) forwards;
+  pointer-events: none;
+}
+
+@keyframes lift {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-101%); opacity: 1; }
+}
+
+/* ============================================================ reveal
+ *
+ * Content settling in as it comes into view. Deliberately small: a long
+ * travel on every block is the thing that reads as generated. Only the
+ * opacity and a few pixels move, and only once.
+ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity var(--t-slow) var(--ease-ink),
+              transform var(--t-slow) var(--ease-settle);
+}
+
+.reveal.is-in { opacity: 1; transform: none; }
+
+/* Without JavaScript nothing adds `is-in`, so the rule below makes the
+ * content visible by default and the one above only applies once the
+ * observer has said it is in charge. */
+:root:not([data-reveal]) .reveal { opacity: 1; transform: none; transition: none; }
+
+/* ============================================================ layout */
 
 .wrap {
-  max-width: var(--measure);
-  margin: 0 auto;
-  padding: 0 var(--gutter);
+  width: 100%;
+  max-width: var(--wide);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
 }
 
-/* ---------------------------------------------------------------- header */
+.measure { max-width: var(--measure); }
+
+/* A band is a full-bleed change of ground. Structure comes from the
+ * cloth changing colour, not from a grid of cards. */
+.band {
+  padding-block: var(--s-7);
+  position: relative;
+  isolation: isolate;
+}
+.band-dark {
+  background: var(--indigo-8);
+  color: var(--cotton);
+  position: relative;
+  isolation: isolate;
+}
+.band-deep { background: var(--indigo-9); color: var(--cotton); }
+.band-quiet { background: var(--surface-2); }
+
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) a { text-decoration-color: var(--saffron); }
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) :focus-visible { outline-color: var(--saffron); }
+
+.band + .band { border-top: 1px solid var(--rule); }
+.band-dark + .band-dark, .band-dark + .band-deep,
+.band-deep + .band-dark { border-top: 0; }
+/* A band carrying a dye edge draws its own boundary. */
+.band:has(> .dye-edge) { border-top: 0; }
+
+.stack > * + * { margin-top: var(--s-4); }
+.stack-loose > * + * { margin-top: var(--s-6); }
+
+/* The only spacing utilities. Anything needing more than these wants a
+ * named component instead. */
+.mt-4 { margin-top: var(--s-4); }
+.mt-5 { margin-top: var(--s-5); }
+.mt-6 { margin-top: var(--s-6); }
+
+.lede {
+  font-size: var(--step-1);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: 34rem;
+}
+
+.band h2 + .lede, .hero h1 + .lede { margin-top: var(--s-4); }
+.band > .wrap > .lede + * { margin-top: var(--s-6); }
+
+/* An editorial split: what the section is stays on the left, the section
+ * itself runs down the right. Below the breakpoint it is one column and
+ * the intro simply sits above its content, which is the same reading
+ * order -- so no markup changes between the two. */
+.band-split > * + * { margin-top: var(--s-6); }
+
+.band-intro h2 { margin-bottom: var(--s-4); }
+.band-intro .lede { font-size: var(--step-0); }
+
+@media (min-width: 60rem) {
+  .band-split {
+    display: grid;
+    grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr);
+    gap: var(--s-6) var(--s-8);
+    align-items: start;
+  }
+
+  .band-split > * + * { margin-top: 0; }
+
+  /* The intro stays put while its section scrolls past, which is what
+   * makes the two columns read as one thing rather than two. */
+  .band-intro {
+    position: sticky;
+    top: var(--s-6);
+  }
+
+  .band-intro .lede { max-width: none; }
+}
+
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .lede { color: var(--indigo-2); }
+
+/* The adire ground: bundled lines, concentric rings, a dotted grid and
+ * small crosses, tiled behind dark bands. Ground, never ornament -- it
+ * is always behind a solid content surface, never under body text. */
+.adire {
+  position: absolute;
+  inset: 0;
+  /* An <svg> with no width/height attribute lays out at its default 300x150
+   * no matter what the positioned box is, which leaves the pattern covering
+   * one corner. Only visible by looking at a screenshot. */
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  color: var(--indigo-3);
+  /* Low enough to read as cloth rather than as wallpaper. The first pass
+   * sat at 0.5 and competed with the headline. Quieter still on a phone,
+   * where the copy is full-bleed and there is nowhere for the pattern to
+   * sit that is not behind text. */
+  opacity: 0.14;
+}
+
+/* On a wide viewport the copy occupies the left, so the ground is masked
+ * away from under it and left to show along the right edge. Below that
+ * width the text is full-bleed and low opacity does the work alone. */
+@media (min-width: 46rem) {
+  .adire {
+    opacity: 0.3;
+    -webkit-mask-image: linear-gradient(95deg, transparent 0 34%, black 78%);
+    mask-image: linear-gradient(95deg, transparent 0 34%, black 78%);
+  }
+}
+
+/* The resist-dye boundary between two grounds. Filled with the colour of
+ * the band above, so the upper ground reads as having run down into this
+ * one, and pulled up by a hair so no seam shows at a fractional pixel. */
+.dye-edge {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 100%;
+  height: 2.25rem;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.dye-from-deep { color: var(--indigo-9); }
+.dye-from-dark { color: var(--indigo-8); }
+.dye-from-paper { color: var(--surface); }
+.dye-from-quiet { color: var(--surface-2); }
+
+/* The first line of content has to clear the edge it is sitting under. */
+.band > .dye-edge + .wrap { padding-top: var(--s-4); }
+
+@media (min-width: 46rem) {
+  .dye-edge { height: 3.5rem; }
+}
+
+/* ============================================================ controls */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 48px;
+  padding: var(--s-3) var(--s-5);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: var(--sans);
+  font-size: var(--step-0);
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--t-fast) var(--ease),
+              background-color var(--t-fast) var(--ease);
+}
+
+.btn:hover { text-decoration: none; transform: translateY(-2px); }
+.btn:active { transform: translateY(0) scale(0.985); }
+
+/* A filled button lifts a little on hover, so it reads as a physical
+ * control rather than a coloured rectangle. */
+.btn { box-shadow: 0 0 0 0 rgba(10, 18, 48, 0); }
+.btn:hover { box-shadow: 0 6px 18px -6px rgba(10, 18, 48, 0.45); }
+
+.btn-quiet {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--rule);
+}
+
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .btn-quiet {
+  color: var(--cotton);
+  border-color: var(--indigo-5);
+}
+
+.btn-on-dark { background: var(--saffron); color: var(--indigo-9); }
+
+.btn-block { width: 100%; }
+
+:is(.masthead, .auth-aside) .btn-plain {
+  color: var(--cotton);
+  border-color: var(--indigo-5);
+}
+
+.btn-plain {
+  min-height: 44px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+
+label { display: block; font-size: var(--step--1); font-weight: 500; }
+
+input, textarea, select {
+  transition: border-color var(--t-fast) var(--ease),
+              box-shadow var(--t-fast) var(--ease);
+}
+
+input[type="text"], input[type="email"], input[type="password"],
+input[type="date"], textarea, select {
+  width: 100%;
+  min-height: 48px;
+  padding: var(--s-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  /* 16px floor, or iOS zooms the page on focus. */
+  font-size: max(1rem, var(--step-0));
+  line-height: 1.4;
+}
+
+textarea { resize: vertical; }
+
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+  border-color: var(--focus);
+}
+
+.field-help { font-size: var(--step--1); color: var(--ink-soft); }
+
+.field-error {
+  font-size: var(--step--1);
+  color: var(--evidence);
+  font-weight: 500;
+}
+
+/* ============================================================ masthead */
 
 .masthead {
-  border-bottom: 1px solid var(--rule);
+  background: var(--indigo-9);
+  color: var(--cotton);
+  position: relative;
+  z-index: 10;
 }
 
 .masthead-inner {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-  /* The gutter must be restated. This element is also `.wrap`, whose
-     `padding: 0 var(--gutter)` a shorthand here would silently reset to zero --
-     which it did, leaving the wordmark flush to the left edge and the
-     allowance clipped against the right one while the body text was correctly
-     inset. Only visible by looking at a screenshot at 360px. */
-  padding: 14px var(--gutter) 12px;
-  /* Nothing in the header may push the page wider than the phone it is on. */
-  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-4);
+  min-height: 64px;
 }
 
 .wordmark {
-  font-size: 19px;
+  font-family: var(--display);
+  font-size: var(--step-2);
   font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--ink);
+  font-variation-settings: "opsz" 36;
+  letter-spacing: -0.02em;
   text-decoration: none;
+  margin-right: auto;
 }
 
-.subject {
-  font-size: 14px;
-  color: var(--ink-soft);
+.wordmark:hover { text-decoration: none; }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
+
+.nav-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--s-3);
+  font-size: var(--step--1);
+  text-decoration: none;
+  color: var(--cotton);
+  border-radius: var(--r-control);
+}
+
+.nav-links a:hover { background: var(--indigo-7); text-decoration: none; }
+.nav-links a[aria-current="page"] { color: var(--saffron); }
+
+/* Below 700px only the essential actions stay; the rest live in the
+ * footer rather than behind a hamburger nobody opens. */
+.nav-wide { display: none; }
 
 .allowance {
-  margin-left: auto;
-  white-space: nowrap;
-  font-family: var(--mono);
-  font-size: 12.5px;
-  color: var(--ink-soft);
+  font-size: var(--step--1);
+  color: var(--indigo-2);
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.allowance strong { color: var(--ink); font-weight: 600; }
+.allowance strong { color: var(--saffron); font-weight: 600; margin-right: 0.3ch; }
 
-/* ------------------------------------------------------------------ text */
+/* ============================================================ headline
+ *
+ * Each word is masked by its own box and rises out of it, stamped rather
+ * than faded. The delays start after the opening cover has lifted so the
+ * two read as one continuous arrival instead of two separate ideas.
+ */
 
-main { padding-bottom: 120px; }
+.words { display: block; }
 
-h1 {
-  font-size: 23px;
+.words .word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  /* Room for descenders, or the mask clips the tail of a 'g'. The line
+   * height below absorbs it -- pulling it back with a negative margin
+   * instead made every line after the first sit on top of the one above. */
+  padding-bottom: 0.14em;
+}
+
+.words .word > b { display: inline-block; font-weight: inherit; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .words .word > b {
+    transform: translateY(115%);
+    animation: word-rise 900ms var(--ease-settle) forwards;
+  }
+  .words .word:nth-child(1) > b { animation-delay: 380ms; }
+  .words .word:nth-child(2) > b { animation-delay: 470ms; }
+  .words .word:nth-child(3) > b { animation-delay: 560ms; }
+  .words .word:nth-child(4) > b { animation-delay: 650ms; }
+}
+
+@keyframes word-rise { to { transform: none; } }
+
+/* ============================================================ ticker
+ *
+ * Syllabus locators drifting past. It is the most honest ornament this
+ * page could have: the locators *are* the product, and seeing forty of
+ * them says "these are real references" faster than a sentence could.
+ */
+
+.ticker {
+  overflow: hidden;
+  background: var(--indigo-8);
+  border-block: 1px solid var(--indigo-7);
+  padding-block: var(--s-3);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+
+.ticker-track {
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+  width: max-content;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ticker-track { animation: drift 64s linear infinite; }
+  /* Stops for anyone trying to actually read one. */
+  .ticker:hover .ticker-track,
+  .ticker:focus-within .ticker-track { animation-play-state: paused; }
+}
+
+@keyframes drift { to { transform: translateX(-50%); } }
+
+.ticker-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  white-space: nowrap;
+  font-size: var(--step--1);
+  color: var(--indigo-2);
+}
+
+.ticker-item b {
+  font-family: var(--mono);
+  font-weight: 500;
+  color: var(--saffron);
+}
+
+/* ============================================================ hero */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  background: var(--indigo-9);
+  color: var(--cotton);
+  padding-block: var(--s-7);
+  overflow: hidden;
+}
+
+.hero h1 {
+  color: var(--cotton);
+  max-width: 14ch;
+  font-size: var(--step-6);
+  font-weight: 700;
+  /* Tight, but leaving room for the descender padding each masked word
+   * carries, so two lines of headline do not collide. */
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  font-variation-settings: "opsz" 144;
+}
+
+
+.hero .lede { color: var(--indigo-2); margin-top: var(--s-4); }
+
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+}
+
+/* Stacked buttons at different widths read as untidy rather than as
+ * hierarchy, so below the breakpoint they share one width. */
+@media (min-width: 30rem) {
+  .hero-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+}
+
+.hero-note {
+  margin-top: var(--s-4);
+  font-size: var(--step--1);
+  color: var(--indigo-2);
+}
+
+.hero-figures {
+  margin-top: var(--s-6);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--indigo-7);
+  max-width: 34rem;
+  font-size: var(--step--1);
+  line-height: 1.7;
+  color: var(--indigo-2);
+}
+
+/* The figures themselves, in the display face and the evidence colour --
+ * they are measurements, which is what that colour means here. */
+.hero-figures b {
+  font-family: var(--display);
+  font-variation-settings: "opsz" 24;
+  font-size: 1.35em;
   font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.015em;
-  margin: 26px 0 8px;
+  color: var(--saffron);
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.01em;
 }
 
-h2 {
-  font-size: 15px;
+/* ============================================================ artifact
+ *
+ * A real answer with its source open. The one genuinely raised object on
+ * the page, because it is the only thing that has to look like it came
+ * off a different surface than the ground behind it.
+ */
+
+.artifact {
+  position: relative;
+  margin-top: var(--s-7);
+  background: var(--cotton);
+  color: var(--indigo-9);
+  border-radius: var(--r-panel);
+  box-shadow: var(--shadow-lift);
+}
+
+/* Two sheets underneath, fanned very slightly. A worked solution is never
+ * the only page on the desk, and it gives the one raised object on the
+ * page some thickness without resorting to a heavier shadow. */
+.artifact::before,
+.artifact::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--r-panel);
+  background: var(--cotton-2);
+  box-shadow: var(--shadow-lift);
+}
+
+.artifact::before { transform: rotate(-1.4deg) translate(-6px, 5px); }
+.artifact::after  { transform: rotate(0.9deg) translate(5px, 8px); opacity: 0.7; }
+
+.artifact > * { position: relative; }
+.artifact > :first-child { border-top-left-radius: var(--r-panel); border-top-right-radius: var(--r-panel); }
+
+.artifact-head {
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--cotton-3);
+  background: var(--cotton-2);
+  font-size: var(--step--1);
+  color: var(--indigo-9);
+}
+
+.artifact-head span { color: var(--bronze); font-weight: 500; }
+
+.artifact-body { padding: var(--s-4); }
+
+.artifact-body ol { margin: 0; padding-left: 1.3em; }
+.artifact-body li + li { margin-top: var(--s-2); }
+
+.artifact-source {
+  margin: var(--s-4) 0 0;
+  padding: var(--s-3) var(--s-4);
+  background: var(--cotton-2);
+  border-left: 3px solid var(--saffron);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+}
+
+.artifact-source .loc {
+  font-family: var(--mono);
+  font-size: var(--step--1);
+  color: var(--bronze);
+  display: block;
+  margin-bottom: var(--s-2);
+}
+
+.artifact-source p { font-size: var(--step--1); line-height: 1.55; }
+
+.artifact-source u {
+  text-decoration: underline;
+  text-decoration-color: var(--bronze);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+/* ============================================================ deck
+ *
+ * Four sheets on a desk. Only the face-up one is in the layout; the rest
+ * are stacked under it, so the container keeps the height of the tallest
+ * and nothing below it jumps when the deck deals.
+ */
+
+.deck { position: relative; margin-top: var(--s-7); }
+
+/* Depth, so the cards behind are genuinely behind rather than merely
+ * smaller. The whole reason the deck reads as a stack of paper. */
+.deck-window {
+  display: grid;
+  perspective: 1400px;
+  perspective-origin: 50% 30%;
+}
+
+/* EVERY card sits in the same grid cell, including the ones nobody can
+ * see. That is what fixes the jump: the window is sized by the tallest
+ * card, so dealing cannot change the height of the page and nothing below
+ * the hero moves. Using `hidden` took the others out of the grid entirely
+ * and the container collapsed onto whichever card happened to be up. */
+.deck-card {
+  grid-area: 1 / 1;
+  margin-top: 0;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+
+/* Before the script takes over there is no rotation to be had, so only the
+ * first card is rendered -- four stacked on one another with no way to
+ * change them would be worse than one. */
+:root:not([data-deck-ready]) .deck-card:not(.is-current) { display: none; }
+
+/* Once it has: out of view but still measured, still sized, still holding
+ * the window open. `visibility` rather than `display` is the entire fix. */
+:root[data-deck-ready] .deck-card {
+  visibility: hidden;
+  opacity: 0;
+  transform: translate3d(0, 30px, -170px) rotateX(7deg) scale(0.97);
+  transition:
+    opacity var(--t-mid) var(--ease-ink),
+    transform var(--t-deal) var(--ease-settle),
+    visibility 0s linear var(--t-mid);
+}
+
+:root[data-deck-ready] .deck-card.is-current {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  z-index: 2;
+  transition:
+    opacity var(--t-mid) var(--ease-ink),
+    transform var(--t-deal) var(--ease-settle),
+    visibility 0s;
+}
+
+/* The card being replaced goes up and back rather than down, so the two
+ * movements read as one hand lifting a sheet off and laying another on. */
+:root[data-deck-ready] .deck-card.is-leaving {
+  visibility: visible;
+  opacity: 0;
+  transform: translate3d(0, -26px, -90px) rotateX(-5deg) scale(0.985);
+  z-index: 1;
+}
+
+.artifact-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.artifact-subject { font-weight: 600; color: var(--indigo-9); }
+
+.artifact-state {
+  font-size: var(--step--1);
+  color: var(--indigo-5);
+  white-space: nowrap;
+}
+
+/* The one card that is a real answer says so in the evidence colour,
+ * because "this is genuinely sourced" is exactly what that colour means. */
+.artifact-state.is-ready { color: var(--bronze); font-weight: 500; }
+
+.deck-controls {
+  display: flex;
+  gap: var(--s-2);
+  justify-content: center;
+  margin-top: var(--s-4);
+}
+
+.deck-dot {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+/* The dot itself is small; the button around it is a 44px target. */
+.deck-dot::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background: var(--indigo-5);
+  transition: background-color var(--t-mid) var(--ease),
+              transform var(--t-mid) var(--ease-settle);
+}
+
+.deck-dot:hover::after { background: var(--indigo-3); }
+
+.deck-dot.is-current::after {
+  background: var(--saffron);
+  transform: scale(1.7);
+}
+
+.deck-note {
+  margin-top: var(--s-3);
+  font-size: var(--step--1);
+  color: var(--indigo-2);
+  text-align: center;
+  max-width: 44ch;
+  margin-inline: auto;
+}
+
+/* ============================================================ sequence
+ *
+ * Numbered because it genuinely is one: a question goes through these
+ * four steps in this order. There are no numbers anywhere else.
+ */
+
+.sequence { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+
+.sequence > li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  gap: var(--s-4);
+  padding-block: var(--s-5);
+}
+
+.sequence > li + li { border-top: 1px solid var(--rule); }
+
+.sequence > li::before {
+  content: counter(step);
+  font-family: var(--mono);
+  font-size: var(--step--1);
+  color: var(--evidence);
+  padding-top: 0.35em;
+}
+
+.sequence h3 { margin-bottom: var(--s-2); }
+.sequence p { color: var(--ink-soft); }
+
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .sequence > li + li { border-top-color: var(--indigo-5); }
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .sequence p { color: var(--indigo-2); }
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .sequence > li::before { color: var(--saffron); }
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .sequence h3 { color: var(--cotton); }
+
+/* ============================================================ subjects */
+
+.subjects { display: grid; gap: var(--s-4); list-style: none; margin: 0; padding: 0; }
+
+.subject {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--s-4);
+  row-gap: var(--s-1);
+  align-items: center;
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--rule);
+}
+
+/* Drawn in the same stroke as the resist motifs, so the glyphs belong to
+ * the cloth rather than to an icon set. */
+.subject-glyph {
+  grid-row: 1 / 3;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--ink-soft);
+  flex: none;
+}
+
+.subject-name {
+  font-family: var(--display);
+  font-size: var(--step-1);
   font-weight: 600;
-  margin: 28px 0 8px;
+  font-variation-settings: "opsz" 24;
+  align-self: end;
 }
 
-p { margin: 0 0 14px; }
+.subject-state { font-size: var(--step--1); color: var(--ink-soft); align-self: start; }
 
-.lede { color: var(--ink-soft); margin-bottom: 22px; }
+.subjects > li:last-child { border-bottom: 1px solid var(--rule); }
+
+.subject-live .subject-glyph { color: var(--evidence); }
+.subject-live .subject-state { color: var(--evidence); font-weight: 500; }
+
+/* ============================================================ limits */
+
+.limits { width: 100%; border-collapse: collapse; font-size: var(--step--1); }
+.limits th, .limits td {
+  text-align: left;
+  padding: var(--s-3) var(--s-3) var(--s-3) 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+.limits th { font-weight: 500; width: 45%; }
+.limits td { color: var(--ink-soft); }
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .limits th { color: var(--cotton); }
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .limits td { color: var(--indigo-2); }
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .limits th, :is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .limits td { border-bottom-color: var(--indigo-5); }
+
+/* Anything else that lands on a dark ground. Kept in one place so the next
+ * component added to a dark band does not have to rediscover this. */
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) h2, :is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) h3, :is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .label-heading { color: var(--cotton); }
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .field-help, :is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .composer-help { color: var(--indigo-2); }
+:is(.hero, .band-dark, .band-deep, .masthead, .auth-aside) .cite { color: var(--saffron); text-decoration-color: var(--saffron); }
+
+/* ============================================================ faq */
+
+.faq { max-width: 44rem; }
+
+.faq details {
+  border-bottom: 1px solid var(--rule);
+}
+
+.faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 56px;
+  padding-block: var(--s-3);
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq summary::-webkit-details-marker { display: none; }
+
+.faq summary { transition: color var(--t-fast) var(--ease); }
+.faq summary:hover { color: var(--evidence); }
+
+.faq summary::after {
+  content: "";
+  flex: none;
+  width: 10px; height: 10px;
+  border-right: 2px solid var(--evidence);
+  border-bottom: 2px solid var(--evidence);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform var(--t-mid) var(--ease);
+}
+
+.faq details[open] summary::after { transform: rotate(-135deg) translateY(-2px); }
+
+.faq details > p {
+  padding-bottom: var(--s-4);
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+
+/* ============================================================ footer */
+
+.site-footer {
+  background: var(--indigo-9);
+  color: var(--indigo-2);
+  padding-block: var(--s-6);
+  font-size: var(--step--1);
+}
+
+.footer-grid { display: grid; gap: var(--s-5); }
+
+.site-footer h4 { color: var(--cotton); margin-bottom: var(--s-2); }
+.site-footer ul { list-style: none; margin: 0; padding: 0; }
+.site-footer li + li { margin-top: var(--s-2); }
+.site-footer a { color: var(--indigo-2); text-decoration-color: var(--indigo-5); }
+.site-footer a:hover { color: var(--cotton); }
+
+.footer-note {
+  margin-top: var(--s-6);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--indigo-7);
+  max-width: 54ch;
+}
+
+/* ============================================================ app shell */
+
+.app-main { padding-block: var(--s-5) var(--s-8); }
+
+/* Reading material gets a measure even inside a wide wrap: an intro
+ * paragraph set across 1440px is well past 80 characters. */
+.app-main > p,
+.app-main .field-help,
+.app-main section > p { max-width: 62ch; }
+
+.app-main .stat-grid { max-width: 64rem; }
+
+.page-head { margin-bottom: var(--s-5); }
+.page-head h1 { font-size: var(--step-3); }
+.page-head p { color: var(--ink-soft); margin-top: var(--s-2); }
+
+/* ============================================================ answer */
 
 .asked {
-  margin: 22px 0 0;
-  font-size: 17px;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  margin-bottom: var(--s-2);
+}
+
+.question {
+  font-size: var(--step-1);
+  font-weight: 500;
+  max-width: var(--measure);
+  /* Stated, not inherited: this sits inside .page-head, whose paragraphs are
+   * secondary text -- and the question a student just asked is the one thing
+   * on the page that is not secondary. */
   color: var(--ink);
 }
 
-.asked-label {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--ink-soft);
-  display: block;
-  margin-bottom: 4px;
-}
-
-hr.sep {
-  border: 0;
+.answer {
+  max-width: var(--measure);
+  margin-top: var(--s-5);
+  padding-top: var(--s-5);
   border-top: 1px solid var(--rule);
-  margin: 18px 0;
 }
 
-/* ---------------------------------------------------------------- answer */
+.answer p + p { margin-top: var(--s-4); }
+.answer ol.steps { margin: var(--s-4) 0 0; padding-left: 1.4em; }
+.answer ol.steps li + li { margin-top: var(--s-3); }
+.answer strong { font-weight: 600; }
 
-.answer { font-size: 17px; }
-
-.answer ol.steps {
-  margin: 0 0 14px;
-  padding-left: 1.35em;
-}
-
-.answer ol.steps li { margin-bottom: 6px; }
-
-/* The citation marker. Mono, marking red, with a pen line under it that sits
-   low — a reference underlined by hand, not a hyperlink. */
+/* A citation. Mono because a syllabus code is a reference, underlined in
+ * the evidence colour because that is what this colour means. */
 .cite {
   font-family: var(--mono);
-  font-size: 0.82em;
-  color: var(--mark);
+  font-size: 0.92em;
+  color: var(--evidence);
   text-decoration: underline;
-  text-decoration-color: var(--mark);
+  text-decoration-color: var(--evidence);
   text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
+  text-underline-offset: 2px;
   white-space: nowrap;
-  padding: 0 1px;
 }
 
-.cite:hover { background: var(--wash); }
+.cite:hover { text-decoration-thickness: 2px; }
 
-/* --------------------------------------------------------- source panels */
+/* ============================================================ source panel
+ *
+ * The product's entire claim, so it is the most carefully built object
+ * here and everything around it is deliberately plainer.
+ */
 
-.sources { margin: 22px 0 0; }
+.sources { max-width: var(--measure); margin-top: var(--s-6); }
 
-.sources-label {
-  font-family: var(--mono);
-  font-size: 12px;
+/* A quiet heading that introduces a list without shouting. Used for the
+ * source list and the examples; deliberately not a caps eyebrow. */
+.sources > h2, .label-heading {
+  font-size: var(--step-0);
+  font-family: var(--sans);
+  font-weight: 500;
   color: var(--ink-soft);
-  margin-bottom: 8px;
+  margin-bottom: var(--s-3);
 }
 
 .source {
   border: 1px solid var(--rule);
-  border-left: 3px solid var(--mark);
-  border-radius: 2px;
-  margin-bottom: 10px;
-  background: var(--paper);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  margin-bottom: var(--s-3);
+  overflow: hidden;
 }
 
-.source[open] { background: var(--wash); }
+/* A source panel is the thing a student is most likely to open, so it
+ * opens rather than snaps. `interpolate-size` above is what makes the
+ * height animatable; `::details-content` is what there is to animate.
+ * Both are recent, and where they are missing the panel just appears --
+ * which is exactly what it did before. */
+.source {
+  transition: background-color var(--t-mid) var(--ease),
+              border-color var(--t-mid) var(--ease);
+}
+
+.source::details-content {
+  block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition:
+    block-size var(--t-slow) var(--ease),
+    content-visibility var(--t-slow) allow-discrete,
+    opacity var(--t-mid) var(--ease);
+}
+
+.source[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+
+/* The FAQ answers the same way. */
+.faq details::details-content {
+  block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition:
+    block-size var(--t-slow) var(--ease),
+    content-visibility var(--t-slow) allow-discrete,
+    opacity var(--t-mid) var(--ease);
+}
+
+.faq details[open]::details-content { block-size: auto; opacity: 1; }
+
+.source > summary:hover { background: var(--surface-2); }
 
 .source > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 48px;
+  padding: var(--s-3) var(--s-4);
   cursor: pointer;
   list-style: none;
-  padding: 11px 13px;
-  min-height: 44px;
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  flex-wrap: wrap;
+  font-size: var(--step--1);
 }
 
 .source > summary::-webkit-details-marker { display: none; }
 
-.locator {
+.source .locator {
   font-family: var(--mono);
-  font-size: 13px;
+  color: var(--evidence);
+  font-weight: 500;
+}
+
+.source .attribution { color: var(--ink-soft); margin-right: auto; }
+
+.source .disclose { color: var(--evidence); white-space: nowrap; }
+
+.source[open] {
+  background: var(--surface-2);
+  border-color: var(--surface-3);
+}
+
+.source-body {
+  /* The ruled margin of a marked script. The only 3px element here. */
+  border-left: 3px solid var(--evidence);
+  padding: var(--s-4);
+  margin: 0 var(--s-4) var(--s-4);
+  background: var(--surface-2);
+}
+
+.source[open] .source-body { animation: rule-draw var(--t-slow) var(--ease); }
+
+.source-body h3 {
+  font-family: var(--sans);
+  font-size: var(--step--1);
   font-weight: 600;
-  color: var(--mark);
+  margin-bottom: var(--s-2);
 }
 
-.source-kind {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  color: var(--ink-soft);
-}
+.source-body p { font-size: var(--step--1); line-height: 1.6; }
+.source-body p + p { margin-top: var(--s-3); }
 
-.source-title {
-  flex-basis: 100%;
-  font-size: 14px;
-  color: var(--ink-soft);
-}
-
-.source-open {
-  margin-left: auto;
-  font-size: 13.5px;
-  color: var(--mark);
+/* The retrieved sentence is pen-underlined, not highlighted. A highlight
+ * block says "search result"; an underline says a person read this. */
+.source-body mark {
+  background: transparent;
+  color: inherit;
   text-decoration: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-color: var(--evidence);
+  text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
 
-.source[open] .source-open { visibility: hidden; }
-
-.source-body {
-  padding: 2px 13px 13px;
-  border-top: 1px solid var(--rule);
-  font-size: 15.5px;
-  line-height: 1.62;
+.provenance {
+  font-family: var(--mono);
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  margin-top: var(--s-3);
 }
 
-.source-body p { margin: 12px 0 0; }
-
-/* The matched span, underlined in pen. Not a highlighter block: a block says
-   "search result", an underline says a person read this. */
-.source-body mark {
-  background: none;
-  color: inherit;
-  border-bottom: 2px solid var(--mark);
-  padding-bottom: 1px;
+@keyframes rule-draw {
+  from { border-left-color: var(--surface-2); }
+  to { border-left-color: var(--evidence); }
 }
 
-/* The one piece of motion in the product: the margin rule of a panel flashes
-   once when it opens, so the eye can find which thing moved. */
-.source[open] { animation: mark-flash 620ms ease-out 1; }
+/* ============================================================ refusal */
 
-@keyframes mark-flash {
-  0%   { border-left-color: var(--ink); }
-  35%  { border-left-color: var(--mark); }
-  100% { border-left-color: var(--mark); }
+.refusal {
+  max-width: var(--measure);
+  margin-top: var(--s-5);
+  padding: var(--s-5);
+  border-left: 3px solid var(--evidence);
+  background: var(--surface-2);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
 }
 
-/* --------------------------------------------------------------- refusal */
-
-.refusal-note {
-  border-left: 2px solid var(--mark);
-  padding: 2px 0 2px 13px;
-  margin: 14px 0;
-  color: var(--ink);
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+  list-style: none;
+  padding: 0;
 }
 
-.suggestions { margin: 16px 0 0; }
+.suggestions button { min-height: 44px; }
 
-.suggestions a {
-  display: inline-block;
-  font-size: 15px;
-  color: var(--ink);
-  border: 1px solid var(--rule);
-  border-radius: 2px;
-  padding: 7px 11px;
-  margin: 0 6px 6px 0;
-  text-decoration: none;
-}
-
-.suggestions a:hover { border-color: var(--ink-soft); }
-
-/* -------------------------------------------------------------- feedback */
+/* ============================================================ feedback */
 
 .feedback {
-  margin: 26px 0 0;
-  padding-top: 16px;
+  max-width: var(--measure);
+  margin-top: var(--s-6);
+  padding-top: var(--s-4);
   border-top: 1px solid var(--rule);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
 }
 
-.feedback-q { font-size: 15px; color: var(--ink-soft); margin-right: 2px; }
+.feedback-row { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.feedback-row p { font-size: var(--step--1); color: var(--ink-soft); }
 
-.btn-plain {
-  font: inherit;
-  font-size: 15px;
-  background: var(--paper);
-  color: var(--ink);
-  border: 1px solid var(--rule);
-  border-radius: 2px;
-  padding: 8px 16px;
-  min-height: 44px;
-  cursor: pointer;
-}
-
-.btn-plain:hover { border-color: var(--ink-soft); }
-
-.reasons {
-  margin: 12px 0 0;
-  display: none;
-  flex-wrap: wrap;
-  gap: 6px;
-  width: 100%;
-}
-
+.reasons { display: none; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-3); }
 .reasons.open { display: flex; }
+.reasons button { min-height: 44px; }
 
-.reasons button {
-  font: inherit;
-  font-size: 14px;
-  background: var(--paper);
-  color: var(--mark);
-  border: 1px solid var(--mark);
-  border-radius: 2px;
-  padding: 7px 11px;
-  min-height: 44px;
-  cursor: pointer;
-}
-
-.voted { font-size: 15px; color: var(--mark); }
-
-/* ------------------------------------------------------------ disclosure */
+.voted { font-size: var(--step--1); color: var(--evidence); font-weight: 500; }
 
 .disclosure {
-  margin: 26px 0 0;
-  padding: 2px 0 2px 13px;
-  border-left: 2px solid var(--mark);
-  font-size: 14.5px;
+  max-width: var(--measure);
+  margin-top: var(--s-5);
+  padding: var(--s-3) var(--s-4);
+  border-left: 1px solid var(--evidence);
+  font-size: var(--step--1);
   color: var(--ink-soft);
 }
 
-.disclosure a { color: var(--ink-soft); }
-
-/* -------------------------------------------------------------- composer */
+/* ============================================================ composer */
 
 .composer {
   position: sticky;
   bottom: 0;
-  background: var(--paper);
+  background: var(--surface);
   border-top: 1px solid var(--rule);
-  padding: 10px 0 14px;
+  padding: var(--s-3) 0 var(--s-4);
+  margin-top: var(--s-7);
+  z-index: 5;
 }
 
-.composer-row { display: flex; gap: 8px; align-items: flex-end; }
+/* Sits above the composer rather than inside it: the question is the
+ * primary control and the syllabus is a setting on it. */
+.composer-scope {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.composer-scope label { color: var(--ink-soft); }
+.composer-scope select { width: auto; min-width: 14rem; min-height: 44px; }
+
+.composer-row { display: flex; gap: var(--s-2); align-items: flex-end; }
 
 .composer textarea {
   flex: 1;
-  font: inherit;
-  font-size: 16px; /* 16px or iOS zooms on focus */
-  color: var(--ink);
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: 2px;
-  padding: 11px 12px;
-  resize: none;
-  min-height: 46px;
+  min-height: 48px;
   max-height: 140px;
+  overflow-y: auto;
 }
 
-.composer textarea::placeholder { color: var(--ink-soft); }
+.composer button { min-height: 48px; flex: none; }
 
-.composer button {
-  font: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  background: var(--ink);
-  color: var(--paper);
-  border: 1px solid var(--ink);
-  border-radius: 2px;
-  padding: 0 18px;
-  min-height: 46px;
-  cursor: pointer;
-}
-
-.composer-help {
-  font-size: 12.5px;
-  color: var(--ink-soft);
-  margin: 8px 0 0;
-}
-
-.working { display: none; font-size: 14px; color: var(--ink-soft); margin: 8px 0 0; }
+.working { display: none; font-size: var(--step--1); color: var(--ink-soft); margin-top: var(--s-2); }
 .working.on { display: block; }
 
-/* --------------------------------------------------------------- examples */
+.composer-help { font-size: var(--step--1); color: var(--ink-soft); margin-top: var(--s-2); }
 
-.examples { margin: 6px 0 0; padding: 0; list-style: none; }
+/* ============================================================ examples */
 
-.examples li { margin: 0 0 8px; }
+.examples { display: grid; gap: var(--s-2); list-style: none; margin: 0; padding: 0; }
+
+/* Four suggestions arriving together is a block; arriving in order is a
+ * list. 50ms apart, so it reads as one gesture and not as a queue. */
+@media (prefers-reduced-motion: no-preference) {
+  .examples > li { animation: rise var(--t-slow) var(--ease) backwards; }
+  .examples > li:nth-child(1) { animation-delay: 60ms; }
+  .examples > li:nth-child(2) { animation-delay: 110ms; }
+  .examples > li:nth-child(3) { animation-delay: 160ms; }
+  .examples > li:nth-child(4) { animation-delay: 210ms; }
+}
 
 .examples form { margin: 0; }
 
 .examples button {
-  font: inherit;
-  text-align: left;
-  font-size: 15.5px;
-  color: var(--ink);
-  background: none;
-  border: 0;
-  border-bottom: 1px solid var(--rule);
-  padding: 8px 0;
   width: 100%;
-  min-height: 44px;
+  min-height: 48px;
+  padding: var(--s-3) var(--s-4);
+  text-align: left;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--step--1);
   cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease);
 }
 
-.examples button:hover { border-bottom-color: var(--mark); }
-
-/* ----------------------------------------------------------------- misc */
-
-.cap-figure {
-  font-family: var(--mono);
-  font-size: 15px;
-  color: var(--mark);
+.examples button:hover {
+  border-color: var(--evidence);
+  transform: translateX(2px);
 }
 
-table.admin { width: 100%; border-collapse: collapse; font-size: 14px; }
-table.admin th, table.admin td {
-  text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--rule);
-  vertical-align: top;
-}
-table.admin th { font-size: 12px; color: var(--ink-soft); font-weight: 600; }
-code, .mono { font-family: var(--mono); font-size: 13px; }
+.examples button { transition: border-color var(--t-fast) var(--ease),
+                               transform var(--t-fast) var(--ease-settle); }
 
-footer {
+/* ============================================================ auth
+ *
+ * Both panels live on one page and swap with a class, so the transition
+ * costs no navigation -- and both are real forms, so it works with no
+ * JavaScript at all.
+ */
+
+.auth {
+  display: grid;
+  /* Minus the masthead, or the page is always one bar taller than the
+   * viewport. dvh so a phone's collapsing address bar does not do the same. */
+  min-height: calc(100dvh - 64px);
+  background: var(--indigo-9);
+  color: var(--cotton);
+}
+
+.auth-aside {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: var(--s-6) var(--gutter);
+}
+
+.auth-aside .adire { opacity: 0.16; }
+
+@media (min-width: 46rem) {
+  .auth-aside .adire { opacity: 0.2; }
+}
+
+.auth-aside h2 { color: var(--cotton); font-size: var(--step-3); max-width: 20ch; }
+.auth-aside p { color: var(--indigo-2); margin-top: var(--s-4); max-width: 34ch; }
+
+.auth-card {
+  background: var(--surface);
+  color: var(--ink);
+  padding: var(--s-6) var(--gutter) var(--s-8);
+}
+
+.auth-inner { max-width: 26rem; margin-inline: auto; }
+
+.auth-panels { position: relative; overflow: hidden; }
+
+.auth-panel { transition: opacity var(--t-mid) var(--ease), transform var(--t-mid) var(--ease); }
+
+/* The inactive panel is removed from the layout and from the tab order by
+ * `hidden`, so the transition never leaves a focusable ghost behind. */
+.auth-panel[hidden] { display: none; }
+
+.auth-panel.entering { opacity: 0; transform: translateX(var(--from, 1rem)); }
+
+.auth-switch {
+  margin-top: var(--s-5);
+  padding-top: var(--s-4);
   border-top: 1px solid var(--rule);
-  margin-top: 40px;
-  padding: 14px 0 30px;
-  font-size: 13px;
+  font-size: var(--step--1);
   color: var(--ink-soft);
 }
 
-footer a { color: var(--ink-soft); }
+.auth-switch button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--evidence);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  min-height: 44px;
+}
 
-a { color: var(--ink); }
+.codes {
+  margin: var(--s-4) 0;
+  padding: var(--s-4);
+  background: var(--surface-2);
+  border-left: 3px solid var(--evidence);
+  font-family: var(--mono);
+  font-size: var(--step-0);
+  line-height: 2;
+  letter-spacing: 0.04em;
+  list-style: none;
+}
 
-/* ------------------------------------------------------------ a11y, motion */
+/* ============================================================ dashboard */
 
-:focus-visible {
-  outline: 2px solid var(--mark);
-  outline-offset: 2px;
+.stat-grid { display: grid; gap: var(--s-3); grid-template-columns: repeat(2, 1fr); }
+
+.stat {
+  padding: var(--s-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-control);
+  background: var(--surface);
+}
+
+.stat-figure {
+  display: block;
+  font-family: var(--display);
+  font-size: var(--step-4);
+  font-weight: 600;
+  font-variation-settings: "opsz" 72;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.stat-label { font-size: var(--step--1); color: var(--ink-soft); margin-top: var(--s-2); }
+
+.stat-wide { grid-column: 1 / -1; }
+
+/* A topic's rolling correct-rate. A bar, because the number it encodes is
+ * a proportion and a proportion has a length. */
+/* Capped rather than full-bleed: a bar that reaches the far edge of a
+ * 1440px page reads as a rule, not as a measurement. At this width the
+ * empty part of the track is visible, which is what makes it a gauge. */
+.meter-row {
+  display: grid;
+  gap: var(--s-2);
+  padding-block: var(--s-3);
+  max-width: 34rem;
+}
+.meter-row + .meter-row { border-top: 1px solid var(--rule); }
+
+.meter-head { display: flex; justify-content: space-between; gap: var(--s-3); font-size: var(--step--1); }
+.meter-head span:last-child { color: var(--ink-soft); font-family: var(--mono); }
+
+.meter {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.meter > i {
+  display: block;
+  height: 100%;
+  background: var(--evidence);
+  border-radius: var(--r-pill);
+  transform-origin: left center;
+}
+
+/* Grows out from the left as the row arrives, so the bar is read as a
+ * measurement being taken rather than a shape that was already there. */
+@media (prefers-reduced-motion: no-preference) {
+  .meter > i { animation: meter-grow var(--t-slow) var(--ease) backwards; }
+  .meter-row:nth-child(1) .meter > i { animation-delay: 80ms; }
+  .meter-row:nth-child(2) .meter > i { animation-delay: 140ms; }
+  .meter-row:nth-child(3) .meter > i { animation-delay: 200ms; }
+  .meter-row:nth-child(4) .meter > i { animation-delay: 260ms; }
+  .meter-row:nth-child(5) .meter > i { animation-delay: 320ms; }
+  .meter-row:nth-child(6) .meter > i { animation-delay: 380ms; }
+}
+
+@keyframes meter-grow {
+  from { transform: scaleX(0); }
+  to { transform: none; }
+}
+
+/* Recent questions land one after another, same 50ms beat. */
+@media (prefers-reduced-motion: no-preference) {
+  .recent > li { animation: rise var(--t-slow) var(--ease) backwards; }
+  .recent > li:nth-child(1) { animation-delay: 60ms; }
+  .recent > li:nth-child(2) { animation-delay: 110ms; }
+  .recent > li:nth-child(3) { animation-delay: 160ms; }
+  .recent > li:nth-child(4) { animation-delay: 210ms; }
+  .recent > li:nth-child(5) { animation-delay: 260ms; }
+  .recent > li:nth-child(6) { animation-delay: 310ms; }
+}
+
+/* Stat tiles arrive as a row, left to right. */
+@media (prefers-reduced-motion: no-preference) {
+  .stat { animation: rise var(--t-slow) var(--ease) backwards; }
+  .stat:nth-child(1) { animation-delay: 40ms; }
+  .stat:nth-child(2) { animation-delay: 90ms; }
+  .stat:nth-child(3) { animation-delay: 140ms; }
+  .stat:nth-child(4) { animation-delay: 190ms; }
+}
+
+.stat { transition: border-color var(--t-fast) var(--ease); }
+.stat:hover { border-color: var(--evidence); }
+
+.recent { list-style: none; margin: 0; padding: 0; }
+.recent li { padding-block: var(--s-3); }
+.recent li + li { border-top: 1px solid var(--rule); }
+.recent a { display: block; font-weight: 500; text-decoration: none; }
+.recent a:hover { text-decoration: underline; }
+.recent .meta { font-size: var(--step--1); color: var(--ink-soft); margin-top: var(--s-1); }
+.recent .meta .locator { font-family: var(--mono); color: var(--evidence); }
+
+.empty {
+  padding: var(--s-6) var(--s-4);
+  border: 1px dashed var(--rule);
+  border-radius: var(--r-control);
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.empty h3 { font-family: var(--sans); font-size: var(--step-0); color: var(--ink); margin-bottom: var(--s-2); }
+
+/* ============================================================ admin */
+
+.admin { width: 100%; border-collapse: collapse; font-size: var(--step--1); }
+.admin th, .admin td {
+  text-align: left;
+  padding: var(--s-3);
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+.admin code, .mono { font-family: var(--mono); font-size: 0.9em; }
+
+/* The admin queue shows a stored answer verbatim, so it needs to wrap
+ * without losing the line breaks the model produced. */
+.admin pre {
+  white-space: pre-wrap;
+  font-family: var(--mono);
+  font-size: var(--step--1);
+  margin: 0;
+}
+
+.admin textarea, .admin input[type="text"] {
+  min-height: 0;
+  font-size: var(--step--1);
+  padding: var(--s-2);
+}
+
+/* ============================================================ wide */
+
+@media (min-width: 46rem) {
+  .band { padding-block: var(--s-9); }
+
+  .nav-wide { display: flex; }
+
+  .hero { padding-block: var(--s-8); }
+
+  /* Asymmetric: the text holds five columns and the artifact seven, and
+   * the artifact hangs past the container so the page has an edge that
+   * is not a straight line. */
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    gap: var(--s-7);
+    align-items: center;
+  }
+
+  .hero-grid .artifact { margin-top: 0; margin-right: calc(var(--s-7) * -1); }
+
+  .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; gap: var(--s-6); }
+
+  .stat-grid { grid-template-columns: repeat(4, 1fr); }
+  .stat-wide { grid-column: span 2; }
+
+  .auth { grid-template-columns: 1fr 1fr; }
+  .auth-aside { padding: var(--s-8) var(--s-7); display: flex; flex-direction: column; justify-content: center; }
+  .auth-card { padding: var(--s-8) var(--s-7); display: flex; align-items: center; }
+
+  .composer { position: static; border-top: 0; padding-top: var(--s-5); }
+}
+
+@media (min-width: 64rem) {
+  .hero-grid { gap: var(--s-8); }
+}
+
+/* ============================================================ arrivals
+ *
+ * The remaining surfaces. Every page in the product now settles in the
+ * same way and at the same beat, so moving between them feels like one
+ * application rather than several.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* A page heading and its explanation, everywhere they appear:
+   * /app, /thanks, /waitlist, /privacy, /dashboard, the capped page. */
+  .page-head { animation: rise var(--t-slow) var(--ease) backwards; }
+  .page-head > h1 { animation: rise var(--t-slow) var(--ease) 40ms backwards; }
+  .page-head > p { animation: rise var(--t-slow) var(--ease) 100ms backwards; }
+
+  /* Prose pages read top to bottom, so their sections arrive that way. */
+  .app-main > section,
+  .app-main > .disclosure,
+  .app-main > .hero-actions { animation: rise var(--t-slow) var(--ease) 140ms backwards; }
+
+  /* The recovery codes are the one thing on the signup page that must be
+   * read, so they arrive last and alone. */
+  .codes { animation: rise var(--t-slow) var(--ease-settle) 220ms backwards; }
+
+  /* Both auth panels, so the first paint matches the swap that follows. */
+  .auth-card .auth-panel:not([hidden]) {
+    animation: rise var(--t-slow) var(--ease) 60ms backwards;
+  }
+  .auth-aside > :not(.adire) {
+    animation: rise var(--t-slow) var(--ease) 120ms backwards;
+  }
+
+  /* The admin queue is a table of rows and reads like one. */
+  .admin tbody tr { animation: row-in var(--t-mid) var(--ease) backwards; }
+  .admin tbody tr:nth-child(1) { animation-delay: 60ms; }
+  .admin tbody tr:nth-child(2) { animation-delay: 100ms; }
+  .admin tbody tr:nth-child(3) { animation-delay: 140ms; }
+  .admin tbody tr:nth-child(4) { animation-delay: 180ms; }
+  .admin tbody tr:nth-child(5) { animation-delay: 220ms; }
+}
+
+/* The composer is fixed to the bottom of a phone screen and is the one
+ * control a student touches over and over, so it gets the clearest state
+ * change in the product. */
+.composer textarea:focus-visible {
+  box-shadow: 0 0 0 3px var(--surface-2);
+}
+
+.composer { transition: border-color var(--t-fast) var(--ease); }
+
+/* ============================================================ scroll-driven
+ *
+ * Tied to scroll position rather than to a timer, so the page responds to
+ * the reader instead of performing at them. Native CSS: no script, no
+ * library, and browsers without it simply get the static layout because
+ * everything here is inside @supports.
+ */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Each step of "what happens when you ask" comes up as it is reached,
+     * which suits content that genuinely is a sequence. */
+    .sequence > li {
+      animation: step-in linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 26%;
+    }
+
+    /* Subject rows arrive one at a time rather than as a block. */
+    .subjects > li {
+      animation: step-in linear both;
+      animation-timeline: view();
+      animation-range: entry 2% cover 22%;
+    }
+
+    /* The limits table fills in row by row. */
+    .limits tbody tr {
+      animation: row-in linear both;
+      animation-timeline: view();
+      animation-range: entry 2% cover 20%;
+    }
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* The deck drifts against the copy as the hero leaves, which is what
+     * gives the top of the page depth rather than a flat slab. */
+    .deck {
+      animation: deck-drift linear both;
+      animation-timeline: scroll();
+      animation-range: 0 70vh;
+    }
+
+    /* The cloth moves slower than the content on top of it. */
+    .hero .adire {
+      animation: cloth-drift linear both;
+      animation-timeline: scroll();
+      animation-range: 0 90vh;
+    }
+  }
+}
+
+@keyframes step-in {
+  from { opacity: 0.25; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes row-in {
+  from { opacity: 0.3; }
+  to { opacity: 1; }
+}
+
+@keyframes deck-drift { to { transform: translateY(-46px); } }
+@keyframes cloth-drift { to { transform: translateY(34px); } }
+
+/* ============================================================ preferences */
+
+/* One orchestrated moment: the hero arrives in a short stagger. Nothing
+ * else on the page moves unless a person asks it to. */
+@media (prefers-reduced-motion: no-preference) {
+  .rise { animation: rise var(--t-slow) var(--ease) backwards; }
+  .rise-1 { animation-delay: 60ms; }
+  .rise-2 { animation-delay: 680ms; }
+  .rise-3 { animation-delay: 790ms; }
+  .rise-4 { animation-delay: 900ms; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .source[open] { animation: none; }
-  * { transition: none !important; }
+  html { scroll-behavior: auto; }
+  /* No cover at all: a student who has asked for less motion should not be
+   * made to watch something lift off the page before they can read it. */
+  .opening { display: none !important; }
+  :root[data-loading] body > *:not(.opening) { opacity: 1; }
+  :root[data-loading] { overflow: auto; }
+  .reveal { opacity: 1 !important; transform: none !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .source[open] .source-body { animation: none; }
 }
 
-@media (min-width: 640px) {
-  body { font-size: 17.5px; }
-  .composer { position: static; border-top: 0; padding-top: 24px; }
+@media (prefers-contrast: more) {
+  :root { --rule: var(--ink); }
+  .adire { display: none; }
+  .source { border-width: 2px; }
+}
+
+@media print {
+  .masthead, .composer, .site-footer, .feedback, .adire { display: none; }
+  .source { border: 1px solid var(--ink); }
+  .source-body { display: block !important; }
 }

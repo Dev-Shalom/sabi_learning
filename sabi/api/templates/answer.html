@@ -3,41 +3,48 @@
 
 {% block content %}
 
-<p class="asked">
-  <span class="asked-label">You asked</span>
-  {{ result.question }}
-</p>
-
-<hr class="sep">
-
-<div class="answer">
-  {{ result.text | render_answer(known_locators) | safe }}
+<div class="page-head">
+  <p class="asked">You asked</p>
+  <p class="question">{{ result.question }}</p>
 </div>
 
-{% if result.refused and result.suggestions %}
-<div class="suggestions">
-  {% for suggestion in result.suggestions %}
-  <form method="post" action="/ask" style="display:inline">
-    <input type="hidden" name="question" value="{{ suggestion }}">
-    <button type="submit" class="btn-plain">{{ suggestion }}</button>
-  </form>
-  {% endfor %}
+{% if result.refused %}
+<div class="refusal reveal">
+  {{ result.text | render_answer(known_locators) | safe }}
+
+  {% if result.suggestions %}
+  <ul class="suggestions">
+    {% for suggestion in result.suggestions %}
+    <li>
+      <form method="post" action="/ask">
+        {{ csrf_input | safe }}
+        <input type="hidden" name="question" value="{{ suggestion }}">
+        <button type="submit" class="btn-plain">{{ suggestion }}</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% else %}
+<div class="answer reveal">
+  {{ result.text | render_answer(known_locators) | safe }}
 </div>
 {% endif %}
 
 {% if result.citations %}
-<section class="sources">
-  <p class="sources-label">Where this came from</p>
+<section class="sources reveal">
+  <h2>Where this came from</h2>
 
   {% for c in result.citations %}
   <details class="source" id="{{ anchor_id(c.locator) }}">
     <summary>
       <span class="locator">{{ c.locator }}</span>
-      <span class="source-kind">{{ attribution_label(c.attribution) }}</span>
-      <span class="source-open">Show the source</span>
-      <span class="source-title">{{ c.title }}</span>
+      <span class="attribution">{{ attribution_label(c.attribution) }}</span>
+      <span class="disclose">Show the source</span>
     </summary>
     <div class="source-body">
+      <h3>{{ c.title }}</h3>
       {{ c.text | render_source(c.highlight) | safe }}
     </div>
   </details>
@@ -46,17 +53,20 @@
 {% endif %}
 
 <form class="feedback" method="post" action="/feedback" id="feedback-form">
+  {{ csrf_input | safe }}
   <input type="hidden" name="request_id" value="{{ result.request_id }}">
   <input type="hidden" name="reason" value="" id="reason-field">
-  <span class="feedback-q">Was this right?</span>
-  <button class="btn-plain" type="submit" name="vote" value="1">Yes</button>
-  <button class="btn-plain" type="submit" name="vote" value="-1" id="no-button">No</button>
+  <div class="feedback-row">
+    <p>Was this right?</p>
+    <button class="btn-plain" type="submit" name="vote" value="1">Yes</button>
+    <button class="btn-plain" type="submit" name="vote" value="-1" id="no-button">No</button>
+  </div>
 
   <div class="reasons" id="reasons">
-    <button type="submit" name="vote" value="-1" data-reason="wrong_method">Wrong method</button>
-    <button type="submit" name="vote" value="-1" data-reason="not_on_syllabus">Not on syllabus</button>
-    <button type="submit" name="vote" value="-1" data-reason="did_not_answer">Didn't answer my question</button>
-    <button type="submit" name="vote" value="-1" data-reason="citation_mismatch">Citation doesn't match</button>
+    <button class="btn-plain" type="submit" name="vote" value="-1" data-reason="wrong_method">Wrong method</button>
+    <button class="btn-plain" type="submit" name="vote" value="-1" data-reason="not_on_syllabus">Not on syllabus</button>
+    <button class="btn-plain" type="submit" name="vote" value="-1" data-reason="did_not_answer">Didn't answer my question</button>
+    <button class="btn-plain" type="submit" name="vote" value="-1" data-reason="citation_mismatch">Citation doesn't match</button>
   </div>
 </form>
 

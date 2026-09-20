@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Sabi — what it stores{% endblock %}
+{% block description %}The whole list of what Sabi keeps about you, in plain words: an optional account, your questions, and a scrambled version of your network address.{% endblock %}
 
 {% block content %}
 <h1>What Sabi stores about you</h1>
@@ -8,45 +9,68 @@
   away with. Here is the whole list, in plain words.
 </p>
 
-<h2>You do not have an account</h2>
+<h2>An account is optional</h2>
 <p>
-  There is no sign-up, no name, no phone number. Your browser holds a random id
-  that Sabi made up — something like <code>7f3c…</code> with no meaning. That id
-  is how it counts your {{ cap }} questions a day. Clear your browser data and
-  the id is gone and you are a new person to Sabi.
+  You can ask questions with no account at all, the way Sabi has always worked.
+  Your browser holds a random id that Sabi made up — something like
+  <code>7f3c…</code> with no meaning. That id is how it counts your
+  {{ free_cap }} questions a day. Clear your browser data and the id is gone and
+  you are a new person to Sabi.
+</p>
+<p>
+  Making an account is optional. It raises your limit to {{ account_cap }}
+  questions a day and keeps the questions you have already asked, so you can see
+  which topics you keep getting stuck on. Nothing on this site refuses to work
+  because you did not make one.
+</p>
+
+<h2>If you do make an account</h2>
+<p>
+  Two things are stored: the email address you type in, and your password after
+  it has been put through scrypt, which turns it into a long string that cannot
+  be turned back into your password. Nobody running Sabi can read it, and nobody
+  reading the database can either.
+</p>
+<p>
+  Sabi cannot send email and never does. Your address is used to log you in and
+  for nothing else — no newsletters, no reset links, no messages of any kind.
+  That is also why you were given recovery codes when you signed up: they are
+  the only way back in if you forget your password.
 </p>
 
 <h2>Your questions</h2>
 <p>
-  The question you type and the answer you get are stored, attached to that
-  random id. They are kept so that when you mark an answer wrong, the mistake
-  can actually be found and fixed. They are not attached to your name, because
-  Sabi does not know it.
+  The question you type and the answer you get are stored, attached to your
+  account if you have one and to that random id if you do not. They are kept so
+  that when you mark an answer wrong, the mistake can actually be found and
+  fixed. Your questions are never shown to your school.
 </p>
 
 <h2>Your network address</h2>
 <p>
-  Sabi stores a scrambled version of your IP address, not the address itself. It
-  cannot be turned back into the original. It exists only to stop one person
-  clearing their browser repeatedly to get unlimited free questions.
+  Sabi stores a scrambled version of your IP address, not the address itself.
+  The scrambling is one way and uses a secret salt, so it cannot be turned back
+  into the original. It exists only to stop one person clearing their browser
+  over and over to get unlimited free questions.
 </p>
 
 <h2>Feedback</h2>
 <p>
-  When you tap Yes or No on an answer, that is stored against the answer and the
-  random id, and nothing else.
+  When you tap Yes or No on an answer, that is stored against the answer and
+  against whoever asked it, and nothing else.
 </p>
 
-<h2>Email</h2>
+<h2>The waitlist</h2>
 <p>
-  Only if you type one into the waitlist yourself. It is never required, and it
-  is used for one thing: telling you if the daily limit changes.
+  Only if you type your email into the waitlist yourself. It is used for one
+  thing: telling you if the daily limit changes. You can use Sabi without ever
+  touching it.
 </p>
 
 <h2>What Sabi never does</h2>
 <p>
-  No adverts. Nothing sold to anyone. No trackers from other companies. No
-  location. Your exam answers are not shown to your school.
+  No adverts. Nothing sold to anyone, ever. No trackers from other companies. No
+  location. No profile built to follow you around other websites.
 </p>
 
 <div class="disclosure">
