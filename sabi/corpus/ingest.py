@@ -15,6 +15,8 @@ Properties that matter:
 from __future__ import annotations
 
 import hashlib
+import logging
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,10 +26,12 @@ from sqlalchemy.orm import Session
 
 from sabi.config import settings
 from sabi.corpus.chunker import ChunkDraft, chunk_document, chunk_ref
-from sabi.corpus.loader import SourceDocument, load_dir, load_file
+from sabi.corpus.loader import CorpusError, SourceDocument, load_file
 from sabi.db import session_scope
 from sabi.models import Chunk, Document, SystemState
 from sabi.retrieval.embeddings import LocalLSAEmbedder, get_embedder
+
+log = logging.getLogger(__name__)
 
 CORPUS_ROOT = Path(__file__).resolve().parent.parent.parent / "corpus"
 EMBEDDER_KEY = "embedder"
@@ -101,20 +105,87 @@ def configured_only(docs: list[SourceDocument]) -> list[SourceDocument]:
     return keep
 
 
+# Enough of the front matter to find out which syllabus a file belongs to,
+# for a file that does not parse. Deliberately not a YAML parser: the point is
+# to answer one question about a document that has already failed to load.
+_SUBJECT_LINE = re.compile(r"^subject:\s*[\"']?([^\"'\n]+)", re.MULTILINE)
+
+
+def _subject_of_unparseable(path: Path) -> str | None:
+    try:
+        head = path.read_text(encoding="utf-8", errors="replace")[:800]
+    except OSError:
+        return None
+    found = _SUBJECT_LINE.search(head)
+    return found.group(1).strip() if found else None
+
+
 def collect(
     paths: list[Path] | None = None, include_unconfigured: bool = False
 ) -> list[SourceDocument]:
     """Documents to ingest.
 
-    `include_unconfigured` is for tooling that wants to look at drafts --
-    a linter, a word count. The ingest path never sets it.
+    Files are loaded one at a time rather than through a single `load_dir`,
+    because a draft that does not parse must not be able to stop the live
+    corpus from being re-ingested.
+
+    That is not hypothetical. A half-written Chemistry document with an
+    unquoted colon in its title -- `title: Hydrocarbons: alkanes` -- made
+    `sabi ingest` fail outright, for Mathematics and Physics too, neither of
+    which had anything to do with it. Authoring a subject that is switched
+    off should not be able to break the one that is switched on.
+
+    A file that fails to parse is still an error if it belongs to a
+    configured subject, or if we cannot tell which subject it belongs to.
+    Only a draft for a syllabus nobody has enabled is skipped, and it is
+    skipped loudly.
+
+    `include_unconfigured` is for tooling that wants to see drafts -- a
+    linter, a word count. The ingest path never sets it.
     """
-    if not paths:
-        docs = load_dir(CORPUS_ROOT)
-    else:
-        docs = []
+    from sabi.retrieval.scope import declared_subjects
+
+    if paths:
+        files: list[Path] = []
         for p in paths:
-            docs.extend(load_dir(p) if p.is_dir() else [load_file(p)])
+            files.extend(sorted(p.rglob("*.md")) if p.is_dir() else [p])
+    else:
+        files = sorted(CORPUS_ROOT.rglob("*.md"))
+
+    live = set(declared_subjects())
+    docs: list[SourceDocument] = []
+    where: dict[str, Path] = {}
+    skipped: list[tuple[Path, str]] = []
+
+    for path in files:
+        try:
+            doc = load_file(path)
+        except CorpusError:
+            subject = _subject_of_unparseable(path)
+            if not include_unconfigured and subject and subject not in live:
+                skipped.append((path, subject))
+                continue
+            # Either it belongs to a live subject, or we cannot tell. Both
+            # are worth stopping for.
+            raise
+
+        # Uniqueness was enforced inside load_dir, which is no longer used.
+        previous = where.get(doc.doc_id)
+        if previous is not None and previous != path:
+            raise CorpusError(
+                f"duplicate doc_id {doc.doc_id!r} in {path} and {previous}"
+            )
+        where[doc.doc_id] = path
+        docs.append(doc)
+
+    if skipped:
+        for path, subject in skipped:
+            log.warning(
+                "skipping unparseable draft %s (subject %s is not configured)",
+                path.name,
+                subject,
+            )
+
     return docs if include_unconfigured else configured_only(docs)
 
 

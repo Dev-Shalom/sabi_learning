@@ -207,3 +207,70 @@ def test_ingest_ignores_a_syllabus_that_is_not_switched_on():
         assert not kept, f"unconfigured documents survived the filter: {kept}"
         # Which also means the drafts on disk are genuinely being excluded.
         assert len(live) == len(drafts) - len(unconfigured)
+
+
+def test_a_broken_draft_does_not_stop_the_live_corpus(tmp_path, monkeypatch):
+    """A subject nobody has switched on must not be able to break ingest.
+
+    This is a regression test. A half-written Chemistry document with an
+    unquoted colon in its title -- `title: Hydrocarbons: alkanes` -- is not
+    valid YAML, and because the loader globbed the whole corpus tree before
+    anything could filter it, `sabi ingest` failed outright. For Mathematics
+    and Physics too, neither of which had anything to do with it.
+
+    Authoring a subject that is switched off should not be able to break the
+    one that is switched on.
+    """
+    from sabi.corpus import ingest as ingest_mod
+    from sabi.corpus.loader import CorpusError
+    from sabi.retrieval.scope import declared_subjects
+
+    live = declared_subjects()
+    assert live, "no subjects configured, so this test proves nothing"
+
+    root = tmp_path / "corpus"
+    (root / "live").mkdir(parents=True)
+    (root / "draft").mkdir(parents=True)
+
+    (root / "live" / "good.md").write_text(
+        "---\n"
+        "doc_id: live-good\n"
+        "title: A document that parses\n"
+        "source: test\n"
+        "attribution: syllabus\n"
+        "topic: Testing\n"
+        f"subject: {live[0]}\n"
+        "exam_board: WAEC\n"
+        "locator: TST A1\n"
+        "---\n\n## What the syllabus requires\n\nSomething.\n",
+        encoding="utf-8",
+    )
+    # Not valid YAML, and tagged with a subject nobody has configured.
+    (root / "draft" / "broken.md").write_text(
+        "---\n"
+        "doc_id: draft-broken\n"
+        "title: Hydrocarbons: alkanes, alkenes and alkynes\n"
+        "subject: Astronomy\n"
+        "---\n\n## Body\n\nText.\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(ingest_mod, "CORPUS_ROOT", root)
+
+    docs = ingest_mod.collect()
+    assert [d.doc_id for d in docs] == ["live-good"], (
+        "the broken draft should have been skipped, not fatal"
+    )
+
+    # But a broken file belonging to a *live* subject must still stop it:
+    # skipping that quietly would hide a real problem.
+    (root / "live" / "alsobroken.md").write_text(
+        "---\n"
+        "doc_id: live-broken\n"
+        "title: Another: unquoted colon\n"
+        f"subject: {live[0]}\n"
+        "---\n\n## Body\n\nText.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(CorpusError):
+        ingest_mod.collect()

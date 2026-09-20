@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Sabi — your notebook{% endblock %}
+{% block description %}Answers you have kept, with the syllabus passages behind them saved exactly as they read.{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Your notebook</h1>
+  <p>
+    {% if total %}
+    {{ total }} answer{{ '' if total == 1 else 's' }} kept. Each one is stored
+    the way it read when you saved it, sources and all, so revising from it
+    later shows you the same thing.
+    {% else %}
+    Answers you keep are stored here, with the syllabus passage behind each
+    one saved alongside.
+    {% endif %}
+  </p>
+</div>
+
+{% if saved and saved != 'removed' %}
+<p class="field-help" role="status">Saved. It will read the same when you come back to it.</p>
+{% elif saved == 'removed' %}
+<p class="field-help" role="status">Removed from your notebook.</p>
+{% endif %}
+
+{% if subject_counts | length > 1 %}
+<ul class="filter-row" aria-label="Filter by subject">
+  <li>
+    <a class="filter{% if not chosen %} is-current{% endif %}" href="/notebook">
+      All <span>{{ total }}</span>
+    </a>
+  </li>
+  {% for name, n in subject_counts %}
+  <li>
+    <a class="filter{% if chosen == name %} is-current{% endif %}"
+       href="/notebook?subject={{ name }}">
+      {{ name }} <span>{{ n }}</span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if entries %}
+<div class="kept mt-5">
+  {% for e in entries %}
+  <article class="keep reveal">
+    <header class="keep-head">
+      <div>
+        <h2>{{ e.question }}</h2>
+        <p class="keep-meta">
+          {{ e.subject }}{% if e.topic %} · {{ e.topic }}{% endif %}
+          · kept {{ relative_day(e.created_at, today) }}
+        </p>
+      </div>
+      <form method="post" action="/notebook/{{ e.id }}/remove">
+        {{ csrf_input | safe }}
+        <button class="btn-plain" type="submit">Remove</button>
+      </form>
+    </header>
+
+    {% if e.note %}
+    <p class="keep-note">{{ e.note }}</p>
+    {% endif %}
+
+    <div class="answer">
+      {{ e.answer | render_answer(e.locators) | safe }}
+    </div>
+
+    {% if e.citations %}
+    <section class="sources">
+      <h2>Where this came from</h2>
+      {% for c in e.citations %}
+      <details class="source" id="keep-{{ e.id }}-{{ loop.index }}">
+        <summary>
+          <span class="locator">{{ c.locator }}</span>
+          <span class="attribution">{{ attribution_label(c.attribution) }}</span>
+          <span class="disclose">Show the source</span>
+        </summary>
+        <div class="source-body">
+          <h3>{{ c.title }}</h3>
+          {{ c.text | render_source(c.highlight) | safe }}
+        </div>
+      </details>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    <div class="disclosure">{{ e.disclosure }}</div>
+  </article>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="empty mt-5">
+  <h3>Nothing kept yet</h3>
+  <p>
+    When an answer is worth coming back to, save it. Sabi keeps the answer and
+    the syllabus passage behind it exactly as they read, so the corpus changing
+    later cannot change what you revised from.
+  </p>
+  <p class="mt-4"><a class="btn" href="/app">Ask a question</a></p>
+</div>
+{% endif %}
+{% endblock %}

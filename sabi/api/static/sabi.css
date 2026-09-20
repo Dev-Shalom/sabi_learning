@@ -1770,6 +1770,85 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 .empty h3 { font-family: var(--sans); font-size: var(--step-0); color: var(--ink); margin-bottom: var(--s-2); }
 
+/* ============================================================ notebook */
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 40px;
+  padding: 0 var(--s-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  font-size: var(--step--1);
+  text-decoration: none;
+}
+
+.filter span { color: var(--ink-soft); font-family: var(--mono); }
+.filter:hover { border-color: var(--evidence); text-decoration: none; }
+
+.filter.is-current {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+.filter.is-current span { color: var(--on-accent); }
+
+.kept { display: grid; gap: var(--s-6); }
+
+/* Each kept answer is a sheet in its own right, so it gets a rule above it
+ * rather than a card around it -- four cards in a column is the thing the
+ * rest of this design avoids. */
+.keep { padding-top: var(--s-5); border-top: 1px solid var(--rule); }
+
+.keep-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.keep-head h2 {
+  font-family: var(--sans);
+  font-size: var(--step-1);
+  font-weight: 500;
+  line-height: 1.35;
+  max-width: 42ch;
+}
+
+.keep-meta { font-size: var(--step--1); color: var(--ink-soft); margin-top: var(--s-2); }
+
+/* The student's own words, marked as theirs rather than as Sabi's. */
+.keep-note {
+  margin-top: var(--s-4);
+  padding-left: var(--s-4);
+  border-left: 2px solid var(--rule);
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  font-style: italic;
+  max-width: var(--measure);
+}
+
+.keep-bar { max-width: var(--measure); margin-top: var(--s-5); }
+
+.keep-form { display: flex; gap: var(--s-2); align-items: center; }
+.keep-form input[type="text"] { flex: 1; }
+.keep-form button { flex: none; }
+
+@media (max-width: 34rem) {
+  .keep-form { flex-direction: column; align-items: stretch; }
+}
+
 /* ============================================================ admin */
 
 .admin { width: 100%; border-collapse: collapse; font-size: var(--step--1); }

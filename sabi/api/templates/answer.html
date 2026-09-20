@@ -70,6 +70,27 @@
   </div>
 </form>
 
+{# Keeping an answer needs an account: a notebook that disappears when a
+   student clears their browser is worse than none, because they would have
+   trusted it with revision they then lose. #}
+<div class="keep-bar">
+  {% if viewer and viewer.is_authenticated %}
+  <form method="post" action="/notebook/save" class="keep-form">
+    {{ csrf_input | safe }}
+    <input type="hidden" name="request_id" value="{{ result.request_id }}">
+    <label for="keep-note" class="visually-hidden">Why you are keeping this</label>
+    <input type="text" id="keep-note" name="note" maxlength="600"
+           placeholder="A note to your future self (optional)">
+    <button class="btn" type="submit">Keep this answer</button>
+  </form>
+  {% else %}
+  <p class="field-help">
+    <a href="/signup">Create a free account</a> to keep this answer, with its
+    sources, for revision later.
+  </p>
+  {% endif %}
+</div>
+
 <div class="disclosure">
   {{ result.disclosure }}
 </div>

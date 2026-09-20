@@ -314,6 +314,54 @@ class Feedback(Base):
     promoted_golden_id: Mapped[int | None] = mapped_column(Integer)
 
 
+class NotebookEntry(Base):
+    """An answer a student chose to keep.
+
+    The snapshot is the whole point, and it follows `Feedback.snapshot` for
+    the same reason. A saved answer must still read correctly in three weeks,
+    and by then the corpus may have been re-chunked, a document edited, or a
+    locator reassigned. Rendering a saved answer live against whatever the
+    corpus says today would quietly change what a student revised from --
+    which is the exact failure this product exists to avoid, arriving by a
+    side door.
+
+    So the answer text, its citations and the source passages behind them are
+    copied in at save time. `request_id` stays as the link back to how it was
+    produced, but nothing about the display depends on it still resolving.
+    """
+
+    __tablename__ = "notebook_entries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    request_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("requests.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    # Denormalised so the list page needs no joins and no live corpus lookup.
+    question: Mapped[str] = mapped_column(Text)
+    subject: Mapped[str] = mapped_column(String(64), default="Mathematics")
+    exam_board: Mapped[str] = mapped_column(String(32), default="WAEC")
+    topic: Mapped[str | None] = mapped_column(String(120))
+
+    # The student's own words about why they kept it.
+    note: Mapped[str | None] = mapped_column(Text)
+
+    # Everything needed to render the answer exactly as it was: the text, the
+    # citations, and the source passage behind each one.
+    snapshot: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    __table_args__ = (
+        # One entry per answer per student: saving twice should update the
+        # note, not grow the list.
+        UniqueConstraint("user_id", "request_id", name="uq_notebook_user_request"),
+        Index("ix_notebook_user_created", "user_id", "created_at"),
+    )
+
+
 class GoldenItem(Base):
     """The evaluation set. Seed items and promoted feedback live in one table."""
 

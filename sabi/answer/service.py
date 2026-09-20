@@ -168,6 +168,25 @@ def _highlight(chunk_text: str, answer_text: str) -> str | None:
     return best if best_score >= 0.5 else None
 
 
+def citation_body(parts) -> str:
+    """The passage a citation panel shows, built from the chunks behind it.
+
+    Sibling chunks of one document share a locator, so they are joined back
+    together in document order, the context header each carries for retrieval
+    is stripped, and the result is reflowed for reading.
+
+    Public and separate because the notebook rebuilds saved citations later
+    from `Chunk` rows rather than from retrieval candidates, and has to
+    produce byte-identical text. The underline is computed against this
+    string, so a difference here would put it somewhere else or lose it.
+    """
+    from sabi.llm.offline import _strip_context_header
+    from sabi.textutil import reflow
+
+    ordered = sorted(parts, key=lambda c: c.ref)
+    return reflow("\n\n".join(_strip_context_header(c.text) for c in ordered))
+
+
 def _citations_from(retrieval: RetrievalResult, locators: list[str], answer: str) -> list[Citation]:
     """One panel per cited source.
 
@@ -188,7 +207,7 @@ def _citations_from(retrieval: RetrievalResult, locators: list[str], answer: str
         parts.sort(key=lambda c: c.ref)
         head = parts[0]
         prov = head.provenance
-        body = reflow("\n\n".join(_strip_context_header(c.text) for c in parts))
+        body = citation_body(parts)
         out.append(
             Citation(
                 locator=locator,

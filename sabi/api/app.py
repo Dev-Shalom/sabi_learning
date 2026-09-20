@@ -49,6 +49,7 @@ from sabi.config import runtime
 from sabi.db import get_session
 from sabi.limits import limiter
 from sabi.models import Feedback, GoldenItem, Request as RequestRow, WaitlistEntry
+from sabi import notebook
 from sabi.obs import dashboard as dash
 from sabi.retrieval.scope import RetrievalScope, live_scopes
 
@@ -409,6 +410,75 @@ def logout(
     response = RedirectResponse("/", status_code=303)
     clear_session_cookie(response)
     return response
+
+
+# ----------------------------------------------------------------- notebook
+
+
+@app.post("/notebook/save")
+def notebook_save(
+    request: Req,
+    request_id: str = Form(...),
+    note: str = Form(""),
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_login),
+):
+    """Keep an answer.
+
+    Requires an account, because a notebook that vanishes when a student
+    clears their browser is worse than no notebook -- they would have
+    trusted it with revision they then lose.
+    """
+    try:
+        rid = uuid.UUID(request_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="bad request id")
+
+    row = s.get(RequestRow, rid)
+    if row is None:
+        raise HTTPException(status_code=404, detail="unknown request")
+    if row.user_id != v.user.id:
+        # Same rule as feedback: you can only keep your own answers.
+        raise HTTPException(status_code=403, detail="not your answer")
+
+    # Rebuilt from the stored request rather than re-answered, so saving
+    # costs nothing and cannot produce different text from what was shown.
+    saved = notebook.save_from_request(s, user=v.user, request=row, note=note)
+    return RedirectResponse(
+        f"/notebook?saved={saved.id}", status_code=303
+    )
+
+
+@app.get("/notebook", response_class=HTMLResponse)
+def notebook_page(
+    request: Req,
+    subject: str = "",
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_login),
+):
+    ctx = base_context(request, v, nav="notebook")
+    ctx.update(
+        {
+            "entries": notebook.listing(s, user=v.user, subject=subject or None),
+            "subject_counts": notebook.subjects(s, user=v.user),
+            "chosen": subject,
+            "total": notebook.count(s, user=v.user),
+            "today": limiter.wat_today(),
+            "saved": request.query_params.get("saved", ""),
+        }
+    )
+    return templates.TemplateResponse(request, "notebook.html", ctx)
+
+
+@app.post("/notebook/{entry_id}/remove")
+def notebook_remove(
+    request: Req,
+    entry_id: int,
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_login),
+):
+    notebook.remove(s, user=v.user, entry_id=entry_id)
+    return RedirectResponse("/notebook?saved=removed", status_code=303)
 
 
 # ---------------------------------------------------------------- dashboard
