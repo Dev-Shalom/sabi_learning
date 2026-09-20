@@ -51,8 +51,17 @@ def cmd_status(args: argparse.Namespace) -> int:
     print(f"chunks         {chunks}")
     print(f"golden items   {golden}")
     print(f"requests       {reqs}")
+    from sabi.schema import MIN_PGVECTOR, pgvector_version
+
+    pgv = pgvector_version()
+    shown = ".".join(str(n) for n in pgv) if pgv else "not installed"
+    if pgv and pgv < MIN_PGVECTOR:
+        wanted = ".".join(str(n) for n in MIN_PGVECTOR)
+        shown += f"  (below {wanted}: filtered vector search will lose recall)"
+
     print(f"embedder       {emb.value.get('identity') if emb else 'none'}")
     print(f"corpus version {corpus.value.get('version') if corpus else 'unindexed'}")
+    print(f"pgvector       {shown}")
     return 0
 
 

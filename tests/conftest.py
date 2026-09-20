@@ -11,6 +11,7 @@ first use by design.
 from __future__ import annotations
 
 import os
+import re
 import tempfile
 from pathlib import Path
 
@@ -56,6 +57,14 @@ def database() -> None:
     apply_ingest(None, prune=True, refit=True)
 
 
+# Everything except these is traffic, and traffic is wiped between tests. Naming
+# what to *keep* rather than what to clear means a new table is cleaned the day
+# it is added -- the previous hardcoded TRUNCATE list silently leaked state from
+# any table nobody remembered to add to it, and the bare `DELETE FROM users` that
+# followed it would fail outright on the first table to reference users.
+KEEP_BETWEEN_TESTS = frozenset({"documents", "chunks", "plans", "system_state"})
+
+
 @pytest.fixture(autouse=True)
 def clean_traffic():
     """Each test starts with no requests, users or feedback.
@@ -67,11 +76,18 @@ def clean_traffic():
     from sqlalchemy import text
 
     from sabi.db import session_scope
+    from sabi.models import Base
 
+    tables = [
+        t.name for t in Base.metadata.sorted_tables
+        if t.name not in KEEP_BETWEEN_TESTS
+    ]
+    # CASCADE covers dependents; users is truncated with the rest rather than
+    # deleted after, so order does not matter and foreign keys cannot block it.
     with session_scope() as s:
-        s.execute(text("TRUNCATE feedback, usage_events, requests, waitlist, "
-                       "golden_items, answer_cache RESTART IDENTITY CASCADE"))
-        s.execute(text("DELETE FROM users"))
+        s.execute(
+            text(f"TRUNCATE {', '.join(tables)} RESTART IDENTITY CASCADE")
+        )
 
 
 @pytest.fixture
@@ -82,10 +98,47 @@ def session():
         yield s
 
 
+# Every state-changing POST carries a CSRF token, which is bound to the
+# caller's session or, for an anonymous visitor, to their signed id cookie.
+# Rather than thread that through sixty call sites, the test client fetches a
+# token the same way a browser would -- by loading a page that has a form on
+# it -- and fills the field in when the test did not.
+#
+# Tests that want to check the protection itself pass `csrf_token=""`
+# explicitly, which is honoured and not overwritten.
+CSRF_FIELD = re.compile(r'name="csrf_token" value="([^"]+)"')
+
+
+class FormClient:
+    """A TestClient that fills in the CSRF field, as a browser would."""
+
+    def __init__(self, app) -> None:
+        from fastapi.testclient import TestClient
+
+        self._client = TestClient(app)
+
+    def __getattr__(self, name):
+        return getattr(self._client, name)
+
+    def csrf(self) -> str:
+        # /app carries the composer, and the GET also establishes the signed
+        # anonymous cookie that the token is derived from.
+        page = self._client.get("/app")
+        found = CSRF_FIELD.search(page.text)
+        assert found, "no CSRF field on /app -- has the composer changed?"
+        return found.group(1)
+
+    def post(self, url, **kwargs):
+        data = kwargs.get("data")
+        if isinstance(data, dict) and "csrf_token" not in data:
+            data = dict(data)
+            data["csrf_token"] = self.csrf()
+            kwargs["data"] = data
+        return self._client.post(url, **kwargs)
+
+
 @pytest.fixture
 def client():
-    from fastapi.testclient import TestClient
-
     from sabi.api.app import app
 
-    return TestClient(app)
+    return FormClient(app)

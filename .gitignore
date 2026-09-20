@@ -9,3 +9,9 @@ __pycache__/
 .coverage
 htmlcov/
 var/
+
+# Agent tooling installed locally, not part of the product.
+# The design skill this project follows is installed with:
+#   npx -y skills add anthropics/skills --skill frontend-design --agent claude-code
+.claude/
+.agents/

@@ -14,7 +14,11 @@ jobs:
         # The same image used locally. Retrieval is half SQL -- tsvector
         # ranking, cosine distance, the lateral join in the exclusion query --
         # so CI runs against a real Postgres with pgvector, not a stand-in.
-        image: pgvector/pgvector:pg16
+        #
+        # Pinned to an exact pgvector version, not the floating pg16 tag: a
+        # filtered vector query's recall depends on the extension's behaviour,
+        # so "whatever pgvector shipped today" is not a fixed instrument.
+        image: pgvector/pgvector:0.8.6-pg16
         env:
           POSTGRES_USER: sabi
           POSTGRES_PASSWORD: sabi
@@ -76,7 +80,7 @@ jobs:
           python -m sabi.cli eval \
             --baseline eval/baselines/current.json \
             --save .eval-runs/ci.json \
-            --fail-under "citations.validity=1.0,retrieval.recall_at_k=0.95,grounding.mean_ratio=0.90,correctness.value_pass_rate=0.95,refusal.unanswerable_caught=0.80"
+            --fail-under "citations.validity=1.0,retrieval.recall_at_k=0.95,grounding.mean_ratio=0.90,correctness.value_pass_rate=0.95,refusal.unanswerable_caught=0.80,refusal.by_kind.unanswerable:out_of_subject.caught=1.0"
 
       - name: Upload the eval run
         if: always()
@@ -85,3 +89,66 @@ jobs:
           name: eval-run
           path: .eval-runs/ci.json
           if-no-files-found: ignore
+
+  # `create_all` creates missing tables and never alters an existing one, so a
+  # new column with no matching MIGRATIONS entry passes on every fresh database
+  # -- which is every database the job above builds. This job is the only place
+  # that failure is visible before production: it builds the schema at the
+  # previous commit, brings it forward with the current `bootstrap()`, and asks
+  # whether the result actually carries what the ORM declares.
+  schema-drift:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg16
+        env:
+          POSTGRES_USER: sabi
+          POSTGRES_PASSWORD: sabi
+          POSTGRES_DB: sabi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sabi"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      SABI_DATABASE_URL: postgresql+psycopg://sabi:sabi@localhost:5432/sabi
+      SABI_LLM_PROVIDER: offline
+      SABI_EMBEDDING_PROVIDER: local_lsa
+      SABI_IP_HASH_SALT: ci-salt
+
+    steps:
+      # Two commits, because the whole point is to build the previous one.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Build the schema as it stood at the previous commit
+        run: |
+          if ! git rev-parse --verify --quiet HEAD~1 >/dev/null; then
+            echo "no previous commit to compare against; nothing to check"
+            exit 0
+          fi
+          git worktree add ../prev HEAD~1
+          # Run the *old* bootstrap, so the database is genuinely one that
+          # predates this commit rather than one create_all just built.
+          (cd ../prev && PYTHONPATH=. python -c             "from sabi.schema import bootstrap; bootstrap()")
+
+      - name: Bring it forward and diff against the ORM
+        run: |
+          if [ ! -d ../prev ]; then exit 0; fi
+          python -c "from sabi.schema import bootstrap; bootstrap()"
+          python tools/schema_drift.py

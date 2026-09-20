@@ -19,7 +19,7 @@ Notes that matter more than the column list:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
@@ -123,6 +123,19 @@ class Chunk(Base):
 
     # Denormalised so a citation renders from one row.
     locator: Mapped[str] = mapped_column(String(64))
+
+    # Also denormalised from the parent document, so retrieval can be scoped
+    # without a join -- and, more to the point, so a *partial* index per scope
+    # exists to be matched. The same values sit in `provenance`, but JSONB is
+    # not cheaply indexable for this, and an HNSW walk that post-filters on a
+    # joined table silently returns fewer candidates than it was asked for.
+    subject: Mapped[str] = mapped_column(String(64), default="Mathematics")
+    exam_board: Mapped[str] = mapped_column(String(32), default="WAEC")
+    # True for a "Not on this syllabus" section. This was an unindexed
+    # `heading ILIKE '%not on this syllabus%'` over every chunk, on every
+    # request, with the pattern hardcoded as a default argument in two places.
+    is_exclusion: Mapped[bool] = mapped_column(Boolean, default=False)
+
     provenance: Mapped[dict] = mapped_column(JSONB, default=dict)
 
     embedding: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIM))
@@ -157,7 +170,14 @@ class Plan(Base):
 
 
 class User(Base):
-    """A device-scoped anonymous identity. No PII is required to use Sabi."""
+    """One identity, anonymous or not.
+
+    An account is not a separate row: signing up sets credentials on the row
+    the device already had, so every `requests`, `usage_events` and `feedback`
+    row keeps pointing at the same `users.id` and nothing has to be migrated.
+    It also means the daily allowance cannot be reset by signing up, which is
+    both the simpler implementation and the right anti-abuse answer.
+    """
 
     __tablename__ = "users"
 
@@ -166,8 +186,27 @@ class User(Base):
     plan: Mapped[str] = mapped_column(
         ForeignKey("plans.name"), default="free", index=True
     )
-    # Optional, only if a student volunteers it for the waitlist. Never required.
+    # The address as typed, for display. `email_normalised` is what is matched
+    # on, and it is the one carrying the uniqueness constraint.
     email: Mapped[str | None] = mapped_column(String(320))
+    # Not index=True: the partial unique index `uq_users_email_live` in
+    # schema.py POST_DDL already covers the only lookup there is (a live
+    # account by address), and a second index on the same column would be
+    # redundant. Declaring one here would also be invisible on an existing
+    # database, which is what tools/schema_drift.py caught.
+    email_normalised: Mapped[str | None] = mapped_column(String(320))
+    # scrypt, with its parameters inside the value so they can be raised later
+    # and old hashes still verified. Null for an anonymous identity.
+    password_hash: Mapped[str | None] = mapped_column(String(255))
+    signed_up_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Set when this row has been folded into another. The unique index on
+    # `email_normalised` is partial on this being null, so a merged-away row
+    # releases its address.
+    merged_into_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    # The date they sit the paper, for the countdown. Volunteered, never required.
+    exam_date: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
@@ -218,6 +257,12 @@ class Request(Base):
     cache_hit: Mapped[bool] = mapped_column(Boolean, default=False)
     ip_hash: Mapped[str | None] = mapped_column(String(64), index=True)
     client: Mapped[str] = mapped_column(String(24), default="web")  # web|eval|cli
+
+    # The retrieval scope this question was asked in. A dashboard breaks usage
+    # down by subject, and `promote` copies the pair onto the golden item so a
+    # promoted down-vote stays in the slice it came from.
+    subject: Mapped[str] = mapped_column(String(64), default="Mathematics")
+    exam_board: Mapped[str] = mapped_column(String(32), default="WAEC")
 
 
 class UsageEvent(Base):
@@ -299,6 +344,11 @@ class GoldenItem(Base):
     source_feedback_id: Mapped[int | None] = mapped_column(Integer)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    # Which scope this item measures. A global metric over several subjects
+    # cannot detect one subject regressing, so the suite slices on these.
+    subject: Mapped[str] = mapped_column(String(64), default="Mathematics")
+    exam_board: Mapped[str] = mapped_column(String(32), default="WAEC")
+
 
 class AnswerCache(Base):
     """Semantic cache. A hit costs one embedding call and a vector lookup."""
@@ -307,6 +357,10 @@ class AnswerCache(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     question_norm_hash: Mapped[str] = mapped_column(String(64), index=True)
+    # Which syllabus this answer was produced for. Two subjects can share a
+    # question's wording, and serving one's answer for the other would be the
+    # worst possible cache hit.
+    scope: Mapped[str] = mapped_column(String(64), default="WAEC:Mathematics")
     question: Mapped[str] = mapped_column(Text)
     embedding: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIM))
 
@@ -318,6 +372,80 @@ class AnswerCache(Base):
     hits: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_hit_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AuthSession(Base):
+    """A logged-in session.
+
+    A table rather than a signed cookie, for four reasons specific to this
+    app: a new table costs nothing under `create_all`; every route already
+    holds a database session, so the lookup rides along with work that is
+    happening anyway; revocation and "log out everywhere" become possible; and
+    it gives the dashboard somewhere to list a student's active devices.
+
+    Named AuthSession because `sqlalchemy.orm.Session` is imported everywhere
+    and a second meaning for the word would be a permanent hazard.
+    """
+
+    __tablename__ = "auth_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # Only the hash is stored. The token itself exists in the cookie and
+    # nowhere else, so a database dump does not let anyone log in.
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    # Per-session CSRF secret, so rotating the session invalidates every form
+    # that was open under the old one.
+    csrf_secret: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # For "this was a different device" on the dashboard. Both one-way.
+    ip_hash: Mapped[str | None] = mapped_column(String(64))
+    user_agent_hash: Mapped[str | None] = mapped_column(String(64))
+
+
+class RecoveryCode(Base):
+    """One-time codes, shown once at signup.
+
+    There is no email transport in this deployment, so a password reset has no
+    way to reach anyone. Codes are the transport-free answer: hashed the same
+    way a password is, single use, and useless to anyone reading the database.
+    """
+
+    __tablename__ = "recovery_codes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    code_hash: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class LoginAttempt(Base):
+    """Every login try, so repeated failures can be slowed down.
+
+    The existing limiter counts questions, not logins, so it offers no
+    protection here at all. Throttling is not optional either: verifying a
+    scrypt hash holds 16 MiB and a worker for a moment, which is itself a
+    lever worth pulling if nobody is counting.
+
+    The email is stored only as a salted hash, matching how IPs are handled --
+    a failed-login table should not become a list of who has an account.
+    """
+
+    __tablename__ = "login_attempts"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    email_hash: Mapped[str] = mapped_column(String(64), index=True)
+    ip_hash: Mapped[str | None] = mapped_column(String(64), index=True)
+    ok: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class SystemState(Base):

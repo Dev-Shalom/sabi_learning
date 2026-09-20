@@ -2,7 +2,10 @@
 # http://localhost:8000 with the corpus ingested.
 services:
   db:
-    image: pgvector/pgvector:pg16
+    # Pinned: retrieval depends on pgvector behaviour, not just its presence.
+    # 0.8+ is required for hnsw.iterative_scan, which keeps a filtered vector
+    # query from silently returning fewer rows than it asked for.
+    image: pgvector/pgvector:0.8.6-pg16
     environment:
       POSTGRES_USER: sabi
       POSTGRES_PASSWORD: sabi
