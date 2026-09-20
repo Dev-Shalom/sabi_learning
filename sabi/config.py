@@ -46,6 +46,25 @@ class Settings(BaseSettings):
     embedding_provider: str = "local_lsa"
     embedding_dim: int = 256
 
+    # How the local embedder is fitted. "full_svd" is the historic path: a dense
+    # TF-IDF matrix and a full LAPACK SVD. "randomised" is sparse TF-IDF plus a
+    # seeded randomised SVD, which is what survives a corpus several times this
+    # size and is reproducible across machines.
+    #
+    # The default stays "full_svd" on purpose. Every threshold in
+    # config/limits.yaml -- refusal, scope exclusion, cache similarity -- was
+    # swept against the vectors it produces, as was the committed eval baseline.
+    # Changing the fit changes every vector, so the switch is made deliberately,
+    # together with a new corpus and a threshold re-sweep, not by a default
+    # moving under anyone.
+    embedding_fit: str = "full_svd"
+
+    # Vocabulary controls. None means "whatever this fit mode's own default is"
+    # -- see MODE_DEFAULTS in sabi/retrieval/embeddings.py, which is where the
+    # reasoning lives. Set either to override both modes.
+    embedding_min_df: int | None = None
+    embedding_max_features: int | None = None
+
     anthropic_api_key: str | None = None
     voyage_api_key: str | None = None
 
@@ -55,6 +74,14 @@ class Settings(BaseSettings):
 
     # Salt for hashing IP addresses. We never store a raw IP.
     ip_hash_salt: str = "dev-salt-change-me"
+
+    # Signs the anonymous id cookie and derives CSRF tokens. Rotating it logs
+    # everyone out and invalidates every in-flight form, which is the correct
+    # behaviour for a leaked key.
+    secret_key: str = "dev-secret-change-me"
+
+    # How long a login lasts without being used. Rotated on every login.
+    session_days: int = 30
 
     limits_path: Path = DEFAULT_LIMITS_PATH
     artifact_dir: Path = REPO_ROOT / "var"

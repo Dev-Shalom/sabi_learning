@@ -1,36 +1,58 @@
 """The web app.
 
-Server-rendered HTML. The composer is a real form POST and the source panels are
-`<details>` elements, so the whole thing works with JavaScript off -- which
-matters when the audience is on cheap Android handsets over patchy mobile data.
-JavaScript only upgrades: it keeps you on the page, shows a visible working
-state, and turns a timeout into an explanation instead of a spinner.
+Server-rendered HTML. The composer is a real form POST, the source panels are
+`<details>`, the FAQ is `<details>`, and log in and sign up are two real forms
+on one page -- so the whole thing works with JavaScript off, which matters when
+the audience is on cheap Android handsets over patchy mobile data. JavaScript
+only upgrades: it keeps you on the page, shows a visible working state, turns a
+timeout into an explanation instead of a spinner, and animates the swap between
+the two auth panels.
+
+Identity is resolved in exactly one place (`sabi.accounts.identity.resolve`, via
+`Depends(viewer)`), so the allowance in the masthead is the same number the
+limiter enforced.
 """
 
 from __future__ import annotations
 
-import secrets
 import uuid
+from datetime import date
 from pathlib import Path
 from typing import Any
 
-from fastapi import Cookie, Depends, FastAPI, Form, Header, HTTPException, Request as Req
+from fastapi import Depends, FastAPI, Form, HTTPException, Request as Req
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
-from sabi.answer.service import answer_question
+from sabi.accounts import recovery, sessions as sessions_mod, service
+from sabi.api.deps import (
+    LoginRequired,
+    Viewer,
+    base_context,
+    clear_session_cookie,
+    client_ip,
+    csrf_input,
+    finish,
+    ip_hash_for,
+    require_admin,
+    require_csrf,
+    require_login,
+    set_session_cookie,
+    viewer,
+)
 from sabi.api.render import anchor_id, attribution_label, render_answer, render_source
-from sabi.config import runtime, settings
+from sabi.answer.service import answer_question
+from sabi.config import runtime
 from sabi.db import get_session
 from sabi.limits import limiter
-from sabi.models import Feedback, GoldenItem, Request as RequestRow, User, WaitlistEntry
+from sabi.models import Feedback, GoldenItem, Request as RequestRow, WaitlistEntry
+from sabi.obs import dashboard as dash
+from sabi.retrieval.scope import RetrievalScope, live_scopes
 
 BASE_DIR = Path(__file__).resolve().parent
-COOKIE = "sabi_id"
-COOKIE_MAX_AGE = 400 * 24 * 3600  # the longest a browser will honour
 
 app = FastAPI(title="Sabi", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
@@ -38,6 +60,8 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["anchor_id"] = anchor_id
 templates.env.globals["attribution_label"] = attribution_label
+templates.env.globals["relative_day"] = dash.relative_day
+templates.env.globals["exam_phrase"] = dash.exam_phrase
 templates.env.filters["render_answer"] = render_answer
 templates.env.filters["render_source"] = render_source
 
@@ -49,41 +73,11 @@ EXAMPLES = [
 ]
 
 
-def client_ip(request: Req) -> str | None:
-    """Real client address behind a proxy, if the proxy told us."""
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else None
-
-
-def anon_id_from(cookie_value: str | None) -> tuple[str, bool]:
-    """Return (anon_id, is_new). Device-scoped, opaque, no PII."""
-    if cookie_value and 16 <= len(cookie_value) <= 64 and cookie_value.isalnum():
-        return cookie_value, False
-    return uuid.uuid4().hex, True
-
-
-def set_cookie(response: Any, anon_id: str) -> None:
-    response.set_cookie(
-        COOKIE,
-        anon_id,
-        max_age=COOKIE_MAX_AGE,
-        httponly=True,
-        samesite="lax",
-        secure=settings().environment == "production",
-    )
-
-
-def base_context(request: Req, s: Session, anon_id: str) -> dict[str, Any]:
-    user = limiter.get_or_create_user(s, anon_id)
-    verdict = limiter.check(s, user, None)
-    return {
-        "request": request,
-        "remaining": verdict.remaining,
-        "cap": verdict.cap,
-        "reset_phrase": verdict.reset_phrase,
-    }
+@app.exception_handler(LoginRequired)
+def login_required_handler(request: Req, exc: LoginRequired):
+    """A dependency cannot return a redirect, so it raises and this converts."""
+    target = request.url.path or "/"
+    return RedirectResponse(f"/login?next={target}", status_code=303)
 
 
 @app.get("/healthz")
@@ -93,51 +87,89 @@ def healthz() -> JSONResponse:
     return JSONResponse({"ok": ping()})
 
 
+# ------------------------------------------------------------------- public
+
+
 @app.get("/", response_class=HTMLResponse)
-def index(
-    request: Req,
-    s: Session = Depends(get_session),
-    sabi_id: str | None = Cookie(default=None),
-):
-    anon_id, is_new = anon_id_from(sabi_id)
-    ctx = base_context(request, s, anon_id)
+def landing(request: Req):
+    """The landing page.
+
+    Deliberately touches no database and sets no cookie. It is a public page,
+    and resolving an identity here would mint a `users` row for every crawler
+    that ever loaded the site. An identity is created when somebody asks
+    something.
+    """
+    return templates.TemplateResponse(
+        request,
+        "landing.html",
+        {"request": request, "nav": "", "viewer": None, "csrf_input": ""},
+    )
+
+
+@app.get("/app", response_class=HTMLResponse)
+def study(request: Req, v: Viewer = Depends(viewer)):
+    """The study surface. Usable without an account, which is the point."""
+    ctx = base_context(request, v, nav="app")
     ctx["examples"] = EXAMPLES
-    response = templates.TemplateResponse(request, "index.html", ctx)
-    if is_new:
-        set_cookie(response, anon_id)
-    return response
+    # The picker only appears once there is a choice to make. With one
+    # syllabus configured, a select with a single option is furniture.
+    ctx["scopes"] = live_scopes()
+    ctx["scope"] = RetrievalScope.safe_parse(
+        request.query_params.get("subject"), request.query_params.get("exam_board")
+    )
+    return finish(templates.TemplateResponse(request, "index.html", ctx), v)
 
 
 @app.post("/ask", response_class=HTMLResponse)
 def ask(
     request: Req,
     question: str = Form(""),
+    subject: str = Form(""),
+    exam_board: str = Form(""),
     s: Session = Depends(get_session),
-    sabi_id: str | None = Cookie(default=None),
+    v: Viewer = Depends(require_csrf),
 ):
-    anon_id, is_new = anon_id_from(sabi_id)
+    # `answer_question` opens its own session, so this one has to let go of
+    # its locks first. Resolving the viewer can write `last_seen_at`, and
+    # holding that row lock while a second connection tries to take it is a
+    # deadlock that blocks until one side times out.
+    s.commit()
+
+    # `user.anon_id` rather than the cookie value: signing up claims the
+    # identity row rather than creating a new one, so this is stable across
+    # devices for a logged-in student and is the single metering key.
+    # The syllabus comes from the form. `safe_parse` inside the service falls
+    # back to the default rather than raising, so a stale bookmark carrying a
+    # subject that has since been retired gets an answer, not a 500.
     result = answer_question(
         question=question,
-        anon_id=anon_id,
+        anon_id=v.user.anon_id,
+        # Raw address: `answer_question` salts and hashes it itself, and a raw
+        # one is never stored.
         ip=client_ip(request),
         client="web",
+        subject=subject or None,
+        exam_board=exam_board or None,
     )
+    chosen = RetrievalScope.safe_parse(subject or None, exam_board or None)
 
     known = {c.locator for c in result.citations}
     ctx = {
         "request": request,
+        "viewer": v,
+        "nav": "app",
+        "csrf_input": csrf_input(v),
         "result": result,
         "known_locators": known,
         "remaining": result.remaining_today,
         "cap": result.daily_cap,
         "reset_phrase": result.reset_phrase,
         "examples": EXAMPLES,
+        "scopes": live_scopes(),
+        "scope": chosen,
     }
     template = "capped.html" if result.capped else "answer.html"
-    response = templates.TemplateResponse(request, template, ctx)
-    if is_new:
-        set_cookie(response, anon_id)
-    return response
+    return finish(templates.TemplateResponse(request, template, ctx), v)
 
 
 @app.post("/feedback")
@@ -147,14 +179,13 @@ def feedback(
     vote: int = Form(...),
     reason: str = Form(""),
     s: Session = Depends(get_session),
-    sabi_id: str | None = Cookie(default=None),
+    v: Viewer = Depends(require_csrf),
 ):
     """Store a vote against the request it belongs to.
 
-    Nothing identifying is stored: the feedback row carries the anonymous user
-    id and a snapshot of what produced the answer, and nothing else.
+    Nothing identifying is stored: the row carries the identity id and a
+    snapshot of what produced the answer, and nothing else.
     """
-    anon_id, _ = anon_id_from(sabi_id)
     try:
         rid = uuid.UUID(request_id)
     except ValueError:
@@ -164,14 +195,15 @@ def feedback(
     if row is None:
         raise HTTPException(status_code=404, detail="unknown request")
 
-    user = limiter.get_or_create_user(s, anon_id)
-    if row.user_id != user.id:
-        # Votes are only accepted from the device that asked. Without this,
-        # anyone could poison the review queue by posting request ids.
+    if row.user_id != v.user.id:
+        # Votes are only accepted from whoever asked. Without this, anyone
+        # could poison the review queue by posting request ids.
         raise HTTPException(status_code=403, detail="not your request")
 
     existing = s.execute(
-        select(Feedback).where(Feedback.request_id == rid, Feedback.user_id == user.id)
+        select(Feedback).where(
+            Feedback.request_id == rid, Feedback.user_id == v.user.id
+        )
     ).scalar_one_or_none()
 
     snapshot = {
@@ -185,6 +217,8 @@ def feedback(
         "refused": row.refused,
         "refusal_kind": row.refusal_kind,
         "route": row.route,
+        "subject": row.subject,
+        "exam_board": row.exam_board,
     }
 
     if existing:
@@ -195,7 +229,7 @@ def feedback(
         s.add(
             Feedback(
                 request_id=rid,
-                user_id=user.id,
+                user_id=v.user.id,
                 vote=1 if int(vote) > 0 else -1,
                 reason=reason or None,
                 snapshot=snapshot,
@@ -204,26 +238,24 @@ def feedback(
 
     accepts_html = "text/html" in (request.headers.get("accept") or "")
     if accepts_html:
-        return RedirectResponse(f"/thanks?vote={1 if int(vote) > 0 else -1}", status_code=303)
+        return RedirectResponse(
+            f"/thanks?vote={1 if int(vote) > 0 else -1}", status_code=303
+        )
     return JSONResponse({"ok": True})
 
 
 @app.get("/thanks", response_class=HTMLResponse)
-def thanks(request: Req, vote: int = 1, s: Session = Depends(get_session),
-           sabi_id: str | None = Cookie(default=None)):
-    anon_id, _ = anon_id_from(sabi_id)
-    ctx = base_context(request, s, anon_id)
+def thanks(request: Req, vote: int = 1, v: Viewer = Depends(viewer)):
+    ctx = base_context(request, v)
     ctx["vote"] = vote
-    return templates.TemplateResponse(request, "thanks.html", ctx)
+    return finish(templates.TemplateResponse(request, "thanks.html", ctx), v)
 
 
 @app.get("/waitlist", response_class=HTMLResponse)
-def waitlist_form(request: Req, s: Session = Depends(get_session),
-                  sabi_id: str | None = Cookie(default=None)):
-    anon_id, _ = anon_id_from(sabi_id)
-    ctx = base_context(request, s, anon_id)
+def waitlist_form(request: Req, v: Viewer = Depends(viewer)):
+    ctx = base_context(request, v)
     ctx["saved"] = False
-    return templates.TemplateResponse(request, "waitlist.html", ctx)
+    return finish(templates.TemplateResponse(request, "waitlist.html", ctx), v)
 
 
 @app.post("/waitlist", response_class=HTMLResponse)
@@ -231,40 +263,211 @@ def waitlist_save(
     request: Req,
     email: str = Form(""),
     s: Session = Depends(get_session),
-    sabi_id: str | None = Cookie(default=None),
+    v: Viewer = Depends(require_csrf),
 ):
-    anon_id, _ = anon_id_from(sabi_id)
-    user = limiter.get_or_create_user(s, anon_id)
     email = (email or "").strip()[:320]
-    s.add(WaitlistEntry(user_id=user.id, email=email or None))
-    ctx = base_context(request, s, anon_id)
+    s.add(WaitlistEntry(user_id=v.user.id, email=email or None))
+    ctx = base_context(request, v)
     ctx["saved"] = True
     ctx["left_email"] = bool(email)
-    return templates.TemplateResponse(request, "waitlist.html", ctx)
+    return finish(templates.TemplateResponse(request, "waitlist.html", ctx), v)
 
 
 @app.get("/privacy", response_class=HTMLResponse)
-def privacy(request: Req, s: Session = Depends(get_session),
-            sabi_id: str | None = Cookie(default=None)):
-    anon_id, _ = anon_id_from(sabi_id)
-    ctx = base_context(request, s, anon_id)
+def privacy(request: Req, v: Viewer = Depends(viewer)):
+    ctx = base_context(request, v, nav="privacy")
     cfg = runtime()
-    ctx["cap"] = int(cfg.get("plans.free.daily_question_cap", 15))
-    return templates.TemplateResponse(request, "privacy.html", ctx)
+    ctx["free_cap"] = int(cfg.get("plans.free.daily_question_cap", 15))
+    ctx["account_cap"] = int(cfg.get("plans.free_account.daily_question_cap", 25))
+    return finish(templates.TemplateResponse(request, "privacy.html", ctx), v)
+
+
+# --------------------------------------------------------------------- auth
+
+
+def _auth_page(
+    request: Req,
+    v: Viewer,
+    *,
+    panel: str,
+    error: str = "",
+    field: str = "",
+    email: str = "",
+    next_url: str = "",
+    status: int = 200,
+):
+    ctx = base_context(request, v, nav=panel)
+    ctx.update(
+        {
+            "panel": panel,
+            "error": error,
+            "error_field": field,
+            "email": email,
+            "next_url": next_url,
+            "min_password": service.MIN_PASSWORD,
+        }
+    )
+    response = templates.TemplateResponse(
+        request, "auth.html", ctx, status_code=status
+    )
+    return finish(response, v)
+
+
+@app.get("/login", response_class=HTMLResponse)
+def login_form(request: Req, next: str = "", v: Viewer = Depends(viewer)):
+    if v.is_authenticated:
+        return RedirectResponse("/dashboard", status_code=303)
+    return _auth_page(request, v, panel="login", next_url=next)
+
+
+@app.get("/signup", response_class=HTMLResponse)
+def signup_form(request: Req, next: str = "", v: Viewer = Depends(viewer)):
+    if v.is_authenticated:
+        return RedirectResponse("/dashboard", status_code=303)
+    return _auth_page(request, v, panel="signup", next_url=next)
+
+
+@app.post("/signup", response_class=HTMLResponse)
+def signup(
+    request: Req,
+    email: str = Form(""),
+    password: str = Form(""),
+    next: str = Form(""),
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_csrf),
+):
+    result = service.sign_up(
+        s,
+        user=v.user,
+        email=email,
+        password=password,
+        ip_hash=ip_hash_for(request),
+        user_agent=request.headers.get("user-agent"),
+    )
+    if not result.ok:
+        return _auth_page(
+            request,
+            v,
+            panel="signup",
+            error=result.error,
+            field=result.field_name,
+            email=email,
+            next_url=next,
+            status=400,
+        )
+
+    # The codes exist in the clear exactly once, here. Rendered rather than
+    # redirected to, because a redirect would lose them.
+    ctx = base_context(request, v, nav="dashboard")
+    ctx.update({"codes": result.recovery_codes, "next_url": next or "/dashboard"})
+    response = templates.TemplateResponse(request, "signed_up.html", ctx)
+    set_session_cookie(response, result.token or "")
+    return finish(response, v)
+
+
+@app.post("/login", response_class=HTMLResponse)
+def login(
+    request: Req,
+    email: str = Form(""),
+    password: str = Form(""),
+    next: str = Form(""),
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_csrf),
+):
+    result = service.log_in(
+        s,
+        email=email,
+        password=password,
+        ip_hash=ip_hash_for(request),
+        user_agent=request.headers.get("user-agent"),
+    )
+    if not result.ok:
+        return _auth_page(
+            request,
+            v,
+            panel="login",
+            error=result.error,
+            field=result.field_name,
+            email=email,
+            next_url=next,
+            status=400,
+        )
+
+    target = next if next.startswith("/") else "/dashboard"
+    response = RedirectResponse(target, status_code=303)
+    set_session_cookie(response, result.token or "")
+    return response
+
+
+@app.post("/logout")
+def logout(
+    request: Req,
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_csrf),
+):
+    service.log_out(s, v.session)
+    response = RedirectResponse("/", status_code=303)
+    clear_session_cookie(response)
+    return response
+
+
+# ---------------------------------------------------------------- dashboard
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard(
+    request: Req,
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_login),
+):
+    ctx = base_context(request, v, nav="dashboard")
+    ctx.update(
+        {
+            "summary": dash.summary(s, v.user),
+            "topics": dash.topics(s, v.user),
+            "recent": dash.recent(s, v.user),
+            "today": limiter.wat_today(),
+            "codes_left": recovery.remaining(s, v.user.id),
+            "devices": len(sessions_mod.active_for(s, v.user.id)),
+            "saved": request.query_params.get("saved", ""),
+        }
+    )
+    return templates.TemplateResponse(request, "dashboard.html", ctx)
+
+
+@app.post("/dashboard/exam-date")
+def set_exam_date(
+    request: Req,
+    exam_date: str = Form(""),
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_login),
+):
+    """The countdown. Volunteered, and clearable -- so it can be removed too."""
+    raw = (exam_date or "").strip()
+    if not raw:
+        v.user.exam_date = None
+    else:
+        try:
+            v.user.exam_date = date.fromisoformat(raw)
+        except ValueError:
+            return RedirectResponse("/dashboard?saved=bad-date", status_code=303)
+    return RedirectResponse("/dashboard?saved=exam-date", status_code=303)
+
+
+@app.post("/dashboard/logout-everywhere")
+def logout_everywhere(
+    request: Req,
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_login),
+):
+    sessions_mod.revoke_all(s, v.user.id, keep=v.session)
+    return RedirectResponse("/dashboard?saved=logged-out", status_code=303)
 
 
 # --------------------------------------------------------------------- admin
 # The admin surface does not exist unless SABI_ADMIN_TOKEN is set. There is no
-# default credential and no login form to brute force.
-
-
-def require_admin(x_admin_token: str | None = Header(default=None)) -> bool:
-    token = settings().admin_token
-    if not token:
-        raise HTTPException(status_code=404)
-    if not x_admin_token or not secrets.compare_digest(x_admin_token, token):
-        raise HTTPException(status_code=404)
-    return True
+# default credential and no login form to brute force. `require_admin` lives
+# in deps.py now but is unchanged, including returning 404 rather than 403.
 
 
 @app.get("/admin/review", response_class=HTMLResponse)
@@ -284,7 +487,10 @@ def review_queue(
         .all()
     )
     return templates.TemplateResponse(
-        request, "admin_review.html", {"request": request, "rows": rows}
+        request,
+        "admin_review.html",
+        {"request": request, "rows": rows, "nav": "", "viewer": None,
+         "csrf_input": ""},
     )
 
 
@@ -299,7 +505,7 @@ def promote(
 ):
     """Promote a down-voted answer into the golden dataset.
 
-    This is a data move, not a rewrite: the feedback snapshot already holds the
+    A data move, not a rewrite: the feedback snapshot already holds the
     question, the retrieved refs and the model, because the schemas were made
     compatible for exactly this.
     """
@@ -324,6 +530,10 @@ def promote(
         unanswerable_kind=None if is_answerable else "not_in_corpus",
         notes=f"promoted from feedback {fb.id}; reason={fb.reason}",
         source_feedback_id=fb.id,
+        # Carried across so a promoted item stays in the slice it came from
+        # rather than silently joining the Mathematics set.
+        subject=snap.get("subject") or "Mathematics",
+        exam_board=snap.get("exam_board") or "WAEC",
     )
     s.add(item)
     s.flush()

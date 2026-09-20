@@ -33,6 +33,11 @@ WAT = timezone(timedelta(hours=1), "WAT")
 # the cap drift away from what the student experiences.
 COUNTED_EVENTS = ("question", "cache_hit", "refusal")
 
+# How stale `last_seen_at` is allowed to get before it is rewritten. It exists
+# to answer "is this identity still in use", which does not need minute
+# precision, and writing it on every request is a lock nobody needs.
+LAST_SEEN_GRACE = timedelta(minutes=15)
+
 
 def hash_ip(ip: str) -> str:
     """One-way. A raw IP is never stored."""
@@ -95,7 +100,13 @@ def get_or_create_user(s: Session, anon_id: str, plan_hint: str = "free") -> Use
         s.add(user)
         s.flush()
     else:
-        user.last_seen_at = datetime.now(timezone.utc)
+        # Only when it has gone stale. Touching this on every request makes a
+        # write out of every page view, and that write takes a row lock that
+        # is then held for the rest of the request -- which deadlocks against
+        # any code path that opens a second connection to the same row.
+        now = datetime.now(timezone.utc)
+        if user.last_seen_at is None or (now - user.last_seen_at) > LAST_SEEN_GRACE:
+            user.last_seen_at = now
     return user
 
 

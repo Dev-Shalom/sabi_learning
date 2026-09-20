@@ -18,6 +18,37 @@ plans:
     burst_per_minute: 6
     monthly_cost_ceiling_usd_per_user: 0.40
 
+  # What signing up buys. Note what it is NOT: the daily count is not reset by
+  # creating an account, because usage is keyed on the identity and signing up
+  # keeps the same one. So this is a higher ceiling, not a fresh start -- which
+  # is both the honest reward and the thing that stops "clear cookies, sign up,
+  # fifteen more" from working.
+  #
+  # The IP cap is higher too, for a specific reason: `ip_usage_today` counts
+  # every request from an address regardless of who sent it, so a student on
+  # school wifi or behind carrier NAT can be capped by strangers. An account is
+  # the signal that lets them out of that without opening the anonymous tier up.
+  free_account:
+    label: "Free account"
+    daily_question_cap: 25
+    daily_ip_cap: 240
+    burst_per_minute: 8
+    monthly_cost_ceiling_usd_per_user: 0.70
+
+# Which syllabuses exist. Retrieval is scoped to exactly one (board, subject)
+# pair per question, and a partial index is built per pair, so this list is
+# what decides both. Adding a subject here plus its corpus documents is the
+# whole of adding a subject -- there is no code change.
+#
+# Only list a subject once it has real documents: an empty scope retrieves
+# nothing and refuses everything, which looks like a bug rather than an
+# absence.
+syllabus:
+  subjects:
+    - Mathematics
+  exam_boards:
+    - WAEC
+
 limiter:
   # Applies to every caller including internal testing and the eval harness.
   # The eval harness runs as a real user on the `internal` plan; it is metered.
