@@ -238,6 +238,24 @@ neither was fixed by tuning anything:
   are now kept out of answer context; the refusal path reads them separately
   and always did.
 
+**A coverage gap the golden set does not measure.** The Chemistry scope
+document (`CHM A0`) lists six topic areas, and the corpus holds four of them.
+There is no environmental chemistry document — air and water pollution, hard
+water — and no qualitative analysis document, though WAEC's practical paper
+leans on tests for cations, anions and gases. Organic chemistry is one
+document: alkanols, alkanoic acids and esters are named in the scope and
+taught nowhere.
+
+Asked about any of them the system refuses at `low_confidence`, which is the
+safe outcome and was checked rather than assumed — "what causes hard water",
+"how do you test for a carbonate ion", "what is esterification" and "what is
+an alkanol" all refuse, none of them fabricates. But the scope document tells
+a student they can ask, so the failure they experience is a promise the corpus
+does not keep. No golden item covers this, because the golden set is built
+from the documents that exist; a slice can only test what somebody wrote.
+That is a general limitation of deriving eval items from the corpus, and it is
+worth naming here rather than discovering it from a student.
+
 Two patterns worth naming:
 
 1. **Short conceptual questions are the weak spot.** Both over-refusals are four
