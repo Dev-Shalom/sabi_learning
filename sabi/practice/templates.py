@@ -116,6 +116,7 @@ def template(
 
 
 def all_templates() -> list[Template]:
+    import sabi.practice.chemistry  # noqa: F401
     import sabi.practice.maths  # noqa: F401  (registers on import)
     import sabi.practice.physics  # noqa: F401
 
@@ -133,6 +134,19 @@ def for_scope(subject: str, exam_board: str = "WAEC") -> list[Template]:
         for t in all_templates()
         if t.subject == subject and t.exam_board == exam_board
     ]
+
+
+def practisable(exam_board: str = "WAEC") -> list[str]:
+    """Subjects that actually have templates.
+
+    Not the same list as the live retrieval scopes, and the difference is a
+    real one: switching Chemistry on made it answerable and offerable in the
+    subject picker, while the templates were still Mathematics and Physics
+    only. Choosing it raised straight out of `build_set` into a 500. A
+    subject is practisable when something here can build a question for it,
+    which is a fact about this module and belongs in this module.
+    """
+    return sorted({t.subject for t in all_templates() if t.exam_board == exam_board})
 
 
 def topics(subject: str, exam_board: str = "WAEC") -> list[str]:

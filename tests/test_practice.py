@@ -371,6 +371,54 @@ def test_the_daily_set_cap_is_enforced(client, session, monkeypatch):
     assert len(session.execute(select(PracticeSet)).scalars().all()) == 1
 
 
+def test_the_picker_only_offers_subjects_that_can_build_a_set(client):
+    """A subject can be answerable before anyone has written practice for it.
+
+    Switching Chemistry on made it a live retrieval scope, and the picker was
+    reading live scopes -- so it offered Chemistry, `build_set` found no
+    templates, raised, and the student got a 500 from a dropdown the product
+    had put in front of them. The picker now reads what the template registry
+    can actually build.
+    """
+    sign_up(client)
+    page = client.get("/practice").text
+    offered = set(re.findall(r'<option value="([^"]+)"', page))
+    buildable = set(templates_mod.practisable())
+
+    # Topic options share the same <select> markup, so only subject-shaped
+    # values are compared.
+    subjects_offered = offered & (
+        buildable | {"Chemistry", "Biology", "Further Mathematics"}
+    )
+    assert subjects_offered <= buildable, (
+        f"offered without templates: {sorted(subjects_offered - buildable)}"
+    )
+
+    for subject in buildable:
+        r = client.post(
+            "/practice/start",
+            data={"subject": subject, "topic": "",
+                  "csrf_token": csrf(client, "/practice")},
+            follow_redirects=False,
+        )
+        assert r.status_code == 303, f"{subject} is offered but will not start"
+
+
+def test_a_live_subject_without_templates_is_refused_not_a_500(client):
+    """The failure that hid behind the picker, tested directly."""
+    sign_up(client)
+    r = client.post(
+        "/practice/start",
+        data={"subject": "Chemistry", "topic": "",
+              "csrf_token": csrf(client, "/practice")},
+    )
+    # Either Chemistry has templates now, or it is refused cleanly. What it
+    # must never do is raise out of `build_set`.
+    if "Chemistry" in templates_mod.practisable():
+        pytest.skip("Chemistry now has practice templates")
+    assert r.status_code == 400
+
+
 def test_an_unknown_subject_is_refused_rather_than_silently_swapped(client):
     sign_up(client)
     r = client.post(

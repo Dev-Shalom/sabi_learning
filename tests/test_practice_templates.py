@@ -53,7 +53,7 @@ G = 10.0
 # The longest answer a student should have to type into a phone keyboard.
 MAX_ANSWER_LENGTH = 24
 
-LIVE_SUBJECTS = {"Mathematics", "Physics"}
+LIVE_SUBJECTS = {"Mathematics", "Physics", "Chemistry"}
 LIVE_BOARD = "WAEC"
 
 
@@ -679,6 +679,164 @@ def check_half_life_remaining(params, question):
     return initial * 0.5 ** (elapsed / half_life)
 
 
+
+# ----------------------------------------------------------------- chemistry
+#
+# The relative atomic masses are written out again here rather than imported,
+# so a template and its check cannot agree on a wrong mass. This is the table
+# CHM A0 publishes.
+
+MASSES = {
+    "H": 1.0, "C": 12.0, "N": 14.0, "O": 16.0, "Na": 23.0, "Mg": 24.0,
+    "S": 32.0, "Cl": 35.5, "K": 39.0, "Ca": 40.0, "Fe": 56.0, "Cu": 64.0,
+    "Zn": 65.0, "Ag": 108.0,
+}
+
+MOLAR_VOLUME = 22.4
+FARADAY_C = 96500.0
+
+ELEMENT = re.compile(r"([A-Z][a-z]?)(\d*)")
+
+
+def molar_mass(formula: str) -> float:
+    """Sum a relative molecular mass from the formula the student is shown.
+
+    Parsed from the printed string rather than looked up by name, so a
+    template that prints one formula and weighs another is caught. Handles
+    the single bracketed case in the set, Ca(OH)2.
+    """
+    bracket = re.fullmatch(r"([A-Za-z0-9]*)\(([A-Za-z0-9]+)\)(\d+)([A-Za-z0-9]*)",
+                           formula)
+    if bracket:
+        before, inside, multiplier, after = bracket.groups()
+        total = int(multiplier) * molar_mass(inside)
+        if before:
+            total += molar_mass(before)
+        if after:
+            total += molar_mass(after)
+        return total
+
+    total = 0.0
+    consumed = 0
+    for element, count in ELEMENT.findall(formula):
+        assert element in MASSES, f"unknown element {element!r} in {formula!r}"
+        total += MASSES[element] * (int(count) if count else 1)
+        consumed += len(element) + len(count)
+    assert consumed == len(formula), f"could not fully parse {formula!r}"
+    return total
+
+
+def check_moles_from_mass(params, question):
+    mass, formula = grab(r"in ([\d.]+) g of [^,]+, ([A-Za-z0-9()]+)\.", question)
+    return float(mass) / molar_mass(formula)
+
+
+def check_mass_from_moles(params, question):
+    moles, formula = grab(r"of ([\d.]+) mol of [^,]+, ([A-Za-z0-9()]+)\?", question)
+    return float(moles) * molar_mass(formula)
+
+
+def check_relative_molecular_mass(params, question):
+    (formula,) = grab(r"mass of [^,]+, ([A-Za-z0-9()]+)\.", question)
+    return molar_mass(formula)
+
+
+def check_moles_from_gas_volume(params, question):
+    (volume,) = floats(r"in ([\d.]+) dm3 of", question)
+    return volume / MOLAR_VOLUME
+
+
+def check_concentration_mol_per_dm3(params, question):
+    mass, formula = grab(r"^([\d.]+) g of [^,]+, ([A-Za-z0-9()]+),", question)
+    (volume_cm3,) = floats(r"up to ([\d.]+) cm3", question)
+    return (float(mass) / molar_mass(formula)) / (volume_cm3 / 1000.0)
+
+
+def check_concentration_g_per_dm3(params, question):
+    (formula,) = grab(r"A solution of [^,]+, ([A-Za-z0-9()]+),", question)
+    (molar,) = floats(r"concentration of ([\d.]+) mol/dm3", question)
+    return molar * molar_mass(formula)
+
+
+def check_dilution(params, question):
+    from_cm3, start, to_cm3 = floats(
+        r"^([\d.]+) cm3 of a ([\d.]+) mol/dm3 solution is diluted with water "
+        r"to ([\d.]+) cm3",
+        question,
+    )
+    assert to_cm3 > from_cm3, "diluting must increase the volume"
+    return start * from_cm3 / to_cm3
+
+
+def check_titration_concentration(params, question):
+    base_cm3, base_conc = floats(r"^([\d.]+) cm3 of ([\d.]+) mol/dm3", question)
+    (acid_cm3,) = floats(r"required ([\d.]+) cm3 of hydrochloric", question)
+    # The mole ratio is read off the printed equation rather than off params.
+    # Missing the 2 in front of HCl is exactly the mistake this question is
+    # set to catch, so the check has to make it possible to make.
+    (equation,) = grab(r"The equation is (.+?)\. Calculate", question)
+    acid_coefficient = 2 if re.search(r"\b2HCl\b", equation) else 1
+    base_moles = base_conc * base_cm3 / 1000.0
+    return (base_moles * acid_coefficient) / (acid_cm3 / 1000.0)
+
+
+def check_percentage_purity(params, question):
+    sample, pure = floats(
+        r"A ([\d.]+) g sample .*? contain ([\d.]+) g of the pure", question
+    )
+    assert pure <= sample, "a sample cannot hold more pure compound than it weighs"
+    return pure / sample * 100.0
+
+
+def check_percentage_yield(params, question):
+    theoretical, actual = floats(
+        r"give ([\d.]+) g of product actually gives ([\d.]+) g", question
+    )
+    assert actual <= theoretical, "a yield cannot beat the theoretical maximum"
+    return actual / theoretical * 100.0
+
+
+def check_electrolysis_mass(params, question):
+    current, seconds = floats(
+        r"current of ([\d.]+) A is passed for ([\d.]+) s", question
+    )
+    electrons, metal = grab(r"\+ (\d)e- -> ([A-Z][a-z]?)\.", question)
+    (stated,) = floats(r"\[[A-Z][a-z]? = ([\d.]+);", question)
+    assert stated == MASSES[metal], (
+        f"the question states {metal} = {stated}, the table says {MASSES[metal]}"
+    )
+    moles_of_electrons = current * seconds / FARADAY_C
+    return (moles_of_electrons / int(electrons)) * MASSES[metal]
+
+
+def check_heat_of_reaction(params, question):
+    volume, rise = floats(
+        r"^([\d.]+) cm3 of solution .*? rises by ([\d.]+) degrees", question
+    )
+    # The question states a density of 1 g/cm3, so the mass in grams is the
+    # volume in cm3, and a specific heat capacity of 4.2 J/g/K.
+    return volume * 4.2 * rise
+
+
+def check_rate_of_reaction(params, question):
+    start, end, seconds = floats(
+        r"falls from ([\d.]+) mol/dm3 to ([\d.]+) mol/dm3 in ([\d.]+) s",
+        question,
+    )
+    assert start > end, "the concentration of a reactant must fall"
+    return (start - end) / seconds
+
+
+def check_gas_law_volume(params, question):
+    volume, celsius, pressure = floats(
+        r"^([\d.]+) cm3 of a gas is collected at ([\d.]+) degrees Celsius and "
+        r"([\d.]+) mmHg",
+        question,
+    )
+    kelvin = celsius + 273.0
+    return Rounded(pressure * volume * 273.0 / (kelvin * 760.0), 1)
+
+
 CHECKERS: dict[str, Callable[[dict[str, Any], str], Any]] = {
     "base-to-ten": check_base_to_ten,
     "standard-form-product": check_standard_form_product,
@@ -730,6 +888,21 @@ CHECKERS: dict[str, Callable[[dict[str, Any], str], Any]] = {
     "ohms-law-power": check_ohms_law_power,
     "transformer-turns": check_transformer_turns,
     "half-life-remaining": check_half_life_remaining,
+    # chemistry
+    "moles-from-mass": check_moles_from_mass,
+    "mass-from-moles": check_mass_from_moles,
+    "relative-molecular-mass": check_relative_molecular_mass,
+    "moles-from-gas-volume": check_moles_from_gas_volume,
+    "concentration-mol-per-dm3": check_concentration_mol_per_dm3,
+    "concentration-g-per-dm3": check_concentration_g_per_dm3,
+    "dilution": check_dilution,
+    "titration-concentration": check_titration_concentration,
+    "percentage-purity": check_percentage_purity,
+    "percentage-yield": check_percentage_yield,
+    "electrolysis-mass": check_electrolysis_mass,
+    "heat-of-reaction": check_heat_of_reaction,
+    "rate-of-reaction": check_rate_of_reaction,
+    "gas-law-volume": check_gas_law_volume,
 }
 
 # The four templates whose right answer is a fraction, and the two whose

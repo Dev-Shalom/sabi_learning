@@ -588,17 +588,21 @@ def practice_home(
     v: Viewer = Depends(require_login),
 ):
     """Start a set, or pick up where the last one left off."""
-    subject = request.query_params.get("subject") or "Mathematics"
-    live = {sc.subject for sc in live_scopes()}
-    if subject not in live:
-        subject = "Mathematics"
+    # The subjects with templates, not the subjects with a corpus. A subject
+    # can be answerable before anyone has written practice for it, and
+    # offering one that cannot build a set is a 500 with a dropdown in front
+    # of it.
+    offerable = practice_templates.practisable()
+    subject = request.query_params.get("subject") or offerable[0]
+    if subject not in offerable:
+        subject = offerable[0]
 
     recent = practice.recent_sets(s, user=v.user)
     ctx = base_context(request, v, nav="practice")
     ctx.update(
         {
             "subject": subject,
-            "subjects": sorted(live),
+            "subjects": offerable,
             "topics": practice_templates.topics(subject),
             "recent": recent,
             "scores": practice.scores_for(
@@ -630,8 +634,7 @@ def practice_start(
     an unmetered path that writes rows is exactly what `limiter`'s docstring
     warns about, and nothing else here would notice a client looping on it.
     """
-    live = {sc.subject for sc in live_scopes()}
-    if subject not in live:
+    if subject not in practice_templates.practisable():
         raise HTTPException(status_code=400, detail="no practice for that subject")
 
     if practice.sets_today(s, user=v.user) >= practice.DAILY_SET_CAP:
