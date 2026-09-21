@@ -8,19 +8,28 @@ The failure list at the bottom is the part worth reading.
 
 ## The headline, with its caveat attached
 
-| Metric | Value |
-|---|---|
-| Retrieval recall@k (answerable items) | **0.987** |
-| Retrieval precision@1 | **0.936** |
-| Retrieval MRR | **0.959** |
-| Citation validity | **1.000** (0 invalid locators across 100 items) |
-| Groundedness, mean ratio | **1.000** |
-| Fully grounded answers | **1.000** |
-| Answer correctness (deterministic value check, n=59) | **1.000** |
-| Unanswerable questions correctly refused | **0.909** |
-| Over-refusal rate on answerable questions | **0.026** |
-| Latency p50 / p95 | **46 ms / 75 ms** |
-| Cost per question | **$0.00143** (estimated — see below) |
+157 items across three syllabuses: WAEC Mathematics, Physics and Chemistry.
+
+| Metric | Value | Maths | Physics | Chemistry |
+|---|---|---|---|---|
+| Retrieval recall@k (answerable items) | **1.000** | 1.000 | 1.000 | 1.000 |
+| Retrieval precision@1 | **0.958** | | | |
+| Retrieval MRR | **0.976** | | | |
+| Citation validity | **1.000** (0 invalid locators across 157 items) | | | |
+| Groundedness, mean ratio | **1.000** | | | |
+| Fully grounded answers | **1.000** | | | |
+| Answer correctness (deterministic value check, n=91) | **0.989** | | | |
+| Unanswerable questions correctly refused | **0.892** | | | |
+| Over-refusal rate on answerable questions | **0.017** | | | |
+| Latency p50 / p95 | **41 ms / 74 ms** | | | |
+| Cost per question | **$0.00155** (estimated — see below) | | | |
+
+Per-subject recall is gated separately, and that is arithmetic rather than
+caution: Chemistry is 21 of the 120 answerable items, so its recall could fall
+from 1.00 to 0.90 and move global recall by 21 × 0.10 / 120 = 0.0175 — inside
+the 0.02 tolerance on the global figure. A subject is only measured if it is
+measured on its own. `evalharness/runner.py` discovers the subjects from the
+run, so a subject switched on tomorrow is gated from its first baseline.
 
 **Read this before quoting any of it.** These numbers come from the *offline*
 provider: a deterministic extractive answerer with no model behind it. It exists
@@ -64,16 +73,28 @@ Caching is off for a run. A suite answering from cache measures the cache.
 
 ### The dataset
 
-100 items in `eval/golden/seed.jsonl`:
+157 items in `eval/golden/seed.jsonl`, built from three slices
+(`seed`, `physics.jsonl`, `chemistry.jsonl`) that are merged in rather than
+maintained separately:
 
 | Slice | n |
 |---|---|
-| Answerable | 78 |
-| Unanswerable — out of syllabus (Further Maths) | 12 |
-| Unanswerable — out of subject (biology, history, physics…) | 5 |
-| Unanswerable — not in corpus (specific past papers, grade boundaries) | 3 |
+| Answerable | 120 |
+| Unanswerable — out of syllabus (Further Maths, Further Physics, A-level Chemistry) | 23 |
+| Unanswerable — out of subject (asked under the wrong syllabus) | 8 |
+| Unanswerable — not in corpus (specific past papers, grade boundaries) | 4 |
 | Unanswerable — welfare | 2 |
-| …of which have a deterministic value check | 59 |
+| …of which have a deterministic value check | 91 |
+
+By subject: Mathematics 100, Physics 27, Chemistry 30.
+
+The answerable Physics and Chemistry items are **derived from the worked
+examples rather than written by hand**, so the expected value in the golden set
+and the answer in the corpus cannot drift apart — both come from the same
+computation, and a separate test recomputes that computation independently.
+The unanswerable items are hand-written, because what a syllabus *excludes* is
+a judgement rather than a calculation, and each one names the exclusion section
+that should ground the refusal.
 
 Questions are written the way a student would type them, not lifted from the
 corpus. Some reuse a worked example's numbers (testing retrieval); some ask for
@@ -135,15 +156,31 @@ subject to over_refusal_rate <= 0.03
        and recall_at_k       >= 0.97
 ```
 
-Chosen: `refusal_threshold = 0.46`, `scope_exclusion_threshold = 0.42`.
+Configured: `refusal_threshold = 0.40`, `scope_exclusion_threshold = 0.42`.
+
+**Why 0.40 when the sweep printed 0.38.** Exactly three of the 25 points meet
+the constraints, all at `scope = 0.42`, and two of them — refusal 0.38 and 0.42
+— are identical on every metric in the table: caught 0.892, over-refusal 0.017,
+value 0.989, recall 1.000. That is an indifference band, not a winner, so the
+configured value is its midpoint, which leaves margin on both sides rather than
+sitting on an edge. 0.40 is not a grid point, so it was run on its own and
+reproduced the band's row exactly.
 
 **The tradeoff that was rejected.** `refusal_threshold = 0.50` catches more
-unanswerable questions (0.955 against 0.909) but pushes over-refusal to 0.038 —
-three answerable questions refused instead of two. The rule was fixed in advance
+unanswerable questions (0.946 against 0.892) but pushes over-refusal to 0.050 —
+six answerable questions refused instead of two. The rule was fixed in advance
 and it says no, so the answer is no. Stated here because it is a real product
 judgement, not an arithmetic one: telling a student "I don't have this" when the
 material is right there is the failure they feel, and the one most likely to make
 them stop using it.
+
+**The floor went back up.** `MIN_VALUE_PASS` had been lowered from 0.98 to 0.97
+for two named failures that no threshold could fix. Both are now fixed — one by
+switching Chemistry on, which refitted the local embedder and re-weighted every
+term, and one by a change to how the rerank shortlist is built — so the floor
+returned to 0.98, pinned at one remaining failure. Re-applying the selection
+rule to the saved grid at both floors picks the same point, so the choice does
+not depend on it.
 
 The grid is in `eval/sweeps/thresholds.json`.
 
@@ -159,13 +196,16 @@ after the change rather than left stale.
 
 ## What it gets wrong
 
-Four failures out of 100. All four are listed, with the reason.
+Seven failures out of 157. All seven are listed, with the reason.
 
 | Item | Question | What happened |
 |---|---|---|
 | `u-003` | "Simplify (3 + 4i)(2 − i) where i is the square root of −1" | **Answered instead of refused.** Complex numbers are Further Maths, but no syllabus document says so in a section the exclusion index can find — the corpus lists what each *topic* excludes, and complex numbers belong to no Core topic, so nothing excludes them. Retrieval finds surds and algebra, confidence reaches 0.54, and it answers. Fixing this properly means a corpus addition, not a threshold change. |
 | `u-005` | "Expand (1 + x)^(−2) using the binomial theorem" | **Answered instead of refused.** Same root cause. "Binomial theorem" has no Core topic to be excluded from, and the question looks like an indices question (confidence 0.46). |
-| `g-009` | "What does a negative index mean?" | **Retrieval miss, then over-refusal.** The right chunk (SYL A3) is not in the top results at all; the question is four content words long and "negative" and "index" are common across the corpus. Confidence 0.43 falls below the threshold and it refuses. Correct behaviour given bad retrieval, but the retrieval is the bug. This is the single item dragging recall@k to 0.987. |
+| `g-009` | "What does a negative index mean?" | **Over-refused** at confidence 0.38. The question is four content words long and both "negative" and "index" are common across the corpus, so there is little for hybrid retrieval to work with. It used also to be a retrieval miss; it is not any more, which is why recall@k is 1.000. |
+| `u-011` | "Find the equation of a parabola with focus (2,0) and directrix x = −2" | **Answered instead of refused.** Same root cause as `u-003` and `u-005`: conic sections belong to no Core topic, so no exclusion section names them. |
+| `p-027` | "What was question 4 on the 2019 WAEC physics paper 2?" | **Answered instead of refused.** The corpus holds no past papers and says so, but the question reads as ordinary Physics vocabulary and retrieval obliges. This is `not_in_corpus`, the kind that stays hardest: there is no syllabus section that excludes a paper we simply do not have. |
+| `c-002` | "I have 5.6 dm³ of carbon dioxide at s.t.p, what mass is that" | **Wrong value, from a correct retrieval.** The syllabus document contains the literal string "5.6 dm3" inside a *different* calculation — heating CaCO₃ — and ranks first. The extractive answerer quotes that calculation and returns 14 g of CaO instead of 11 g of CO₂. The worked example that answers the question is retrieved too, at rank three. This is a generator failure, not a retrieval one, and it is the single item the 0.98 value floor is pinned at. |
 | `g-037` | "What does the discriminant tell you?" | **Over-refused** at confidence 0.276. The syllabus text explains the discriminant under a heading about quadratic equations; the word "discriminant" appears three times in one chunk and nowhere else, so there is no support mass and the confidence formula punishes that. |
 
 A fifth item, `g-077` ("What is the contrapositive of 'if p then q'?"), was on
@@ -178,6 +218,25 @@ changing a single answer, which is how the bug was noticed. Citations are now
 stripped before groundedness is scored. It is recorded here rather than quietly
 deleted because a metric that moves when only formatting changed is worth
 distrusting.
+
+**Fixed in the change that added Chemistry**, and worth recording because
+neither was fixed by tuning anything:
+
+- `g-008` ("Simplify 27^(2/3) × 16^(−1/2)") retrieved surds instead of
+  fractional indices. Switching Chemistry on refitted the local embedder over
+  a corpus 40% larger, which re-weighted every term, and the right example
+  started winning. A production embedding model is stateless and would not
+  have moved at all — this is a property of the offline embedder, and it cuts
+  both ways.
+- `p-005` ("What force accelerates a 1200 kg car at 2.5 m/s²") retrieved
+  circular motion instead of Newton's second law. The Newton's-law example was
+  ranked **first** by the vector search and thrown away by fusion before the
+  reranker could see it; see `_shortlist` in `sabi/retrieval/pipeline.py`.
+- `p-022` and `p-025` ("derive the equations of motion using calculus", "state
+  Maxwell's equations") were answered rather than refused, out of the very
+  "Not on this syllabus" sections that say they are excluded. Exclusion chunks
+  are now kept out of answer context; the refusal path reads them separately
+  and always did.
 
 Two patterns worth naming:
 

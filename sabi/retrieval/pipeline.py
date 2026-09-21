@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from sabi.config import runtime
+from sabi.corpus.ingest import EXCLUSION_HEADING
 from sabi.retrieval.embeddings import get_embedder, tokenize
 from sabi.retrieval.rerank import Scored, confidence, get_reranker
 from sabi.retrieval.scope import DEFAULT_SCOPE, RetrievalScope
@@ -165,14 +166,14 @@ def retrieve(
     rerank_n = int(cfg.get("retrieval.rerank_top_n", 8))
     final_n = int(cfg.get("retrieval.final_context_chunks", 4))
 
-    lexical = lexical_candidates(s, query, k_lex, scope=scope)
+    lexical = _answerable(lexical_candidates(s, query, k_lex, scope=scope))
     # The caller has usually embedded the question already for the cache lookup.
     # Re-embedding here would double the only per-request cost a cache hit has.
     vector = query_vector if query_vector is not None else get_embedder().embed_one(query)
-    semantic = vector_candidates(s, vector, k_vec, scope=scope)
+    semantic = _answerable(vector_candidates(s, vector, k_vec, scope=scope))
 
     fused = reciprocal_rank_fusion([lexical, semantic], k=rrf_k)
-    shortlist = fused[:rerank_n]
+    shortlist = _shortlist(fused, lexical, semantic, rerank_n)
 
     df, n_docs = corpus_document_frequencies(s, corpus_version, scope=scope)
     reranker = get_reranker(df, n_docs)
@@ -203,6 +204,70 @@ def retrieve(
             "final": len(selected),
         },
     )
+
+
+# Each retriever's best guesses, guaranteed a hearing. Two rather than one
+# because a worked example is usually split across two chunks and the
+# question half and the solution half rank adjacently.
+GUARANTEED_PER_RETRIEVER = 2
+
+
+def _answerable(candidates):
+    """Drop the 'Not on this syllabus' chunks from answer context.
+
+    An exclusion section says what the syllabus does *not* teach, and the
+    refusal path already reads them: `generator.scope_exclusion` runs its own
+    query over exactly these chunks, with its own threshold, and builds a
+    grounded refusal citing the text and locator. Nothing downstream of here
+    needs them.
+
+    Left in, they are actively misleading. Asked "what does a negative index
+    mean?", retrieval surfaced the scope document's exclusion list and the
+    answer opened "Further Mathematics topics are not examined here" before
+    quoting a mean-deviation formula -- a confident non-answer assembled from
+    a list of things the paper leaves out.
+
+    Filtered here in Python rather than in the SQL on purpose. Adding
+    `AND NOT c.is_exclusion` to the vector query would put a predicate on the
+    ANN walk that its partial index does not cover, and the walk would then
+    exhaust `ef_search` and quietly return fewer rows than `LIMIT` asked for
+    -- the exact failure `sabi/retrieval/scope.py` exists to prevent. The cost
+    of filtering afterwards is a couple of the 24 candidate slots.
+    """
+    return [c for c in candidates if EXCLUSION_HEADING not in (c.heading or "").lower()]
+
+
+def _shortlist(fused, lexical, semantic, rerank_n: int):
+    """The candidates the reranker gets to see.
+
+    Fusion is a cheap heuristic for narrowing the field; the reranker is the
+    component that actually judges relevance. Cutting the shortlist at the
+    fused ranking alone means fusion's mistakes can never be recovered, and
+    reciprocal rank fusion makes a specific mistake here: with `k` at 60 and
+    lists only 24 long, every rank contributes between 1/61 and 1/84, so
+    appearing in *both* lists outweighs being ranked first in one.
+
+    That is precisely backwards for the case the two retrievers exist to
+    cover. "Express a 0.5 mol/dm3 solution of H2SO4 in g/dm3" is answered
+    word for word by one worked example. The lexical index misses it -- the
+    student wrote "change", the document says "convert" -- while the vector
+    search ranks it first and second. Fusion put it twelfth, below the
+    shortlist, so the reranker never saw it; asked to rank the full fused
+    list, the reranker puts it first. The answer the student got instead was
+    a confident explanation of average rate of reaction.
+
+    So each retriever's top few survive regardless of fused rank, and the
+    reranker decides. This widens the shortlist by at most four, and the
+    reranker is local and lexical, so the cost is nil.
+    """
+    shortlist = list(fused[:rerank_n])
+    seen = {c.ref for c in shortlist}
+    for source in (lexical, semantic):
+        for candidate in source[:GUARANTEED_PER_RETRIEVER]:
+            if candidate.ref not in seen:
+                seen.add(candidate.ref)
+                shortlist.append(candidate)
+    return shortlist
 
 
 def _expand_siblings(

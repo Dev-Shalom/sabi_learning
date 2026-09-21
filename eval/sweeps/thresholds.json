@@ -3,365 +3,365 @@
     {
       "refusal_threshold": 0.34,
       "scope_threshold": 0.26,
-      "caught": 0.7727,
-      "over_refusal": 0.0641,
-      "value_pass": 0.9322,
+      "caught": 0.8919,
+      "over_refusal": 0.1,
+      "value_pass": 0.8901,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 0.6667,
+        "not_in_corpus": 0.75,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.6667,
+        "out_of_syllabus": 0.8696,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.34,
       "scope_threshold": 0.3,
-      "caught": 0.7727,
-      "over_refusal": 0.0513,
-      "value_pass": 0.9492,
+      "caught": 0.8378,
+      "over_refusal": 0.075,
+      "value_pass": 0.9231,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 0.6667,
+        "not_in_corpus": 0.75,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.6667,
+        "out_of_syllabus": 0.7826,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.34,
       "scope_threshold": 0.34,
-      "caught": 0.7727,
-      "over_refusal": 0.0256,
-      "value_pass": 0.9831,
+      "caught": 0.8108,
+      "over_refusal": 0.0417,
+      "value_pass": 0.9451,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 0.6667,
+        "not_in_corpus": 0.75,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.6667,
+        "out_of_syllabus": 0.7391,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.34,
       "scope_threshold": 0.38,
-      "caught": 0.6818,
-      "over_refusal": 0.0256,
-      "value_pass": 0.9831,
+      "caught": 0.7838,
+      "over_refusal": 0.025,
+      "value_pass": 0.967,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 0.6667,
+        "not_in_corpus": 0.5,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.5,
+        "out_of_syllabus": 0.7391,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.34,
       "scope_threshold": 0.42,
-      "caught": 0.6818,
-      "over_refusal": 0.0128,
-      "value_pass": 1.0,
+      "caught": 0.7838,
+      "over_refusal": 0.0083,
+      "value_pass": 0.989,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 0.6667,
+        "not_in_corpus": 0.5,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.5,
+        "out_of_syllabus": 0.7391,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.38,
       "scope_threshold": 0.26,
-      "caught": 0.8636,
-      "over_refusal": 0.0769,
-      "value_pass": 0.9322,
+      "caught": 0.973,
+      "over_refusal": 0.1083,
+      "value_pass": 0.8901,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.75,
+        "out_of_syllabus": 0.9565,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.38,
       "scope_threshold": 0.3,
-      "caught": 0.8636,
-      "over_refusal": 0.0641,
-      "value_pass": 0.9492,
+      "caught": 0.9189,
+      "over_refusal": 0.0833,
+      "value_pass": 0.9231,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.75,
+        "out_of_syllabus": 0.8696,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.38,
       "scope_threshold": 0.34,
-      "caught": 0.8636,
-      "over_refusal": 0.0385,
-      "value_pass": 0.9831,
+      "caught": 0.9189,
+      "over_refusal": 0.05,
+      "value_pass": 0.9451,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.75,
+        "out_of_syllabus": 0.8696,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.38,
       "scope_threshold": 0.38,
-      "caught": 0.8182,
-      "over_refusal": 0.0385,
-      "value_pass": 0.9831,
+      "caught": 0.8919,
+      "over_refusal": 0.0333,
+      "value_pass": 0.967,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 1.0,
+        "not_in_corpus": 0.75,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.6667,
+        "out_of_syllabus": 0.8696,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.38,
       "scope_threshold": 0.42,
-      "caught": 0.8182,
-      "over_refusal": 0.0256,
-      "value_pass": 1.0,
+      "caught": 0.8919,
+      "over_refusal": 0.0167,
+      "value_pass": 0.989,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 1.0,
+        "not_in_corpus": 0.75,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.6667,
+        "out_of_syllabus": 0.8696,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.42,
       "scope_threshold": 0.26,
-      "caught": 0.8636,
-      "over_refusal": 0.0769,
-      "value_pass": 0.9322,
+      "caught": 0.973,
+      "over_refusal": 0.1083,
+      "value_pass": 0.8901,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.75,
+        "out_of_syllabus": 0.9565,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.42,
       "scope_threshold": 0.3,
-      "caught": 0.8636,
-      "over_refusal": 0.0641,
-      "value_pass": 0.9492,
+      "caught": 0.9189,
+      "over_refusal": 0.0833,
+      "value_pass": 0.9231,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.75,
+        "out_of_syllabus": 0.8696,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.42,
       "scope_threshold": 0.34,
-      "caught": 0.8636,
-      "over_refusal": 0.0385,
-      "value_pass": 0.9831,
+      "caught": 0.9189,
+      "over_refusal": 0.05,
+      "value_pass": 0.9451,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.75,
+        "out_of_syllabus": 0.8696,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.42,
       "scope_threshold": 0.38,
-      "caught": 0.8182,
-      "over_refusal": 0.0385,
-      "value_pass": 0.9831,
+      "caught": 0.8919,
+      "over_refusal": 0.0333,
+      "value_pass": 0.967,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 1.0,
+        "not_in_corpus": 0.75,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.6667,
+        "out_of_syllabus": 0.8696,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.42,
       "scope_threshold": 0.42,
-      "caught": 0.8182,
-      "over_refusal": 0.0256,
-      "value_pass": 1.0,
+      "caught": 0.8919,
+      "over_refusal": 0.0167,
+      "value_pass": 0.989,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 1.0,
+        "not_in_corpus": 0.75,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.6667,
+        "out_of_syllabus": 0.8696,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.46,
       "scope_threshold": 0.26,
-      "caught": 0.9091,
-      "over_refusal": 0.0769,
-      "value_pass": 0.9322,
+      "caught": 0.973,
+      "over_refusal": 0.1167,
+      "value_pass": 0.8791,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.8333,
+        "out_of_syllabus": 0.9565,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.46,
       "scope_threshold": 0.3,
-      "caught": 0.9091,
-      "over_refusal": 0.0641,
-      "value_pass": 0.9492,
+      "caught": 0.9459,
+      "over_refusal": 0.0917,
+      "value_pass": 0.9121,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.8333,
+        "out_of_syllabus": 0.913,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.46,
       "scope_threshold": 0.34,
-      "caught": 0.9091,
-      "over_refusal": 0.0385,
-      "value_pass": 0.9831,
+      "caught": 0.9459,
+      "over_refusal": 0.0667,
+      "value_pass": 0.9341,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.8333,
+        "out_of_syllabus": 0.913,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.46,
       "scope_threshold": 0.38,
-      "caught": 0.8636,
-      "over_refusal": 0.0385,
-      "value_pass": 0.9831,
+      "caught": 0.9189,
+      "over_refusal": 0.05,
+      "value_pass": 0.956,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 1.0,
+        "not_in_corpus": 0.75,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.75,
+        "out_of_syllabus": 0.913,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.46,
       "scope_threshold": 0.42,
-      "caught": 0.8636,
-      "over_refusal": 0.0256,
-      "value_pass": 1.0,
+      "caught": 0.9189,
+      "over_refusal": 0.0333,
+      "value_pass": 0.978,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 1.0,
+        "not_in_corpus": 0.75,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.75,
+        "out_of_syllabus": 0.913,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.5,
       "scope_threshold": 0.26,
-      "caught": 0.9545,
-      "over_refusal": 0.0897,
-      "value_pass": 0.9322,
+      "caught": 0.973,
+      "over_refusal": 0.1333,
+      "value_pass": 0.8791,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.9167,
+        "out_of_syllabus": 0.9565,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.5,
       "scope_threshold": 0.3,
-      "caught": 0.9545,
-      "over_refusal": 0.0769,
-      "value_pass": 0.9492,
+      "caught": 0.973,
+      "over_refusal": 0.1083,
+      "value_pass": 0.9121,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.9167,
+        "out_of_syllabus": 0.9565,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.5,
       "scope_threshold": 0.34,
-      "caught": 0.9545,
-      "over_refusal": 0.0513,
-      "value_pass": 0.9831,
+      "caught": 0.973,
+      "over_refusal": 0.0833,
+      "value_pass": 0.9341,
       "recall": 1.0,
       "by_kind": {
         "not_in_corpus": 1.0,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.9167,
+        "out_of_syllabus": 0.9565,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.5,
       "scope_threshold": 0.38,
-      "caught": 0.9091,
-      "over_refusal": 0.0513,
-      "value_pass": 0.9831,
+      "caught": 0.9459,
+      "over_refusal": 0.0667,
+      "value_pass": 0.956,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 1.0,
+        "not_in_corpus": 0.75,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.8333,
+        "out_of_syllabus": 0.9565,
         "welfare": 1.0
       }
     },
     {
       "refusal_threshold": 0.5,
       "scope_threshold": 0.42,
-      "caught": 0.9091,
-      "over_refusal": 0.0385,
-      "value_pass": 1.0,
+      "caught": 0.9459,
+      "over_refusal": 0.05,
+      "value_pass": 0.978,
       "recall": 1.0,
       "by_kind": {
-        "not_in_corpus": 1.0,
+        "not_in_corpus": 0.75,
         "out_of_subject": 1.0,
-        "out_of_syllabus": 0.8333,
+        "out_of_syllabus": 0.9565,
         "welfare": 1.0
       }
     }
   ],
   "chosen": {
-    "refusal_threshold": 0.46,
+    "refusal_threshold": 0.38,
     "scope_threshold": 0.42,
-    "caught": 0.8636,
-    "over_refusal": 0.0256,
-    "value_pass": 1.0,
+    "caught": 0.8919,
+    "over_refusal": 0.0167,
+    "value_pass": 0.989,
     "recall": 1.0,
     "by_kind": {
-      "not_in_corpus": 1.0,
+      "not_in_corpus": 0.75,
       "out_of_subject": 1.0,
-      "out_of_syllabus": 0.75,
+      "out_of_syllabus": 0.8696,
       "welfare": 1.0
     }
   }

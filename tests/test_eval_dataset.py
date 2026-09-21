@@ -119,3 +119,65 @@ def test_by_subject_has_the_same_shape_as_by_topic():
         "n": 2, "retrieval_hits": 1, "failures": 1, "recall": 0.5,
     }
     assert metrics["by_subject"]["Physics"]["recall"] == 1.0
+
+
+# --------------------------------------------------- the per-subject gate
+
+
+def _run(recalls: dict, global_recall: float = 1.0) -> dict:
+    return {
+        "metrics": {
+            "retrieval": {"recall_at_k": global_recall, "precision_at_1": 1.0},
+            "citations": {"validity": 1.0},
+            "grounding": {"mean_ratio": 1.0},
+            "correctness": {"value_pass_rate": 1.0},
+            "refusal": {"unanswerable_caught": 1.0, "over_refusal_rate": 0.0},
+            "by_subject": {s: {"recall": r} for s, r in recalls.items()},
+        }
+    }
+
+
+def test_one_subject_can_regress_without_the_global_number_moving_enough():
+    """The reason `by_subject` is gated separately, as arithmetic.
+
+    Chemistry is 21 of the 120 answerable items. If its recall falls from
+    1.00 to 0.90, global recall moves by 21 x 0.10 / 120 = 0.0175 -- inside
+    the 0.02 tolerance on `retrieval.recall_at_k`. Without a per-subject
+    gate, one subject in three could quietly stop working.
+    """
+    from evalharness.runner import compare
+
+    baseline = _run({"Mathematics": 1.0, "Physics": 1.0, "Chemistry": 1.0})
+    regressed = _run(
+        {"Mathematics": 1.0, "Physics": 1.0, "Chemistry": 0.90},
+        global_recall=1.0 - 0.0175,
+    )
+
+    # The global gate genuinely does not catch it -- that is the premise.
+    globals_only = [
+        f for f in compare(regressed, baseline)
+        if not f["metric"].startswith("by_subject.")
+    ]
+    assert globals_only == [], (
+        "the premise no longer holds: the global tolerance now catches this, "
+        "so the arithmetic in the comment above needs redoing"
+    )
+
+    found = compare(regressed, baseline)
+    assert [f["metric"] for f in found] == ["by_subject.Chemistry.recall"]
+
+
+def test_a_newly_added_subject_is_not_a_regression():
+    from evalharness.runner import compare
+
+    baseline = _run({"Mathematics": 1.0})
+    with_new = _run({"Mathematics": 1.0, "Biology": 0.4})
+    assert compare(with_new, baseline) == []
+
+
+def test_a_subject_holding_steady_is_not_a_regression():
+    from evalharness.runner import compare
+
+    baseline = _run({"Mathematics": 1.0, "Chemistry": 0.95})
+    same = _run({"Mathematics": 1.0, "Chemistry": 0.95})
+    assert compare(same, baseline) == []

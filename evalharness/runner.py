@@ -45,6 +45,17 @@ GATED_INVERTED = {
     "refusal.over_refusal_rate": 0.05,
 }
 
+# How far one subject's recall may fall before it is a regression, even when
+# the global figure still looks fine.
+#
+# This is not belt and braces, it is arithmetic. Chemistry is 21 of the 120
+# answerable items. Its recall could fall from 1.00 to 0.90 -- one question in
+# ten stops finding its source -- and the global recall would move by
+# 21 x 0.10 / 120 = 0.0175, which is inside the 0.02 tolerance above. The
+# global number cannot see it. A subject is only measured if it is measured
+# on its own.
+BY_SUBJECT_RECALL_TOLERANCE = 0.03
+
 
 @dataclass
 class ItemResult:
@@ -375,6 +386,25 @@ def compare(run: dict[str, Any], baseline: dict[str, Any]) -> list[dict[str, Any
             out.append(
                 {"metric": path, "baseline": was, "now": now, "delta": round(now - was, 4),
                  "tolerance": tolerance, "direction": "higher is worse"}
+            )
+
+    # Per-subject recall, discovered from the run rather than listed here, so
+    # a subject that gets switched on is gated from its first baseline without
+    # anyone remembering to add it. A subject present now but absent from the
+    # baseline is new, and new is not a regression.
+    was_subjects = (baseline.get("metrics", {}).get("by_subject") or {})
+    for subject, stats in (run["metrics"].get("by_subject") or {}).items():
+        before = was_subjects.get(subject)
+        if not before:
+            continue
+        now, was = stats.get("recall"), before.get("recall")
+        if now is None or was is None:
+            continue
+        if now < was - BY_SUBJECT_RECALL_TOLERANCE:
+            out.append(
+                {"metric": f"by_subject.{subject}.recall", "baseline": was, "now": now,
+                 "delta": round(now - was, 4),
+                 "tolerance": BY_SUBJECT_RECALL_TOLERANCE}
             )
     return out
 

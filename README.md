@@ -1,8 +1,8 @@
 # Sabi
 
-A WAEC Core Mathematics study assistant that answers from retrieved syllabus
-text and worked examples, shows the source for every claim, and says "I don't
-have that" instead of guessing.
+A WAEC study assistant — Core Mathematics, Physics and Chemistry — that answers
+from retrieved syllabus text and worked examples, shows the source for every
+claim, and says "I don't have that" instead of guessing.
 
 Built for SS3 students in Nigeria studying on cheap Android phones over metered
 mobile data.
@@ -28,22 +28,24 @@ does not support an answer. Whether it actually does that is
 
 ## The numbers
 
-From the committed baseline (`eval/baselines/current.json`), 100 golden items:
+From the committed baseline (`eval/baselines/current.json`), 157 golden items
+across WAEC Mathematics, Physics and Chemistry:
 
 | | |
 |---|---|
-| Retrieval recall@k | 0.987 |
-| Citation validity | 1.000 — zero invalid citations in 100 answers |
-| Unanswerable questions refused | 0.909 |
-| Over-refusal on answerable questions | 0.026 |
-| Latency p50 / p95 | 46 ms / 75 ms |
+| Retrieval recall@k | 1.000 — and 1.000 in each of the three subjects separately |
+| Citation validity | 1.000 — zero invalid citations in 157 answers |
+| Answer correctness (deterministic value check, n=91) | 0.989 |
+| Unanswerable questions refused | 0.892 |
+| Over-refusal on answerable questions | 0.017 |
+| Latency p50 / p95 | 41 ms / 74 ms |
 | Projected cost per free user per month | $0.025 |
 
 **These come from the offline provider, not from a language model.** Groundedness
 scores 1.000 under it, which is a tautology rather than an achievement — the
 offline answerer copies its sentences out of the retrieved context. Correctness
 is measuring retrieval, and the cost is a price-list estimate. [EVALUATION.md](EVALUATION.md) says exactly which numbers
-mean what, and lists all four remaining failures with their causes.
+mean what, and lists all seven remaining failures with their causes.
 
 ---
 
@@ -91,7 +93,7 @@ pip install -e ".[dev]"
 cp .env.example .env               # defaults work as-is for local dev
 
 python -m sabi.cli init            # schema, extensions, plan seeding
-python -m sabi.cli ingest          # 124 documents -> 361 chunks
+python -m sabi.cli ingest          # 163 documents -> 507 chunks
 python -m sabi.cli serve           # http://127.0.0.1:8000
 ```
 
@@ -163,8 +165,8 @@ reconstruct any answer exactly when someone down-votes it three weeks later.
 ### Layout
 
 ```
-corpus/          124 live markdown documents with YAML provenance front matter
-                 (Mathematics and Physics; Chemistry drafted, not switched on)
+corpus/          163 markdown documents with YAML provenance front matter
+                 (WAEC Mathematics, Physics and Chemistry)
 sabi/
   corpus/        loader, chunker, ingestion pipeline
   retrieval/     embeddings, pgvector + FTS store, RRF fusion, reranking
@@ -251,7 +253,7 @@ What is real, and what is not:
 | | |
 |---|---|
 | Corpus, retrieval, refusal, citations | **Working**, measured, tested |
-| Evaluation harness, CI gate | **Working** — 100 items, runs with no API key |
+| Evaluation harness, CI gate | **Working** — 157 items across three subjects, per-subject gates, runs with no API key |
 | Cost, metering, budget kill switch | **Working**, exercised by the suite |
 | Web interface | **Working** locally. Landing page, study surface, accounts, dashboard. 22KB landing, 5KB study, 8KB answer |
 | Accounts, sessions, CSRF, throttling | **Working**, 19 tests, no new dependencies |
@@ -265,13 +267,10 @@ What is real, and what is not:
 | Demo video | **Not recorded.** The brief asked for a two-minute walkthrough; there are screenshots above instead. A video needs a deployed URL to walk through. |
 | Real users | **None.** The brief asked for a shipped tool with real students; this is a complete system that has not been put in front of anyone. |
 
-**Still to come, and scoped in the plan:** photo input, and switching Chemistry
-and Biology on. Scoping, Physics, the notebook and practice have landed.
-Chemistry's 18 syllabus documents and 21 worked examples are written and
-verified but deliberately not enabled — enabling a subject changes every vector
-and invalidates three swept thresholds, so it is its own reviewed step. NECO
-ships as code rather than content: `exam_board` is threaded everywhere, so
-adding it is authoring documents, not changing the system.
+**Still to come, and scoped in the plan:** photo input, and Biology. Scoping,
+Physics, Chemistry, the notebook and practice have landed. NECO ships as code
+rather than content: `exam_board` is threaded everywhere, so adding it is
+authoring documents, not changing the system.
 
 The last three rows are the honest gap between this and the brief. They need an API
 key, a Fly.io account and a link handed to actual students — decisions and

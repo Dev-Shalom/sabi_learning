@@ -50,7 +50,23 @@ MAX_OVER_REFUSAL = 0.03
 # 0.974. This floor is set at two known, named failures and no more, and the
 # per-subject floors in the CI gate are what stop one subject hiding behind
 # the other. If a third item starts failing, this stops the build.
-MIN_VALUE_PASS = 0.97
+#
+# 0.97 -> 0.98, back up again. Both of the failures it was lowered for are
+# fixed, and neither was fixed by moving a threshold:
+#
+#   g-008  fixed by switching Chemistry on. The local embedder is fitted on
+#          the corpus, so a third subject re-weighted every term and the
+#          fractional-indices example started outranking the surds one.
+#   p-005  fixed by `_shortlist` in the retrieval pipeline. The Newton's-law
+#          example was ranked first by the vector search and discarded by
+#          fusion before the reranker could see it.
+#
+# So the floor returns to where it was, now pinned at one named failure --
+# c-002, where the syllabus document contains the string "5.6 dm3" in a
+# different calculation and the extractive answerer takes the wrong one. At
+# 91 checkable items, 0.98 allows exactly that one. A second failure stops
+# the build, which is the point.
+MIN_VALUE_PASS = 0.98
 MIN_RECALL = 0.97
 
 REFUSAL_GRID = [0.34, 0.38, 0.42, 0.46, 0.50]

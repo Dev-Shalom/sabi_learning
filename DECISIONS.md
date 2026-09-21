@@ -353,6 +353,48 @@ engineering consequences:
 
 ---
 
+## Switching a third subject on
+
+- **A subject is not on until it is measured.** Chemistry's 39 documents sat in
+  the corpus, verified, for a whole phase before being enabled, because
+  enabling one changes every vector — the local embedder is fitted on the
+  corpus — and invalidates thresholds swept against the old geometry. The order
+  was: enable, measure the effect on the subjects already live, author a golden
+  slice, re-sweep, regenerate the baseline.
+- **Adding Chemistry improved Mathematics.** recall@k went 0.9899 → 1.0000 and
+  the long-standing `g-008` miss disappeared. Retrieval is scoped, so no
+  Chemistry chunk can ever be returned for a Maths question; the only channel
+  is the shared embedder refit re-weighting every term over a corpus 40%
+  larger. Worth stating plainly because it is a property of the *offline*
+  embedder and cuts both ways — a stateless production model would not move at
+  all, and the next refit could just as easily move something the wrong way.
+  That is what the per-subject gate is for.
+- **Fusion may not discard a retriever's best guess.** Reciprocal rank fusion
+  with `k = 60` over 24-item lists gives every rank a score between 1/61 and
+  1/84, so appearing in *both* lists outweighs being ranked first in one. That
+  is backwards for the case two retrievers exist to cover. "Express a 0.5
+  mol/dm³ solution of H2SO4 in g/dm³" is answered word for word by one worked
+  example; lexical missed it (the student wrote "change", the document says
+  "convert"), the vector search ranked it first, fusion put it twelfth, and the
+  student got a confident explanation of average rate of reaction. Each
+  retriever's top two now survive into the rerank shortlist regardless.
+- **Exclusion sections are evidence for refusing, not material for answering.**
+  A "Not on this syllabus" chunk reaching answer context produced exactly what
+  it sounds like: "what does a negative index mean?" answered with a list of
+  Further Maths topics that are not examined. The refusal path already queries
+  those chunks separately, with its own threshold, so nothing else needed them.
+  Filtered in Python rather than SQL on purpose — `AND NOT c.is_exclusion` on
+  the vector query would put a predicate on the ANN walk its partial index does
+  not cover, and the walk would quietly return fewer rows than `LIMIT` asked
+  for, which is the exact failure the per-scope indexes exist to prevent.
+- **Per-subject recall is gated, and that is arithmetic.** Chemistry is 21 of
+  120 answerable items, so its recall could fall from 1.00 to 0.90 and move the
+  global figure by 0.0175 — inside the 0.02 global tolerance. The gate
+  discovers subjects from the run rather than listing them, so the next subject
+  is covered from its first baseline.
+
+---
+
 ## Practice
 
 - **Not called a mock exam, and it never will be.** A mock exam implies past
