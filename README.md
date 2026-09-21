@@ -91,7 +91,7 @@ pip install -e ".[dev]"
 cp .env.example .env               # defaults work as-is for local dev
 
 python -m sabi.cli init            # schema, extensions, plan seeding
-python -m sabi.cli ingest          # 82 documents -> 188 chunks
+python -m sabi.cli ingest          # 124 documents -> 361 chunks
 python -m sabi.cli serve           # http://127.0.0.1:8000
 ```
 
@@ -163,13 +163,15 @@ reconstruct any answer exactly when someone down-votes it three weeks later.
 ### Layout
 
 ```
-corpus/          82 markdown documents with YAML provenance front matter
+corpus/          124 live markdown documents with YAML provenance front matter
+                 (Mathematics and Physics; Chemistry drafted, not switched on)
 sabi/
   corpus/        loader, chunker, ingestion pipeline
   retrieval/     embeddings, pgvector + FTS store, RRF fusion, reranking
   answer/        prompts, guardrail, refusals, cache, routing, the request path
   llm/           provider interface, Anthropic client, offline extractor, pricing
   accounts/      passwords, sessions, recovery codes, login throttle, identity
+  practice/      question templates, set building, marking, weak topics
   limits/        metering, rate limiting, budget kill switch
   billing/       the payment seam. Unimplemented on purpose.
   obs/           structured logging, the cost report, the dashboard queries
@@ -254,6 +256,8 @@ What is real, and what is not:
 | Web interface | **Working** locally. Landing page, study surface, accounts, dashboard. 22KB landing, 5KB study, 8KB answer |
 | Accounts, sessions, CSRF, throttling | **Working**, 19 tests, no new dependencies |
 | Dashboard: stats, streak, topics, countdown | **Working**, all reads over the existing request log |
+| Notebook: kept answers with their sources | **Working**, snapshotted so a saved answer cannot drift |
+| Practice: timed sets, marking, weak topics | **Working**, 50 templates, every answer computed in Python |
 | Feedback loop and review queue | **Working**, promotion into the golden set tested |
 | Run against Claude or Voyage | **Never done.** No API key was available. The clients are written and the seams are tested against fakes, but no real inference call has been made. |
 | LLM-as-judge | **Never run.** Rubric written and wired; the numbers in EVALUATION.md come from the heuristic stand-in. |
@@ -261,10 +265,13 @@ What is real, and what is not:
 | Demo video | **Not recorded.** The brief asked for a two-minute walkthrough; there are screenshots above instead. A video needs a deployed URL to walk through. |
 | Real users | **None.** The brief asked for a shipped tool with real students; this is a complete system that has not been put in front of anyone. |
 
-**Still to come, and scoped in the plan:** subject and exam-board scoping
-through retrieval, three more subjects, timed practice, the notebook, and photo
-input. NECO ships as code rather than content — `exam_board` is threaded
-everywhere, so adding it is authoring documents, not changing the system.
+**Still to come, and scoped in the plan:** photo input, and switching Chemistry
+and Biology on. Scoping, Physics, the notebook and practice have landed.
+Chemistry's 18 syllabus documents and 21 worked examples are written and
+verified but deliberately not enabled — enabling a subject changes every vector
+and invalidates three swept thresholds, so it is its own reviewed step. NECO
+ships as code rather than content: `exam_board` is threaded everywhere, so
+adding it is authoring documents, not changing the system.
 
 The last three rows are the honest gap between this and the brief. They need an API
 key, a Fly.io account and a link handed to actual students — decisions and

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Sabi — practice set{% endblock %}
+{% block description %}A timed practice set. Answers are revealed when you finish it.{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{{ set.topic or set.subject }}</h1>
+  <p>
+    {% if set.finished %}
+    You scored <strong>{{ set.score }}</strong> out of {{ set.items | length }}.
+    Every question below shows how it is worked out, and where in the syllabus
+    that comes from.
+    {% else %}
+    {{ set.items | length }} questions, {{ set.seconds_allowed // 60 }} minutes.
+    Answer them in any order. Nothing is marked until you finish, so you can
+    change an answer as many times as you like.
+    {% endif %}
+  </p>
+</div>
+
+{% if not set.finished %}
+<p class="field-help" role="status">
+  {{ set.answered_count }} of {{ set.items | length }} answered.
+</p>
+{% endif %}
+
+<ol class="practice-items">
+  {% for item in set.items %}
+  <li class="practice-item{% if set.finished %}{{ ' is-right' if item.correct else ' is-wrong' }}{% endif %}"
+      id="q{{ item.id }}">
+    <p class="practice-question">{{ item.question }}</p>
+
+    {% if set.finished %}
+    <p class="practice-verdict">
+      {% if item.correct %}
+      Right — {{ item.expected }}.
+      {% else %}
+      {% if item.given %}You put {{ item.given }}.{% else %}You did not answer this one.{% endif %}
+      The answer is <strong>{{ item.expected }}</strong>.
+      {% endif %}
+    </p>
+
+    <details class="source">
+      <summary>
+        <span class="locator">{{ item.locator }}</span>
+        <span class="attribution">Worked example</span>
+        <span class="disclose">Show how it is done</span>
+      </summary>
+      <div class="source-body">
+        <ol class="practice-working">
+          {% for step in item.working %}
+          <li>{{ step }}</li>
+          {% endfor %}
+        </ol>
+        <p class="field-help">
+          This is the method from {{ item.locator }} in the syllabus corpus,
+          applied to your numbers. Ask about {{ item.subtopic | lower }} on the
+          <a href="/app">Ask</a> page to see the full passage.
+        </p>
+      </div>
+    </details>
+
+    {% else %}
+    <form class="practice-answer" method="post" action="/practice/{{ set.id }}/answer">
+      {{ csrf_input | safe }}
+      <input type="hidden" name="item_id" value="{{ item.id }}">
+      <label class="visually-hidden" for="a{{ item.id }}">Your answer</label>
+      <input id="a{{ item.id }}" name="given" type="text" inputmode="text"
+             autocomplete="off" value="{{ item.given or '' }}"
+             placeholder="Your answer">
+      <button class="btn-quiet" type="submit">
+        {{ 'Change' if item.answered else 'Save' }}
+      </button>
+    </form>
+    <p class="field-help">{{ item.hint }}</p>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>
+
+{% if set.finished %}
+<form class="mt-5" method="post" action="/practice/start">
+  {{ csrf_input | safe }}
+  <input type="hidden" name="subject" value="{{ set.subject }}">
+  <input type="hidden" name="topic" value="{{ set.topic or '' }}">
+  <button class="btn" type="submit">Another set</button>
+</form>
+{% else %}
+<form class="mt-5" method="post" action="/practice/{{ set.id }}/finish">
+  {{ csrf_input | safe }}
+  <button class="btn" type="submit">Finish and see the answers</button>
+  <p class="field-help">
+    Once you finish, the answers are shown and this set stops accepting
+    changes.
+  </p>
+</form>
+{% endif %}
+{% endblock %}

@@ -25,6 +25,7 @@ from typing import Any
 
 from sabi.retrieval.embeddings import tokenize
 from sabi.textutil import logical_lines
+from sabi.valuematch import contains_value, normalise_value  # noqa: F401
 
 NUMERAL = re.compile(r"\d+(?:[.,]\d+)?")
 SENTENCE = re.compile(r"(?<=[.;:])\s+(?=[A-Z(])")
@@ -35,9 +36,13 @@ MIN_TERMS_FOR_GROUNDING = 5
 SUPPORTED_AT = 0.8
 
 
-def normalise_value(text: str) -> str:
-    """Compare answers without arguing about spacing or punctuation."""
-    return re.sub(r"[\s,]+", "", text.lower()).replace("−", "-")
+# `normalise_value` and `contains_value` are imported from `sabi.valuematch`
+# above rather than defined here. Practice marking needs the same judgement
+# about whether two answers are the same number, and two implementations of
+# that would drift -- one of them deciding 1/2 and 0.5 are the same answer
+# and the other not. The harness's own question is narrower than practice's,
+# so it uses `contains_value`: a paragraph of working legitimately contains
+# more than the value, and a precision rule would reject it for that.
 
 
 # ---------------------------------------------------------------- retrieval
@@ -194,7 +199,7 @@ class ValueScore:
 def score_value(expected_value: str | None, answer_text: str) -> ValueScore:
     if not expected_value:
         return ValueScore(False, False, None)
-    return ValueScore(True, normalise_value(expected_value) in normalise_value(answer_text), expected_value)
+    return ValueScore(True, contains_value(expected_value, answer_text), expected_value)
 
 
 # ------------------------------------------------------------------ refusal

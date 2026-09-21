@@ -314,6 +314,124 @@ class Feedback(Base):
     promoted_golden_id: Mapped[int | None] = mapped_column(Integer)
 
 
+class PracticeSet(Base):
+    """One sitting of practice: the questions, and how it went.
+
+    The plan for this feature listed `practice_sets` and `practice_attempts`
+    as separate tables, on the assumption that a set is a fixed paper several
+    students could sit. That is not how these are built -- every set is
+    sampled fresh for one student, from `sabi/practice/templates.py` -- so a
+    set and an attempt at it are the same row, and splitting them would mean
+    a second table always holding exactly one row per first. Recorded here
+    rather than in a commit message, because the plan says otherwise.
+
+    `seconds_allowed` is what makes it timed practice. It is not enforced by
+    refusing a late answer: a student who loses their connection halfway
+    through has not cheated, and locking them out would be punishing the
+    wrong thing. The elapsed time is recorded and shown.
+    """
+
+    __tablename__ = "practice_sets"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    subject: Mapped[str] = mapped_column(String(64), default="Mathematics")
+    exam_board: Mapped[str] = mapped_column(String(32), default="WAEC")
+    # Null for a mixed set spanning the whole syllabus.
+    topic: Mapped[str | None] = mapped_column(String(120))
+    # How the set was put together: mixed | topic | weak
+    built_from: Mapped[str] = mapped_column(String(16), default="mixed")
+
+    seconds_allowed: Mapped[int] = mapped_column(Integer, default=900)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        Index("ix_practice_sets_user_created", "user_id", "created_at"),
+    )
+
+
+class PracticeItem(Base):
+    """One generated question.
+
+    `template_id` and `params` are the question: the text is re-rendered from
+    them rather than trusted from storage, so a row cannot drift out of step
+    with the code that marks it. The rendered text is stored anyway, because
+    a template that is later removed or corrected must not silently change
+    the question a student already answered -- the same reasoning as the
+    notebook snapshot.
+
+    `source_doc_id` and `source_locator` point back at the worked example the
+    template was drawn from, so a student who gets one wrong is sent to a
+    real passage in the corpus rather than to generated prose.
+    """
+
+    __tablename__ = "practice_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    set_id: Mapped[int] = mapped_column(
+        ForeignKey("practice_sets.id", ondelete="CASCADE"), index=True
+    )
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+    template_id: Mapped[str] = mapped_column(String(64), index=True)
+    source_doc_id: Mapped[str] = mapped_column(String(120))
+    source_locator: Mapped[str] = mapped_column(String(32))
+    params: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    topic: Mapped[str] = mapped_column(String(120), default="")
+    subtopic: Mapped[str] = mapped_column(String(120), default="", index=True)
+
+    question: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str] = mapped_column(String(255))
+    answer_kind: Mapped[str] = mapped_column(String(16), default="number")
+    hint: Mapped[str] = mapped_column(Text, default="")
+    working: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    __table_args__ = (
+        UniqueConstraint("set_id", "position", name="uq_practice_item_position"),
+    )
+
+
+class PracticeResponse(Base):
+    """What a student answered, and whether it was right.
+
+    `user_id` is denormalised off the set so that weak-topic detection is one
+    indexed read rather than a join through two tables on every dashboard
+    load.
+    """
+
+    __tablename__ = "practice_responses"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_id: Mapped[int] = mapped_column(
+        ForeignKey("practice_items.id", ondelete="CASCADE"), index=True
+    )
+    set_id: Mapped[int] = mapped_column(
+        ForeignKey("practice_sets.id", ondelete="CASCADE"), index=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+
+    subject: Mapped[str] = mapped_column(String(64), default="Mathematics")
+    subtopic: Mapped[str] = mapped_column(String(120), default="")
+
+    given: Mapped[str] = mapped_column(String(255), default="")
+    correct: Mapped[bool] = mapped_column(Boolean, default=False)
+    answered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (
+        # One answer per question. Changing an answer updates the row rather
+        # than adding one, or a student could raise their own correct-rate by
+        # resubmitting until it passed.
+        UniqueConstraint("item_id", name="uq_practice_response_item"),
+        Index("ix_practice_responses_user_topic", "user_id", "subtopic", "answered_at"),
+    )
+
+
 class NotebookEntry(Base):
     """An answer a student chose to keep.
 

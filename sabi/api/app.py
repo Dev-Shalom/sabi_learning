@@ -53,7 +53,8 @@ from sabi.config import runtime, settings
 from sabi.db import get_session
 from sabi.limits import limiter
 from sabi.models import Feedback, GoldenItem, Request as RequestRow, WaitlistEntry
-from sabi import notebook
+from sabi import notebook, practice
+from sabi.practice import templates as practice_templates
 from sabi.obs import dashboard as dash
 from sabi.retrieval.scope import RetrievalScope, live_scopes
 
@@ -577,6 +578,119 @@ def notebook_remove(
     return RedirectResponse("/notebook?saved=removed", status_code=303)
 
 
+# ----------------------------------------------------------------- practice
+
+
+@app.get("/practice", response_class=HTMLResponse)
+def practice_home(
+    request: Req,
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_login),
+):
+    """Start a set, or pick up where the last one left off."""
+    subject = request.query_params.get("subject") or "Mathematics"
+    live = {sc.subject for sc in live_scopes()}
+    if subject not in live:
+        subject = "Mathematics"
+
+    recent = practice.recent_sets(s, user=v.user)
+    ctx = base_context(request, v, nav="practice")
+    ctx.update(
+        {
+            "subject": subject,
+            "subjects": sorted(live),
+            "topics": practice_templates.topics(subject),
+            "recent": recent,
+            "scores": practice.scores_for(
+                s, user=v.user, set_ids=[r.id for r in recent]
+            ),
+            "rates": practice.topic_rates(s, user=v.user, subject=subject),
+            "weak": practice.weak_subtopics(s, user=v.user, subject=subject),
+            "set_size": practice.SET_SIZE,
+            "minutes": practice.SECONDS_ALLOWED // 60,
+            "today": limiter.wat_today(),
+            "notice": request.query_params.get("notice", ""),
+        }
+    )
+    return templates.TemplateResponse(request, "practice.html", ctx)
+
+
+@app.post("/practice/start")
+def practice_start(
+    request: Req,
+    subject: str = Form("Mathematics"),
+    topic: str = Form(""),
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_login_csrf),
+):
+    """Generate a set.
+
+    Costs no API calls -- every question is computed in Python -- so this is
+    not metered against the daily question allowance. It is capped anyway:
+    an unmetered path that writes rows is exactly what `limiter`'s docstring
+    warns about, and nothing else here would notice a client looping on it.
+    """
+    live = {sc.subject for sc in live_scopes()}
+    if subject not in live:
+        raise HTTPException(status_code=400, detail="no practice for that subject")
+
+    if practice.sets_today(s, user=v.user) >= practice.DAILY_SET_CAP:
+        return RedirectResponse("/practice?notice=cap", status_code=303)
+
+    row = practice.build_set(
+        s, user=v.user, subject=subject, topic=topic.strip() or None
+    )
+    return RedirectResponse(f"/practice/{row.id}", status_code=303)
+
+
+@app.get("/practice/{set_id}", response_class=HTMLResponse)
+def practice_set(
+    request: Req,
+    set_id: int,
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_login),
+):
+    found = practice.view(s, user=v.user, set_id=set_id)
+    if found is None:
+        raise HTTPException(status_code=404, detail="unknown practice set")
+
+    ctx = base_context(request, v, nav="practice")
+    ctx.update({"set": found, "today": limiter.wat_today()})
+    return templates.TemplateResponse(request, "practice_set.html", ctx)
+
+
+@app.post("/practice/{set_id}/answer")
+def practice_answer(
+    request: Req,
+    set_id: int,
+    item_id: int = Form(...),
+    given: str = Form(""),
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_login_csrf),
+):
+    """Record one answer, without saying whether it was right.
+
+    Marking each answer as it arrives would turn a timed set into a guessing
+    game against the marker: type, see red, try again, repeat. The answer is
+    stored and scored now, and shown once the set is closed.
+    """
+    if practice.mark(s, user=v.user, item_id=item_id, given=given) is None:
+        raise HTTPException(status_code=404, detail="not your question")
+    return RedirectResponse(f"/practice/{set_id}#q{item_id}", status_code=303)
+
+
+@app.post("/practice/{set_id}/finish")
+def practice_finish(
+    request: Req,
+    set_id: int,
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_login_csrf),
+):
+    if practice.finish(s, user=v.user, set_id=set_id) is None:
+        raise HTTPException(status_code=404, detail="unknown practice set")
+    return RedirectResponse(f"/practice/{set_id}", status_code=303)
+
+
 # ---------------------------------------------------------------- dashboard
 
 
@@ -586,12 +700,16 @@ def dashboard(
     s: Session = Depends(get_session),
     v: Viewer = Depends(require_login),
 ):
+    practice_correct, practice_answered = practice.totals(s, user=v.user)
     ctx = base_context(request, v, nav="dashboard")
     ctx.update(
         {
             "summary": dash.summary(s, v.user),
             "topics": dash.topics(s, v.user),
             "recent": dash.recent(s, v.user),
+            "practice_correct": practice_correct,
+            "practice_answered": practice_answered,
+            "practice_weak": practice.weak_subtopics(s, user=v.user),
             "today": limiter.wat_today(),
             "codes_left": recovery.remaining(s, v.user.id),
             "devices": len(sessions_mod.active_for(s, v.user.id)),

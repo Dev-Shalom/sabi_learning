@@ -353,6 +353,66 @@ engineering consequences:
 
 ---
 
+## Practice
+
+- **Not called a mock exam, and it never will be.** A mock exam implies past
+  papers under licence and a mark scheme somebody else wrote. This is questions
+  generated from the worked examples already in the corpus. Calling it what it
+  is costs nothing and keeps an unsupportable claim out of the product.
+- **The numbers are resampled; the shapes are authored.** Asking the 50 worked
+  examples directly would not work: they *are* the answer corpus, so a student
+  can paste the question into the composer and be handed the worked solution,
+  and they overlap the golden eval items, so using them as practice would turn
+  the evaluation into a memorisation test. 50 templates sample fresh numbers
+  and **compute the answer in Python** — the same rule the Physics and
+  Chemistry generators follow, and the only reason to trust any of them.
+- **Sampling is constrained next to the arithmetic it protects.** Several
+  templates would otherwise produce answers that are correct and useless: a
+  parallel resistance of 12/7 ohms, a transformer secondary of 36.67 V, a mean
+  printed as 1837/40 when the question asked for two decimal places. One
+  produced something worse — a machine more than 100 per cent efficient, which
+  is arithmetically consistent and physically impossible. Each constraint is
+  written where the working is, because the two go wrong together.
+- **One notion of whether two answers are the same number.** `normalise_value`
+  moved out of `evalharness/scorers.py` into `sabi/valuematch.py` and the
+  harness imports it. Two implementations would have drifted, one of them
+  deciding `1/2` and `0.5` are the same answer and the other not.
+- **Marking uses the rule a human marker uses**, stated explicitly: a value is
+  accepted if it equals the true value correctly rounded to the precision the
+  student actually wrote. So `0.33` passes for one third and `1795` does not
+  pass for 1800, and nobody had to pick a tolerance. A whole number written
+  without a decimal point is treated as a claim of exactness — without that,
+  the significant-figure test reads `12` as two figures and accepts it for
+  12.4, which is the one direction this must never be wrong in.
+- **Nothing is marked until the set is closed.** Marking each answer as it
+  arrives turns a timed set into a guessing game against the marker: type, see
+  red, try again. A closed set then stops accepting answers, or the score only
+  measures how long somebody kept typing.
+- **A wrong answer ends at a citation**, not at generated prose — every item
+  carries the `doc_id` and locator of the worked example its template came
+  from. Same rule as the answer path.
+- **Weak topics are a rolling correct-rate, not a mastery model.** A proportion
+  over a subtopic's recent answers, with a floor of four answers before
+  anything is called weak. It is explainable to a sixteen-year-old in one
+  sentence, which matters more here than anything a latent-trait model buys.
+- **Practice is not metered against the daily question cap**, because it makes
+  no model call and costs nothing to sit — charging a student a question for it
+  would be charging for arithmetic. It is capped at 40 sets a day anyway:
+  unmetered is not the same as unbounded, and nothing else here would notice a
+  client looping on it.
+- **`practice_attempts` was not built.** The plan listed it beside
+  `practice_sets`, assuming a set is a fixed paper several students could sit.
+  Every set is sampled fresh for one student, so a set and an attempt at it are
+  the same row and the second table would always hold exactly one row per
+  first.
+- **Colour is never the only carrier of a mark.** Right and wrong get their own
+  tokens, checked against body-text contrast in both themes rather than the
+  3:1 a decorative accent would get away with — and neither appears without a
+  word beside it saying the same thing, because roughly one student in twelve
+  cannot tell those two hues apart.
+
+---
+
 ## Things deliberately not done
 
 - **Alembic.** The schema is `create_all` plus a forward-only list of idempotent

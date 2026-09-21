@@ -113,6 +113,42 @@
 </section>
 
 <section class="mt-6 reveal">
+  <h2 class="label-heading">Practice</h2>
+
+  {% if practice_answered %}
+  <p class="field-help mt-4">
+    {{ practice_correct }} right out of {{ practice_answered }} answered.
+    {% if practice_weak %}
+    The topics below are the ones you are getting wrong most often — a new
+    set weights itself towards them without you having to choose.
+    {% else %}
+    Nothing stands out as a weak topic yet.
+    {% endif %}
+  </p>
+  {% if practice_weak %}
+  <ul class="filter-row mt-4" aria-label="Topics worth working on">
+    {% for r in practice_weak %}
+    <li>
+      <a class="filter" href="/practice">{{ r.subtopic }} <span>{{ r.correct }}/{{ r.answered }}</span></a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <p class="mt-4"><a class="btn-quiet" href="/practice">Start a set</a></p>
+  {% else %}
+  <div class="empty mt-4">
+    <h3>No practice yet</h3>
+    <p>
+      Timed sets built from the worked examples, with the numbers changed
+      each time so you cannot sit the same question twice. Every answer is
+      worked out here, and each one shows the syllabus passage behind it.
+    </p>
+    <p class="mt-4"><a class="btn" href="/practice">Try a set</a></p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="mt-6 reveal">
   <h2 class="label-heading">What you asked recently</h2>
 
   {% if recent %}

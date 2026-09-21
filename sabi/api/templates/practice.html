@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Sabi — practice{% endblock %}
+{% block description %}Timed practice sets built from the worked examples, with fresh numbers every time.{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Practice</h1>
+  <p>
+    {{ set_size }} questions, {{ minutes }} minutes. The numbers are fresh
+    every time, so you cannot practise the same question twice — and every
+    answer is worked out here, not guessed, with the syllabus passage behind
+    it shown when you finish.
+  </p>
+</div>
+
+{% if notice == 'cap' %}
+<p class="field-help" role="status">
+  That is as many sets as you can start today. Your finished ones are still
+  below, and answers stay where they are.
+</p>
+{% endif %}
+
+<form class="practice-start" method="post" action="/practice/start">
+  {{ csrf_input | safe }}
+
+  {% if subjects | length > 1 %}
+  <div class="field">
+    <label for="subject">Subject</label>
+    <select id="subject" name="subject">
+      {% for name in subjects %}
+      <option value="{{ name }}"{% if name == subject %} selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% else %}
+  <input type="hidden" name="subject" value="{{ subject }}">
+  {% endif %}
+
+  <div class="field">
+    <label for="topic">Topic</label>
+    <select id="topic" name="topic">
+      <option value="">Across the whole syllabus</option>
+      {% for name in topics %}
+      <option value="{{ name }}">{{ name }}</option>
+      {% endfor %}
+    </select>
+    <p class="field-help">
+      Leave this as it is and Sabi weights the set towards whatever you have
+      been getting wrong.
+    </p>
+  </div>
+
+  <button class="btn" type="submit">Start a set</button>
+</form>
+
+{% if weak %}
+<section class="mt-5">
+  <h2>Worth working on</h2>
+  <p class="field-help">
+    Topics where you are getting fewer than 3 in 5 right, over your last few
+    answers in each.
+  </p>
+  <ul class="filter-row" aria-label="Weak topics">
+    {% for r in weak %}
+    <li>
+      <a class="filter" href="/practice?subject={{ subject }}">
+        {{ r.subtopic }} <span>{{ r.correct }}/{{ r.answered }}</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if rates %}
+<section class="mt-5">
+  <h2>How you are doing</h2>
+  <table class="limits">
+    <thead>
+      <tr><th scope="col">Topic</th><th scope="col">Right</th><th scope="col">Answered</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rates %}
+      <tr>
+        <th scope="row">{{ r.subtopic }}</th>
+        <td>{{ r.correct }}</td>
+        <td>{{ r.answered }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if recent %}
+<section class="mt-5">
+  <h2>Your sets</h2>
+  <div class="kept">
+    {% for r in recent %}
+    {% set score = scores.get(r.id) %}
+    <article class="keep reveal">
+      <header class="keep-head">
+        <div>
+          <h3><a href="/practice/{{ r.id }}">{{ r.topic or r.subject }}</a></h3>
+          <p class="keep-meta">
+            {{ r.subject }} · started {{ relative_day(r.created_at, today) }}
+            {%- if r.finished_at %} · finished{% else %} · still open{% endif %}
+          </p>
+        </div>
+        {% if score %}
+        <p class="keep-meta"><strong>{{ score[0] }}</strong> of {{ score[1] }} right</p>
+        {% endif %}
+      </header>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

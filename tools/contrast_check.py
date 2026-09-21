@@ -71,6 +71,11 @@ REQUIREMENTS = [
     ("evidence", "surface-2", 4.5, "a locator on an open panel", BOTH),
     # Filled controls.
     ("on-accent", "accent", 4.5, "a label on the primary button", BOTH),
+    # Marking. These are the one place colour carries meaning, so they are
+    # held to body-text contrast rather than the 3:1 a decorative accent
+    # would get away with -- a student reads their score off this line.
+    ("right", "surface", 4.5, "a correct practice answer", BOTH),
+    ("wrong", "surface", 4.5, "a wrong practice answer", BOTH),
 ]
 
 

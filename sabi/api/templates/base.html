@@ -38,6 +38,7 @@
       <li><a href="/app"{% if nav == 'app' %} aria-current="page"{% endif %}>Ask</a></li>
       {% if viewer and viewer.is_authenticated %}
       <li><a href="/dashboard"{% if nav == 'dashboard' %} aria-current="page"{% endif %}>Dashboard</a></li>
+      <li><a href="/practice"{% if nav == 'practice' %} aria-current="page"{% endif %}>Practice</a></li>
       <li><a href="/notebook"{% if nav == 'notebook' %} aria-current="page"{% endif %}>Notebook</a></li>
       {% endif %}
       <li><a href="/privacy"{% if nav == 'privacy' %} aria-current="page"{% endif %}>Privacy</a></li>
