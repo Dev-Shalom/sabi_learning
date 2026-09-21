@@ -93,7 +93,7 @@ pip install -e ".[dev]"
 cp .env.example .env               # defaults work as-is for local dev
 
 python -m sabi.cli init            # schema, extensions, plan seeding
-python -m sabi.cli ingest          # 163 documents -> 507 chunks
+python -m sabi.cli ingest          # 170 documents -> 538 chunks
 python -m sabi.cli serve           # http://127.0.0.1:8000
 ```
 
@@ -165,7 +165,7 @@ reconstruct any answer exactly when someone down-votes it three weeks later.
 ### Layout
 
 ```
-corpus/          163 markdown documents with YAML provenance front matter
+corpus/          170 markdown documents with YAML provenance front matter
                  (WAEC Mathematics, Physics and Chemistry)
 sabi/
   corpus/        loader, chunker, ingestion pipeline
