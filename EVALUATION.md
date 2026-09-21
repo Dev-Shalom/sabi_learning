@@ -256,6 +256,34 @@ from the documents that exist; a slice can only test what somebody wrote.
 That is a general limitation of deriving eval items from the corpus, and it is
 worth naming here rather than discovering it from a student.
 
+**A fix that was tried and rejected, with its numbers.** Once the three
+missing Chemistry documents landed, several conceptual questions were answered
+out of a document's `## What the syllabus requires` section -- a list of
+learning objectives, not teaching material. Asked what causes hard water, a
+student could be told to "name the common air pollutants, say where each comes
+from and what harm it does". That reads like an instruction to the student
+rather than an answer.
+
+The obvious fix was to keep those chunks out of answer context, the way
+exclusion chunks are. Measured, it is clearly wrong:
+
+| | keeping them | filtering them |
+|---|---|---|
+| recall@k | 1.000 | 0.983 |
+| precision@1 | 0.958 | 0.908 |
+| MRR | 0.976 | 0.942 |
+| value pass | 0.989 | 0.956 |
+| over-refusal | 0.017 | 0.042 |
+| failures | 7 | 12 |
+
+Those 71 chunks are 13% of the corpus and they carry the vocabulary that finds
+a document in the first place — a requirements list names every term the
+document goes on to explain. Removing them costs far more retrieval than the
+occasional awkward answer costs a reader. So it stays, recorded here as a
+known weakness with a measured, rejected remedy rather than as a silent
+decision. The real fix is in how the generator chooses between chunks of one
+document, not in which chunks it may see.
+
 Two patterns worth naming:
 
 1. **Short conceptual questions are the weak spot.** Both over-refusals are four

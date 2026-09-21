@@ -69,6 +69,10 @@ The syllabus is organised here into these areas:
    alkanoates.
 6. Chemistry of the environment: air and water pollution, hard water, and the
    chemical industry in West Africa.
+7. Practical chemistry: qualitative analysis, meaning the tests for the common
+   gases, for cations with sodium hydroxide solution and with aqueous ammonia,
+   for anions, and the flame test, together with the recording of observations
+   and the inferences drawn from them.
 
 ## Not on this syllabus
 

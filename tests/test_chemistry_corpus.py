@@ -271,6 +271,35 @@ _alkane = f"C{round(_n_alkane)}H{round(2 * _n_alkane + 2)}"   # C4H10
 _n_alkyne = (40.0 + 2) / 14                                   # 3
 _alkyne = f"C{round(_n_alkyne)}H{round(2 * _n_alkyne - 2)}"   # C3H4
 
+# -- 22. alkanol and alkanoic acid from a relative molecular mass ------------
+# An alkanol CnH2n+2O has mass 14n + 18; an alkanoic acid CnH2nO2, 14n + 32.
+_n_ol = (46.0 - (2 * RAM["H"] + RAM["O"])) / 14               # 2
+_alkanol = f"C{round(_n_ol)}H{round(2 * _n_ol + 1)}OH"        # C2H5OH
+_alkanol_named = {1: "methanol", 2: "ethanol", 3: "propanol"}[round(_n_ol)]
+_n_acid = (60.0 - 2 * RAM["O"]) / 14                          # 2
+_acid = f"C{round(_n_acid)}H{round(2 * _n_acid)}O2"           # C2H4O2
+_acid_named = {
+    1: "methanoic acid", 2: "ethanoic acid", 3: "propanoic acid",
+}[round(_n_acid)]
+
+# -- 23. percentage of carbon in ethyl ethanoate, CH3COOC2H5 = C4H8O2 -------
+_rmm_ester = _mm(("C", 4), ("H", 8), ("O", 2))                # 88
+_pc_c_ester = (4 * RAM["C"]) / _rmm_ester * 100               # 54.5454...
+
+# -- 24. C2H5OH + 3O2 -> 2CO2 + 3H2O ---------------------------------------
+_mol_ethanol = 9.2 / _mm(("C", 2), ("H", 6), ("O", 1))        # 0.2
+_vol_co2_burn = (2 * _mol_ethanol) * MOLAR_VOLUME             # 8.96 dm3
+_mass_co2_burn = (2 * _mol_ethanol) * _mm(("C", 1), ("O", 2))  # 17.6 g
+
+# -- 25. hardness of water, as Ca2+ and Mg2+ per dm3 ------------------------
+# Ca(HCO3)2 is temporary hardness, MgSO4 permanent. One hardness ion each.
+_mol_temp = 0.162 / (RAM["Ca"] + 2 * (RAM["H"] + RAM["C"] + 3 * RAM["O"]))
+_mol_perm = 0.120 / _mm(("Mg", 1), ("S", 1), ("O", 4))        # 0.001
+_total_hardness = _mol_temp + _mol_perm                       # 0.002 mol/dm3
+_as_caco3 = _mm(("Ca", 1), ("C", 1), ("O", 3))                # 100
+_ppm_total = _total_hardness * _as_caco3 * 1000               # 200 ppm
+_ppm_boiled = _mol_perm * _as_caco3 * 1000                    # 100 ppm
+
 
 CHECKS: list[tuple[str, str, list[str]]] = [
     ("chm-ex-01-moles-from-mass", "n = m/M, then x the Avogadro constant",
@@ -315,6 +344,17 @@ CHECKS: list[tuple[str, str, list[str]]] = [
      [f"{_near(_v2, 2)} cm3"]),
     ("chm-ex-21-homologous-series-formula", "14n + 2 for CnH2n+2, 14n - 2 for CnH2n-2",
      [_alkane, _alkyne]),
+    ("chm-ex-22-alkanol-formula", "14n + 18 for an alkanol, 14n + 32 for an acid",
+     [_alkanol, _alkanol_named, _acid, _acid_named]),
+    ("chm-ex-23-ester-percentage-composition",
+     "sum the atoms of C4H8O2, then carbon's share of the mass",
+     [f"(a) {_near(_rmm_ester, 2)}", f"{_near(_pc_c_ester, 2)} per cent"]),
+    ("chm-ex-24-ethanol-combustion", "n = m/46, 1 ethanol gives 2 CO2, V = n x 22.4",
+     [f"{_near(_vol_co2_burn, 2)} dm3", f"{_near(_mass_co2_burn, 2)} g"]),
+    ("chm-ex-25-water-hardness",
+     "moles of Ca2+ and Mg2+ per dm3, quoted as CaCO3 at 1 ppm = 1 mg/dm3",
+     [f"{_near(_total_hardness, 5)} mol/dm3", f"{_near(_ppm_total, 2)} ppm",
+      f"{_near(_ppm_boiled, 2)} ppm"]),
 ]
 
 

@@ -899,6 +899,231 @@ EXAMPLES.append(doc(
 ))
 
 
+# ------------------------------------------- 22. alkanol and alkanoic acid RMM
+ORGANIC = "Organic chemistry"
+OXYGENATED = "Alkanols, alkanoic acids and alkanoates"
+ENVIRONMENT = "Chemistry of the environment"
+
+ch2_unit = C + 2 * H                     # 14, the difference between members
+alkanol_tail = 2 * H + O                 # the extra H2 and O over CnH2n
+rmm_alkanol = 46.0
+n_alkanol = (rmm_alkanol - alkanol_tail) / ch2_unit
+alkanol_formula = f"C{round(n_alkanol)}H{round(2 * n_alkanol + 1)}OH"
+alkanol_names = {1: "methanol", 2: "ethanol", 3: "propanol", 4: "butanol"}
+alkanol_name = alkanol_names[round(n_alkanol)]
+
+acid_tail = 2 * O                        # CnH2nO2, so the tail is two oxygens
+rmm_acid = 60.0
+n_acid = (rmm_acid - acid_tail) / ch2_unit
+acid_formula = f"C{round(n_acid)}H{round(2 * n_acid)}O2"
+acid_condensed = {1: "HCOOH", 2: "CH3COOH", 3: "C2H5COOH"}
+acid_names = {1: "methanoic acid", 2: "ethanoic acid", 3: "propanoic acid"}
+acid_short, acid_name = acid_condensed[round(n_acid)], acid_names[round(n_acid)]
+
+EXAMPLES.append(doc(
+    num=22, slug="alkanol-formula",
+    title="Molecular formula of an alkanol and of an alkanoic acid",
+    topic=ORGANIC, subtopic=OXYGENATED, section="E2",
+    question=(
+        f"(a) An alkanol has a relative molecular mass of {n(rmm_alkanol)}. "
+        f"(b) An alkanoic acid has a relative molecular mass of {n(rmm_acid)}. "
+        "Determine the molecular formula and the name of each. "
+        f"[H = {n(H)}, C = {n(C)}, O = {n(O)}]"
+    ),
+    steps=[
+        "As with the hydrocarbons, start from the general formula of the series "
+        "and write its relative molecular mass in terms of n.",
+        f"Part (a). An alkanol is CnH2n+1OH, which is the same as CnH2n+2O, so "
+        f"its mass is ({n(C)}n) + (2n + 2) + {n(O)} = 12n + 2n + 2 + 16 = "
+        f"14n + {n(alkanol_tail)}.",
+        f"14n + {n(alkanol_tail)} = {n(rmm_alkanol)}, so "
+        f"14n = {n(rmm_alkanol - alkanol_tail)} and n = {n(n_alkanol)}.",
+        f"With n = {n(n_alkanol)} the formula is {alkanol_formula}, which is "
+        f"{alkanol_name}.",
+        f"Part (b). An alkanoic acid is CnH2n+1COOH, which is the same as "
+        f"CnH2nO2, so its mass is 12n + 2n + (2 x {n(O)}) = 14n + "
+        f"{n(acid_tail)}. The carbon of the -COOH group is counted in n.",
+        f"14n + {n(acid_tail)} = {n(rmm_acid)}, so "
+        f"14n = {n(rmm_acid - acid_tail)} and n = {n(n_acid)}.",
+        f"With n = {n(n_acid)} the formula is {acid_formula}, written out as "
+        f"{acid_short}, which is {acid_name}.",
+        f"Check both. {alkanol_formula}: ({n(round(n_alkanol))} x {n(C)}) + "
+        f"({n(round(2 * n_alkanol + 2))} x {n(H)}) + {n(O)} = "
+        f"{n(round(n_alkanol) * C + round(2 * n_alkanol + 2) * H + O)}. "
+        f"{acid_formula}: ({n(round(n_acid))} x {n(C)}) + "
+        f"({n(round(2 * n_acid))} x {n(H)}) + (2 x {n(O)}) = "
+        f"{n(round(n_acid) * C + round(2 * n_acid) * H + 2 * O)}.",
+        "Note that an alkanol and an alkanoic acid can share a relative "
+        f"molecular mass: {n(rmm_alkanol)} fits {alkanol_name} and also fits "
+        f"{acid_condensed[1]}, {acid_names[1]}. The mass alone does not settle "
+        "which family a compound belongs to; the functional group does.",
+    ],
+    answer=(
+        f"(a) {alkanol_formula}, {alkanol_name}  "
+        f"(b) {acid_formula}, that is {acid_short}, {acid_name}"
+    ),
+))
+
+
+# ------------------------------------------- 23. percentage composition of an ester
+ester_c, ester_h, ester_o = 4, 8, 2          # ethyl ethanoate, CH3COOC2H5
+rmm_ester = ester_c * C + ester_h * H + ester_o * O
+mass_c_in_ester = ester_c * C
+pc_c_ester = mass_c_in_ester / rmm_ester * 100
+EXAMPLES.append(doc(
+    num=23, slug="ester-percentage-composition",
+    title="Percentage by mass of carbon in an ester",
+    topic=ORGANIC, subtopic=OXYGENATED, section="E2",
+    question=(
+        "Ethyl ethanoate, CH3COOC2H5, is the alkanoate formed when ethanol "
+        "reacts with ethanoic acid. Calculate (a) its relative molecular mass, "
+        "(b) the percentage by mass of carbon in it, to two decimal places. "
+        f"[H = {n(H)}, C = {n(C)}, O = {n(O)}]"
+    ),
+    steps=[
+        "Part (a). First count the atoms in the condensed formula. "
+        f"CH3COOC2H5 has {ester_c} carbon atoms, {ester_h} hydrogen atoms and "
+        f"{ester_o} oxygen atoms, so its molecular formula is "
+        f"C{ester_c}H{ester_h}O{ester_o}.",
+        f"Relative molecular mass = ({ester_c} x {n(C)}) + ({ester_h} x "
+        f"{n(H)}) + ({ester_o} x {n(O)}).",
+        f"= {n(ester_c * C)} + {n(ester_h * H)} + {n(ester_o * O)} = "
+        f"{n(rmm_ester)}.",
+        "Part (b). The percentage by mass of an element is the mass that "
+        "element contributes, divided by the relative molecular mass, times "
+        "100.",
+        f"Mass contributed by carbon = {ester_c} x {n(C)} = "
+        f"{n(mass_c_in_ester)}.",
+        f"Percentage of carbon = ({n(mass_c_in_ester)} / {n(rmm_ester)}) x 100 "
+        f"= {n(pc_c_ester)} per cent.",
+        "Check the three percentages add to 100. Carbon "
+        f"{n(pc_c_ester)}, hydrogen "
+        f"{n(ester_h * H / rmm_ester * 100)}, oxygen "
+        f"{n(ester_o * O / rmm_ester * 100)}, and "
+        f"{n(pc_c_ester)} + {n(ester_h * H / rmm_ester * 100)} + "
+        f"{n(ester_o * O / rmm_ester * 100)} = "
+        f"{n(pc_c_ester + ester_h * H / rmm_ester * 100 + ester_o * O / rmm_ester * 100)} "
+        "to two decimal places.",
+    ],
+    answer=f"(a) {n(rmm_ester)}  (b) {n(pc_c_ester)} per cent carbon",
+))
+
+
+# ------------------------------------------------ 24. combustion of ethanol
+mass_ethanol = 9.2
+mm_ethanol = 2 * C + 6 * H + O                 # C2H5OH
+mol_ethanol = mass_ethanol / mm_ethanol
+co2_per_ethanol = 2                            # C2H5OH + 3O2 -> 2CO2 + 3H2O
+mol_co2_burn = mol_ethanol * co2_per_ethanol
+vol_co2_burn = mol_co2_burn * MOLAR_VOLUME
+mm_co2_burn = C + 2 * O
+mass_co2_burn = mol_co2_burn * mm_co2_burn
+EXAMPLES.append(doc(
+    num=24, slug="ethanol-combustion",
+    title="Carbon(IV) oxide from the complete combustion of ethanol",
+    topic=ORGANIC, subtopic=OXYGENATED, section="E2",
+    question=(
+        f"{n(mass_ethanol)} g of ethanol, C2H5OH, is burnt completely in "
+        "oxygen. The equation is\n\n"
+        "C2H5OH + 3O2 -> 2CO2 + 3H2O\n\n"
+        "Calculate (a) the volume of carbon(IV) oxide produced, measured at "
+        "s.t.p., (b) its mass. "
+        f"[H = {n(H)}, C = {n(C)}, O = {n(O)}; molar volume of a gas at s.t.p. "
+        f"= {n(MOLAR_VOLUME)} dm3/mol]"
+    ),
+    steps=[
+        "The equation is a statement about moles, so turn the mass of ethanol "
+        "into moles first.",
+        f"Molar mass of C2H5OH = (2 x {n(C)}) + (6 x {n(H)}) + {n(O)} = "
+        f"{n(2 * C)} + {n(6 * H)} + {n(O)} = {n(mm_ethanol)} g/mol.",
+        f"Moles of ethanol = {n(mass_ethanol)} / {n(mm_ethanol)} = "
+        f"{n(mol_ethanol)} mol.",
+        f"From the equation, 1 mole of ethanol gives {co2_per_ethanol} moles "
+        "of CO2, because both carbon atoms end up as carbon(IV) oxide.",
+        f"Moles of CO2 = {co2_per_ethanol} x {n(mol_ethanol)} = "
+        f"{n(mol_co2_burn)} mol.",
+        f"Part (a). Volume at s.t.p. = moles x {n(MOLAR_VOLUME)} = "
+        f"{n(mol_co2_burn)} x {n(MOLAR_VOLUME)} = {n(vol_co2_burn)} dm3.",
+        f"Part (b). Molar mass of CO2 = {n(C)} + (2 x {n(O)}) = "
+        f"{n(mm_co2_burn)} g/mol.",
+        f"Mass = {n(mol_co2_burn)} x {n(mm_co2_burn)} = {n(mass_co2_burn)} g.",
+        "Complete combustion is assumed because oxygen is in plenty. In a "
+        "limited supply the ethanol would give carbon(II) oxide or soot "
+        "instead, and this arithmetic would not apply.",
+    ],
+    answer=(
+        f"(a) {n(vol_co2_burn)} dm3 at s.t.p.  "
+        f"(b) {n(mass_co2_burn)} g of carbon(IV) oxide"
+    ),
+))
+
+
+# --------------------------------------------------------- 25. hardness of water
+mass_ca_hco3 = 0.162           # g per dm3, temporary hardness
+mm_ca_hco3 = CA + 2 * (H + C + 3 * O)
+mol_ca_hco3 = mass_ca_hco3 / mm_ca_hco3
+mass_mgso4 = 0.120             # g per dm3, permanent hardness
+mm_mgso4 = MG + S + 4 * O
+mol_mgso4 = mass_mgso4 / mm_mgso4
+total_hardness_mol = mol_ca_hco3 + mol_mgso4
+mm_caco3_h = CA + C + 3 * O
+ppm_total = total_hardness_mol * mm_caco3_h * 1000     # mg per dm3
+ppm_after_boiling = mol_mgso4 * mm_caco3_h * 1000
+EXAMPLES.append(doc(
+    num=25, slug="water-hardness",
+    title="Total hardness of a water sample in mol per dm3 and in ppm",
+    topic=ENVIRONMENT, subtopic="Hard water", section="F1",
+    question=(
+        "One cubic decimetre of a sample of hard water contains "
+        f"{n(mass_ca_hco3, 3)} g of calcium hydrogentrioxocarbonate(IV), "
+        f"Ca(HCO3)2, and {n(mass_mgso4, 3)} g of magnesium "
+        "tetraoxosulphate(VI), MgSO4. Calculate (a) the total hardness in "
+        "mol/dm3 of calcium and magnesium ions, (b) the total hardness in parts "
+        "per million expressed as CaCO3, (c) the hardness remaining after the "
+        "water has been boiled, in ppm. "
+        f"[H = {n(H)}, C = {n(C)}, O = {n(O)}, Mg = {n(MG)}, S = {n(S)}, "
+        f"Ca = {n(CA)}. Take 1 dm3 of water to have a mass of 1 kg, so that "
+        "1 ppm is 1 mg/dm3.]"
+    ),
+    steps=[
+        "Part (a). Hardness is caused by the calcium and magnesium ions, and "
+        "each of these salts gives one such ion per formula unit, so find the "
+        "moles of each salt.",
+        f"Molar mass of Ca(HCO3)2 = {n(CA)} + 2 x ({n(H)} + {n(C)} + "
+        f"(3 x {n(O)})) = {n(CA)} + (2 x {n(H + C + 3 * O)}) = "
+        f"{n(mm_ca_hco3)} g/mol.",
+        f"Moles of Ca(HCO3)2 = {n(mass_ca_hco3, 3)} / {n(mm_ca_hco3)} = "
+        f"{n(mol_ca_hco3, 5)} mol, which is {n(mol_ca_hco3, 5)} mol of Ca2+.",
+        f"Molar mass of MgSO4 = {n(MG)} + {n(S)} + (4 x {n(O)}) = "
+        f"{n(mm_mgso4)} g/mol.",
+        f"Moles of MgSO4 = {n(mass_mgso4, 3)} / {n(mm_mgso4)} = "
+        f"{n(mol_mgso4, 5)} mol, which is {n(mol_mgso4, 5)} mol of Mg2+.",
+        f"Total hardness = {n(mol_ca_hco3, 5)} + {n(mol_mgso4, 5)} = "
+        f"{n(total_hardness_mol, 5)} mol/dm3.",
+        "Part (b). Hardness is conventionally quoted as though all of it were "
+        "calcium trioxocarbonate(IV), so convert the same number of moles into "
+        "a mass of CaCO3.",
+        f"Molar mass of CaCO3 = {n(CA)} + {n(C)} + (3 x {n(O)}) = "
+        f"{n(mm_caco3_h)} g/mol.",
+        f"Mass as CaCO3 = {n(total_hardness_mol, 5)} x {n(mm_caco3_h)} = "
+        f"{n(total_hardness_mol * mm_caco3_h, 3)} g/dm3, which is "
+        f"{n(ppm_total)} mg/dm3, that is {n(ppm_total)} ppm.",
+        "Part (c). Boiling decomposes only the hydrogentrioxocarbonate(IV), "
+        "Ca(HCO3)2 -> CaCO3 + H2O + CO2, so the temporary hardness is "
+        "precipitated out and the MgSO4 is left in solution.",
+        f"Remaining hardness = {n(mol_mgso4, 5)} x {n(mm_caco3_h)} = "
+        f"{n(mol_mgso4 * mm_caco3_h, 3)} g/dm3 = {n(ppm_after_boiling)} ppm, "
+        "and it is permanent hardness, needing washing soda or an ion-exchange "
+        "column to remove it.",
+    ],
+    answer=(
+        f"(a) {n(total_hardness_mol, 5)} mol/dm3  "
+        f"(b) {n(ppm_total)} ppm as CaCO3  "
+        f"(c) {n(ppm_after_boiling)} ppm of permanent hardness"
+    ),
+))
+
+
 def main() -> int:
     ROOT.mkdir(parents=True, exist_ok=True)
     names = [name for name, _ in EXAMPLES]
