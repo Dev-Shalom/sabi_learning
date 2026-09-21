@@ -1417,6 +1417,10 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   font-family: var(--mono);
   color: var(--evidence);
   font-weight: 500;
+  /* `EX 01` is one token with a space in it. Left to wrap, it breaks after
+   * `EX` at 360px and reads as two separate things -- which is the opposite
+   * of what a citation marker is for. */
+  white-space: nowrap;
 }
 
 .source .attribution { color: var(--ink-soft); margin-right: auto; }

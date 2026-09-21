@@ -34,7 +34,7 @@ SURFACES = [
 
 # Reached only by signing up, so they are captured in a second pass that
 # creates a throwaway account and asks a few questions first.
-ACCOUNT_SURFACES = [("dashboard", "/dashboard")]
+ACCOUNT_SURFACES = [("dashboard", "/dashboard"), ("practice", "/practice")]
 
 WIDTHS = [("360", 360, 3200), ("1440", 1440, 2400)]
 
@@ -75,6 +75,36 @@ def shoot_account(browser, base, out, label, width, height, theme, scale=1) -> i
             page.screenshot(path=str(out / name), full_page=True)
             print(f"  {name}")
             written += 1
+
+        # A practice set, reached by pressing the real button, then marked --
+        # the marked page is the one worth looking at, because it is where
+        # the verdict colours and the working sit. Both are shot: an empty
+        # set and a marked one lay out differently at 360.
+        page.goto(base + "/practice", wait_until="load")
+        page.click(".practice-start button[type=submit]")
+        page.wait_for_load_state("load")
+        page.wait_for_timeout(200)
+        name = f"practice-set-{label}-{theme}.png"
+        page.screenshot(path=str(out / name), full_page=True)
+        print(f"  {name}")
+        written += 1
+
+        # By name, not position: the CSRF field is the first input in every
+        # form here, so `.practice-answer input` resolves to a hidden field.
+        answers = page.locator('.practice-answer input[name="given"]')
+        for index in range(min(3, answers.count())):
+            answers.nth(index).fill("150")
+            page.locator(".practice-answer button[type=submit]").nth(index).click()
+            page.wait_for_load_state("load")
+            answers = page.locator('.practice-answer input[name="given"]')
+
+        page.click("form[action$='/finish'] button[type=submit]")
+        page.wait_for_load_state("load")
+        page.wait_for_timeout(200)
+        name = f"practice-marked-{label}-{theme}.png"
+        page.screenshot(path=str(out / name), full_page=True)
+        print(f"  {name}")
+        written += 1
         return written
     finally:
         context.close()

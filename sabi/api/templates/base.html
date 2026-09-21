@@ -92,6 +92,11 @@
         <ul>
           {% if viewer and viewer.is_authenticated %}
           <li><a href="/dashboard">Dashboard</a></li>
+          {# The masthead links are hidden below 1024px, so without these two
+             a student on a phone can only reach practice and the notebook by
+             going through the dashboard first. #}
+          <li><a href="/practice">Practice</a></li>
+          <li><a href="/notebook">Notebook</a></li>
           {% else %}
           <li><a href="/signup">Create an account</a></li>
           <li><a href="/login">Log in</a></li>
