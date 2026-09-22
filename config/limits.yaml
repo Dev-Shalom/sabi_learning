@@ -17,6 +17,10 @@ plans:
     daily_ip_cap: 90
     burst_per_minute: 6
     monthly_cost_ceiling_usd_per_user: 0.40
+    # Photographs read per day. Separate from the question cap because
+    # reading one is a model call whether or not a question follows, and a
+    # student retaking a blurry picture has not asked three questions.
+    daily_ocr_cap: 5
 
   # What signing up buys. Note what it is NOT: the daily count is not reset by
   # creating an account, because usage is keyed on the identity and signing up
@@ -34,6 +38,7 @@ plans:
     daily_ip_cap: 240
     burst_per_minute: 8
     monthly_cost_ceiling_usd_per_user: 0.70
+    daily_ocr_cap: 10
 
 # Which syllabuses exist. Retrieval is scoped to exactly one (board, subject)
 # pair per question, and a partial index is built per pair, so this list is

@@ -85,6 +85,11 @@ MIGRATIONS = [
     # and stop matching once versions are per scope -- which is correct.
     """ALTER TABLE answer_cache
        ADD COLUMN IF NOT EXISTS scope varchar(64) NOT NULL DEFAULT 'WAEC:Mathematics'""",
+    # 010: photographs read per day, per plan. Defaults to zero, so a plan
+    # that predates the column reads no photos rather than unlimited ones --
+    # a new metered capability must not arrive switched on.
+    """ALTER TABLE plans
+       ADD COLUMN IF NOT EXISTS daily_ocr_cap integer NOT NULL DEFAULT 0""",
 ]
 
 POST_DDL = [
@@ -198,6 +203,7 @@ def sync_plans() -> list[str]:
                 daily_question_cap=int(spec["daily_question_cap"]),
                 daily_ip_cap=int(spec.get("daily_ip_cap", 100)),
                 burst_per_minute=int(spec.get("burst_per_minute", 6)),
+                daily_ocr_cap=int(spec.get("daily_ocr_cap", 0)),
                 monthly_cost_ceiling_usd_per_user=float(
                     spec.get("monthly_cost_ceiling_usd_per_user", 0.0)
                 ),
@@ -216,7 +222,8 @@ def sync_plans() -> list[str]:
         # The eval harness and CLI run as real metered users, so the plan they
         # run on has to exist. It is generous, not unlimited: the brief says no
         # request may be unmetered, including our own.
-        if s.get(Plan, "internal") is None:
+        internal = s.get(Plan, "internal")
+        if internal is None:
             s.add(
                 Plan(
                     name="internal",
@@ -224,10 +231,19 @@ def sync_plans() -> list[str]:
                     daily_question_cap=5000,
                     daily_ip_cap=5000,
                     burst_per_minute=600,
+                    daily_ocr_cap=500,
                     monthly_cost_ceiling_usd_per_user=10.0,
                 )
             )
             changed.append("created internal")
+        elif internal.daily_ocr_cap == 0:
+            # `internal` is created here rather than in limits.yaml, so a new
+            # metered capability has to be backfilled onto it explicitly. The
+            # column defaults to zero -- correct for a real plan, where an
+            # unpriced capability must not arrive switched on, and wrong for
+            # the one plan our own tooling runs under.
+            internal.daily_ocr_cap = 500
+            changed.append("updated internal: daily_ocr_cap")
 
     return changed
 

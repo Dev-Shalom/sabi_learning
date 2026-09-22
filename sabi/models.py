@@ -161,6 +161,11 @@ class Plan(Base):
     daily_ip_cap: Mapped[int] = mapped_column(Integer)
     burst_per_minute: Mapped[int] = mapped_column(Integer)
     monthly_cost_ceiling_usd_per_user: Mapped[float] = mapped_column(Float, default=0.0)
+    # Photographs read per day. Its own cap rather than a share of the
+    # question allowance: reading a photo is a model call whether or not a
+    # question follows it, and a student who takes three blurry pictures of
+    # the same page has not asked three questions.
+    daily_ocr_cap: Mapped[int] = mapped_column(Integer, default=0)
     # Price is null for free. The column exists so that adding a paid plan is a
     # row, not a migration.
     price_ngn_monthly: Mapped[int | None] = mapped_column(Integer)
@@ -312,6 +317,37 @@ class Feedback(Base):
 
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     promoted_golden_id: Mapped[int | None] = mapped_column(Integer)
+
+
+class OcrUpload(Base):
+    """What a photograph was read as. Never the photograph.
+
+    There is no `data` column and there must never be one. A photo of an
+    exercise book carries a student's name, their handwriting and often their
+    school's stamp, and this audience is majority under 18. The hash is
+    enough to serve a re-upload from cache, and it cannot be turned back into
+    a picture.
+
+    Not scoped to a user on purpose: two students photographing the same
+    printed past paper produce the same bytes and the same hash, and the
+    second one should not pay for a model call to be told what the first was
+    told. The row holds no personal data, so sharing it leaks nothing --
+    which is only true *because* the image is discarded.
+    """
+
+    __tablename__ = "ocr_uploads"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sha256: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    media_type: Mapped[str] = mapped_column(String(32))
+    byte_length: Mapped[int] = mapped_column(Integer, default=0)
+
+    transcription: Mapped[str] = mapped_column(Text, default="")
+    model: Mapped[str | None] = mapped_column(String(80))
+    cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+
+    hits: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class PracticeSet(Base):

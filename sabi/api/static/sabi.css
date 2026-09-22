@@ -1880,6 +1880,27 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   .keep-form { flex-direction: column; align-items: stretch; }
 }
 
+/* ============================================================ photo */
+
+.photo-form {
+  display: grid;
+  gap: var(--s-4);
+  max-width: var(--measure);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--rule);
+}
+
+/* A file input cannot be restyled far, and trying is how it stops working on
+ * the Android browsers this is for. It gets a tap target and is left alone. */
+.photo-form input[type="file"] {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--s-3);
+  font-size: var(--step--1);
+}
+
+.photo-form .btn { justify-self: start; }
+
 /* ============================================================ practice */
 
 .practice-start {

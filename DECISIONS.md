@@ -353,6 +353,54 @@ engineering consequences:
 
 ---
 
+## Photo input
+
+- **A capability, not a provider.** `VisionClient` is its own ABC alongside
+  `LLMClient`, because the two are independently available: the offline
+  answerer serves every question in this deployment and cannot read an image
+  at all. `AnthropicLLM` implements both. `complete` was not touched — folding
+  an image branch into the path every answer goes through would put the
+  riskiest new code in the most load-bearing place.
+- **Nothing is asked automatically.** Upload, transcribe, show the text in a
+  textarea, and stop. The student presses Ask. A model that misreads
+  `27^(2/3)` as `27^(213)` and is then asked that question without anyone
+  looking has produced a confident answer to a question nobody asked, which is
+  the failure this product exists to prevent arriving by a new door. The route
+  does not call `answer_question`, and a test asserts no `Request` row appears.
+- **The image bytes are never stored.** `ocr_uploads` holds a sha256, the
+  media type, the size and the transcription. A photo of an exercise book
+  carries handwriting, often a name in the margin, sometimes a school stamp,
+  and this audience is majority under 18. The test checks the *column list*
+  rather than trusting this paragraph, so adding a `data` column fails the
+  build. It is also why the cache can be shared across students without
+  leaking anything: there is nothing personal in the row.
+- **The format is decided by the bytes.** `content_type` on a multipart part
+  is whatever the client typed. `sniff` reads magic bytes, and that is what
+  gets sent to the model, so a PDF named `.png` is refused rather than
+  forwarded.
+- **It is metered, on its own cap.** `limiter.COUNTED_EVENTS` is the question
+  allowance, and an event type outside that tuple is free and unlimited —
+  exactly what `limiter`'s docstring forbids. `ocr` is counted against
+  `plans.daily_ocr_cap` instead of the question cap, because reading a photo
+  is a model call whether or not a question follows, and a student retaking a
+  blurry picture has not asked three questions.
+- **No heuristic OCR.** A hand-rolled reader would be a new dependency whose
+  mistakes are indistinguishable from a model's, and it would make the tests
+  pass against something no student will ever use. Without a key,
+  `NoVisionClient` raises and the page says so and offers the composer — the
+  same visible-degradation rule `refusals.capacity()` follows.
+  `FixtureVisionClient` keys committed transcriptions by image hash, so the
+  tests drive the real validation, hashing, caching and metering and
+  substitute only the model call.
+- **Client-side downscaling was not built.** The plan expected it, and it
+  would have been the first real JavaScript in this product — breaking "works
+  with JS off" for one feature. A 5 MB limit and a clear message naming the
+  size instead. That is worse for a student on a slow connection with a
+  12-megapixel camera, and it is the honest trade until there is a real user
+  who hits it. Revisit with evidence, not in advance.
+
+---
+
 ## Switching a third subject on
 
 - **A subject is not on until it is measured.** Chemistry's 39 documents sat in

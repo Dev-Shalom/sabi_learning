@@ -22,7 +22,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, Form, HTTPException, Request as Req
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request as Req, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -50,10 +50,11 @@ from sabi.api.deps import (
 from sabi.api.render import anchor_id, attribution_label, render_answer, render_source
 from sabi.answer.service import answer_question
 from sabi.config import runtime, settings
+from sabi.llm.base import LLMUnavailable
 from sabi.db import get_session
 from sabi.limits import limiter
 from sabi.models import Feedback, GoldenItem, Request as RequestRow, WaitlistEntry
-from sabi import notebook, practice
+from sabi import notebook, practice, vision
 from sabi.practice import templates as practice_templates
 from sabi.obs import dashboard as dash
 from sabi.retrieval.scope import RetrievalScope, live_scopes
@@ -576,6 +577,81 @@ def notebook_remove(
 ):
     notebook.remove(s, user=v.user, entry_id=entry_id)
     return RedirectResponse("/notebook?saved=removed", status_code=303)
+
+
+# -------------------------------------------------------------------- photo
+#
+# Photo is an input method, never part of the grounded answer path. The route
+# transcribes and then stops: the text lands in an editable box and the
+# student presses Ask themselves. Nothing here calls `answer_question`.
+
+
+@app.get("/photo", response_class=HTMLResponse)
+def photo_page(
+    request: Req,
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(viewer),
+):
+    ctx = base_context(request, v, nav="app")
+    ctx.update(
+        {
+            "scopes": live_scopes(),
+            "scope": RetrievalScope.safe_parse(
+                request.query_params.get("subject"),
+                request.query_params.get("exam_board"),
+            ),
+            "reader_available": vision.get_vision().available(),
+            "max_mb": vision.MAX_BYTES // (1024 * 1024),
+            "photos_left": vision.ocr_remaining(s, v.user),
+            "transcription": "",
+            "problem": "",
+        }
+    )
+    return finish(templates.TemplateResponse(request, "photo.html", ctx), v)
+
+
+@app.post("/photo", response_class=HTMLResponse)
+async def photo_upload(
+    request: Req,
+    photo: UploadFile = File(...),
+    subject: str = Form(""),
+    exam_board: str = Form(""),
+    s: Session = Depends(get_session),
+    v: Viewer = Depends(require_csrf),
+):
+    """Read a photo and show what it said. Never asks it.
+
+    The transcription goes into a textarea the student edits and submits
+    themselves. Asking automatically would mean a misread digit becomes a
+    confidently answered question nobody typed, which is the failure this
+    product exists to prevent arriving through a new door.
+    """
+    ctx = base_context(request, v, nav="app")
+    ctx.update(
+        {
+            "scopes": live_scopes(),
+            "scope": RetrievalScope.safe_parse(subject, exam_board),
+            "reader_available": vision.get_vision().available(),
+            "max_mb": vision.MAX_BYTES // (1024 * 1024),
+            "transcription": "",
+            "problem": "",
+        }
+    )
+
+    # Read with a hard ceiling rather than trusting the declared length: the
+    # size a client announces is not the size it sends.
+    data = await photo.read(vision.MAX_BYTES + 1)
+    try:
+        found = vision.read(s, user=v.user, data=data)
+        ctx["transcription"] = found.text
+        ctx["cached"] = found.cached
+    except vision.ImageRejected as e:
+        ctx["problem"] = str(e)
+    except LLMUnavailable as e:
+        ctx["problem"] = str(e)
+
+    ctx["photos_left"] = vision.ocr_remaining(s, v.user)
+    return finish(templates.TemplateResponse(request, "photo.html", ctx), v)
 
 
 # ----------------------------------------------------------------- practice

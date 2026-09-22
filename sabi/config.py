@@ -68,6 +68,13 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     voyage_api_key: str | None = None
 
+    # Which model reads a photograph. Haiku by default: transcription is a
+    # short, literal task, and paying escalation prices to copy out a line of
+    # handwriting would be the wrong trade for this audience. Separate from
+    # the answering models on purpose -- the photo path must be switchable
+    # and priceable without touching the path every answer goes through.
+    vision_model: str = "claude-haiku-4-5-20251001"
+
     # Admin surface. There is no default credential: if this is unset the admin
     # routes return 404, as if they did not exist.
     admin_token: str | None = None
