@@ -30,6 +30,10 @@ SURFACES = [
     ("login", "/login", "get", None),
     ("privacy", "/privacy", "get", None),
     ("waitlist", "/waitlist", "get", None),
+    # The photo page as it actually ships: no vision key, so it says so and
+    # offers the composer. Shooting the honest state is the point -- a
+    # screenshot of an upload box that cannot work would be a lie.
+    ("photo", "/photo", "get", None),
 ]
 
 # Reached only by signing up, so they are captured in a second pass that

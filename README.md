@@ -259,7 +259,8 @@ What is real, and what is not:
 | Accounts, sessions, CSRF, throttling | **Working**, 19 tests, no new dependencies |
 | Dashboard: stats, streak, topics, countdown | **Working**, all reads over the existing request log |
 | Notebook: kept answers with their sources | **Working**, snapshotted so a saved answer cannot drift |
-| Practice: timed sets, marking, weak topics | **Working**, 50 templates, every answer computed in Python |
+| Practice: timed sets, marking, weak topics | **Working**, 64 templates across three subjects, every answer computed in Python |
+| Photo input | **Written and tested against fixtures.** Ships in its honest state: with no vision key the page says so and offers the composer. No real photo has ever been read. |
 | Feedback loop and review queue | **Working**, promotion into the golden set tested |
 | Run against Claude or Voyage | **Never done.** No API key was available. The clients are written and the seams are tested against fakes, but no real inference call has been made. |
 | LLM-as-judge | **Never run.** Rubric written and wired; the numbers in EVALUATION.md come from the heuristic stand-in. |
@@ -267,10 +268,11 @@ What is real, and what is not:
 | Demo video | **Not recorded.** The brief asked for a two-minute walkthrough; there are screenshots above instead. A video needs a deployed URL to walk through. |
 | Real users | **None.** The brief asked for a shipped tool with real students; this is a complete system that has not been put in front of anyone. |
 
-**Still to come, and scoped in the plan:** photo input, and Biology. Scoping,
-Physics, Chemistry, the notebook and practice have landed. NECO ships as code
-rather than content: `exam_board` is threaded everywhere, so adding it is
-authoring documents, not changing the system.
+**Still to come:** Biology, and running any of this against a real model.
+Every phase in the plan has landed — scoping, three subjects, the notebook,
+practice and photo input. NECO ships as code rather than content:
+`exam_board` is threaded everywhere, so adding it is authoring documents, not
+changing the system.
 
 The last three rows are the honest gap between this and the brief. They need an API
 key, a Fly.io account and a link handed to actual students — decisions and
