@@ -119,6 +119,31 @@ MIGRATIONS = [
        ADD COLUMN IF NOT EXISTS daily_ocr_cap integer NOT NULL DEFAULT 0""",
 ]
 
+# Indexes created by raw DDL rather than by SQLAlchemy metadata, either
+# because the metadata cannot express them (a partial index, a descending
+# expression, an access method pgvector or pg_trgm provides) or because they
+# are per-scope and generated at runtime.
+#
+# Alembic's autogenerate reflects them, cannot reproduce them, and therefore
+# proposes DROPPING them on every single run. `alembic/env.py` imports this set
+# to filter them out. Dropping a partial scope index makes an ANN walk return
+# fewer rows than LIMIT asked for, silently, which is the worst failure this
+# codebase knows about -- so this list is load-bearing, not housekeeping.
+#
+# A new raw index must be added here in the same commit that creates it.
+RAW_MANAGED_INDEXES = frozenset({
+    "ix_chunks_embedding_hnsw",
+    "ix_chunks_scope",
+    "ix_chunks_exclusion",
+    "ix_chunks_text_trgm",
+    "ix_chunks_tsv",
+    "ix_answer_cache_scope_hash",
+    "uq_feedback_request_user",
+    "uq_users_email_live",
+    "ix_login_attempts_email_time",
+    "ix_login_attempts_ip_time",
+})
+
 POST_DDL = [
     # Cosine distance, matching the normalised vectors the embedders produce.
     # Kept as the unscoped fallback: it is what an unfiltered query uses, and

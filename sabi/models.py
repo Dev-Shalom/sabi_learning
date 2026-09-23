@@ -36,6 +36,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TSVECTOR, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -317,6 +318,294 @@ class Feedback(Base):
 
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     promoted_golden_id: Mapped[int | None] = mapped_column(Integer)
+
+
+# ===========================================================================
+# The exam catalog.
+#
+# Shape comes from `contracts/question.schema.json`, which is frozen: the
+# content pipeline, the API and the web app all build against it, so a column
+# here that disagrees with it is a bug in one of the three.
+#
+# The rule that governs every read of this catalog: **a question is servable
+# only when `status == 'verified'` and `licence != 'dev_only'`.** That is
+# enforced in the query layer rather than left to callers, because the failure
+# it prevents -- an unreviewed or unlicensed question shown to a student -- is
+# silent, and a caller who forgets produces no error at all.
+# ===========================================================================
+
+
+class Subject(Base):
+    """A subject in the catalog, seeded from contracts/subject_codes.yaml.
+
+    A table rather than an enum because `available` changes: a subject exists
+    in the catalog long before it has enough verified content to be offered,
+    and a student must never be shown a subject that would give them an empty
+    practice set.
+    """
+
+    __tablename__ = "subjects"
+
+    code: Mapped[str] = mapped_column(String(3), primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), unique=True)
+    track: Mapped[str] = mapped_column(String(16), default="any")
+    wave: Mapped[int] = mapped_column(Integer, default=2)
+
+    # False until the subject meets its verified-content threshold. The
+    # catalog holding a subject is not the same as a student being able to
+    # sit it.
+    available: Mapped[bool] = mapped_column(Boolean, default=False)
+    # False until the subject's name and code have been checked against the
+    # exam body's own published syllabus. A wrong name is what a student picks
+    # in onboarding, so this is not cosmetic.
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Passage(Base):
+    """A comprehension passage several questions hang off.
+
+    Stored once and referenced, so correcting a passage fixes every question
+    that uses it rather than leaving copies to drift apart.
+    """
+
+    __tablename__ = "passages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ref: Mapped[str] = mapped_column(String(160), unique=True, index=True)
+    text: Mapped[str] = mapped_column(Text)
+    source_label: Mapped[str | None] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Question(Base):
+    """One question in the bank.
+
+    Mirrors `contracts/question.schema.json`. The answer key, the licence and
+    the whole verification block live here and are **never** returned by a
+    student-facing endpoint -- the API's `Question` schema simply has no field
+    for them, so there is nothing to forget to strip.
+    """
+
+    __tablename__ = "questions"
+
+    # Derived from the question's identity rather than a surrogate, so a
+    # re-import of the same question produces the same id and de-duplication
+    # and re-review are idempotent.
+    id: Mapped[str] = mapped_column(String(120), primary_key=True)
+
+    exam_body: Mapped[str] = mapped_column(String(16), index=True)
+    series: Mapped[str | None] = mapped_column(String(16))
+    institution: Mapped[str | None] = mapped_column(String(160))
+
+    subject_code: Mapped[str] = mapped_column(
+        String(3), ForeignKey("subjects.code"), index=True
+    )
+    year: Mapped[int] = mapped_column(Integer, index=True)
+    paper: Mapped[str] = mapped_column(String(8), default="1")
+    question_number: Mapped[int] = mapped_column(Integer)
+
+    type: Mapped[str] = mapped_column(String(16), default="objective")
+    stem: Mapped[str] = mapped_column(Text)
+    passage_id: Mapped[int | None] = mapped_column(
+        ForeignKey("passages.id", ondelete="SET NULL")
+    )
+    # [{kind, path, alt}]. `alt` is required by the contract: a diagram with
+    # no alternative text is unusable to a screen reader.
+    assets: Mapped[list] = mapped_column(JSONB, default=list)
+
+    # [{label, text, why_wrong}]. The count comes from the paper's format
+    # config, never assumed to be four -- NECO objective papers use five.
+    options: Mapped[list] = mapped_column(JSONB, default=list)
+
+    # {key} | {value, value_kind} | {model_answer, marking_guide, max_marks}
+    answer: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    # {text, locators, author}. An explanation with no locator is not shown.
+    explanation: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    topic: Mapped[str | None] = mapped_column(String(120), index=True)
+    subtopic: Mapped[str | None] = mapped_column(String(160))
+    difficulty: Mapped[str | None] = mapped_column(String(8))
+
+    # {source, source_detail, source_url, retrieved_on, drafted_by}
+    provenance: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    # The two fields that decide whether a student may ever see this.
+    licence: Mapped[str] = mapped_column(String(20), default="original", index=True)
+    status: Mapped[str] = mapped_column(String(16), default="draft", index=True)
+
+    # {answer_check, reviewer, reviewed_on, reviewer_action, reviewer_note,
+    #  duplicate_of}
+    verification: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    # For de-duplication. The hash catches an exact re-import; the embedding
+    # catches the same question reworded, which is what actually happens when
+    # two sources carry one past paper.
+    stem_hash: Mapped[str] = mapped_column(String(64), index=True)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIM))
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "exam_body", "year", "subject_code", "paper", "question_number",
+            name="uq_question_identity",
+        ),
+        # The index every student-facing read goes through: servable questions
+        # for one subject, narrowed by year or topic.
+        Index(
+            "ix_questions_servable",
+            "subject_code", "exam_body", "year",
+            postgresql_where=text("status = 'verified' AND licence <> 'dev_only'"),
+        ),
+        Index("ix_questions_review_queue", "status", "created_at"),
+    )
+
+
+# ===========================================================================
+# The student's own answers to onboarding, and their exam sittings.
+# ===========================================================================
+
+
+class StudentProfile(Base):
+    """What onboarding asked, and what the dashboard is built from.
+
+    One row per user, all of it volunteered and all of it editable later. Two
+    students with different answers should feel like they are using different
+    apps, which only works if these answers actually reach the dashboard, the
+    recommendations and the tutor's default subject.
+    """
+
+    __tablename__ = "student_profiles"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    school_class: Mapped[str | None] = mapped_column(String(8))   # SS1 | SS2 | SS3
+    track: Mapped[str | None] = mapped_column(String(16))         # science | commercial | arts | undecided
+
+    # [{exam_body, series, institution}] -- the exams they are preparing for.
+    exams: Mapped[list] = mapped_column(JSONB, default=list)
+    # {"<exam_body>": ["MTH", "PHY", ...]} -- subjects per exam, because the
+    # combination rules differ between bodies.
+    subjects: Mapped[dict] = mapped_column(JSONB, default=dict)
+    # {"<exam_body>": "2027-04-15"} -- or absent, which is allowed: "I don't
+    # know yet" shows the usual window for that exam instead.
+    exam_dates: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    target: Mapped[str | None] = mapped_column(String(120))        # "JAMB 280+"
+    weak_topics: Mapped[list] = mapped_column(JSONB, default=list)
+    daily_minutes: Mapped[int | None] = mapped_column(Integer)
+
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
+class ExamSession(Base):
+    """One timed sitting.
+
+    `started_at` and `seconds_allowed` are the clock, and they live here
+    because the server owns the clock. A client that changes the device time
+    changes nothing: every response recomputes the remaining seconds from
+    these two columns.
+
+    `submitted_at` is the gate on marking. Nothing in a session is marked
+    before it is set, which is what separates exam mode from practice.
+    """
+
+    __tablename__ = "exam_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+
+    # Which config drove this sitting, and the copy of it that was used. The
+    # copy matters: a format re-verified next season must not silently change
+    # how a sitting from last season is scored or reviewed.
+    format_key: Mapped[str] = mapped_column(String(64))
+    format_snapshot: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    seconds_allowed: Mapped[int] = mapped_column(Integer)
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    score: Mapped[float | None] = mapped_column(Float)
+    scale_max: Mapped[float | None] = mapped_column(Float)
+
+    __table_args__ = (Index("ix_exam_sessions_user_started", "user_id", "started_at"),)
+
+
+class ExamSessionItem(Base):
+    """One question as it appeared in one sitting.
+
+    The question is referenced, not copied, but its position and section are
+    fixed here so a sitting can be replayed exactly even after the bank moves.
+    """
+
+    __tablename__ = "exam_session_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("exam_sessions.id", ondelete="CASCADE"), index=True
+    )
+    question_id: Mapped[str] = mapped_column(
+        String(120), ForeignKey("questions.id", ondelete="RESTRICT")
+    )
+    section_key: Mapped[str] = mapped_column(String(64))
+    position: Mapped[int] = mapped_column(Integer)
+
+    __table_args__ = (
+        UniqueConstraint("session_id", "position", name="uq_exam_item_position"),
+    )
+
+
+class ExamAnswer(Base):
+    """What the student put, and when they last changed it.
+
+    `client_seq` is the whole reason this is not a simple upsert. An offline
+    client queues answers and replays them on reconnection, and the queue can
+    arrive out of order -- so the server keeps the HIGHEST sequence per
+    question and ignores anything lower. Last-write-wins would silently
+    overwrite the answer a student changed after coming back online with the
+    stale one that was still sitting in the queue.
+    """
+
+    __tablename__ = "exam_answers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_id: Mapped[int] = mapped_column(
+        ForeignKey("exam_session_items.id", ondelete="CASCADE")
+    )
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("exam_sessions.id", ondelete="CASCADE"), index=True
+    )
+
+    selected_label: Mapped[str | None] = mapped_column(String(1))
+    value: Mapped[str | None] = mapped_column(String(255))
+    flagged: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    client_seq: Mapped[int] = mapped_column(Integer, default=0)
+    answered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    # Written only at submission. Null while the sitting is open, which is
+    # what makes "nothing is marked before submit" a property of the data
+    # rather than a promise made by a route.
+    correct: Mapped[bool | None] = mapped_column(Boolean)
+
+    __table_args__ = (
+        UniqueConstraint("item_id", name="uq_exam_answer_item"),
+    )
 
 
 class OcrUpload(Base):

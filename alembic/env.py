@@ -27,6 +27,7 @@ import pgvector.sqlalchemy  # noqa: F401
 
 from sabi.config import settings
 from sabi.models import Base
+from sabi.schema import RAW_MANAGED_INDEXES
 
 config = context.config
 
@@ -59,10 +60,13 @@ def include_object(obj, name, type_, reflected, compare_to):
     partial scope index silently returns fewer rows than `LIMIT` asks for,
     which is the single worst failure this codebase knows about.
     """
-    if type_ == "index" and name and (
-        "hnsw" in name or "trgm" in name or name.startswith("ix_chunks_tsv")
-    ):
-        return False
+    if type_ == "index" and name:
+        # The per-scope partial HNSW indexes are generated per live
+        # (board, subject), so they are matched by shape rather than listed.
+        if name.startswith("ix_chunks_hnsw_"):
+            return False
+        if name in RAW_MANAGED_INDEXES:
+            return False
     return True
 
 
