@@ -619,6 +619,36 @@ would not run a React application whatever Tailwind version we chose, so the
 constraint binds on the public pages, not the app. This needs a real
 device-and-browser measurement in Phase 2 before it is locked in.
 
+### Owner's answers at the Phase 0 checkpoint
+
+- **Positioning versus the legal constraint: acknowledged, not yet resolved.**
+  Work proceeds on a design that does not depend on the answer — the catalog
+  holds a library of any size, and no landing-page copy makes a claim about how
+  many past questions Sabi has. That copy is written in Phase 8, by which point
+  the legal consultation should have happened. Nothing built before then
+  assumes either outcome.
+- **Tailwind v4 / cheap Android: confirmed, and the app must be installable.**
+  The app requires a modern browser and says so; the landing page, pricing and
+  reading mode stay legible without modern CSS or JavaScript. Added by the
+  owner: it must also be installable as a **PWA**. That is already the plan
+  (v2 §3.1) and it strengthens the argument — an installed PWA runs in the
+  device's modern web view and holds its own cache, which is exactly what a
+  student on metered data on an intermittent connection needs. The offline
+  requirement in exam mode and the installability requirement are the same
+  requirement.
+- **Third-party accounts: no sign-ups, blank seams everywhere.** The owner
+  supplies keys when they have them. Every provider gets a named, blank
+  environment variable in `.env.example` and a seam that is built and tested
+  against a fake, so a key can be dropped in without code changes and no other
+  work waits on one. The v1 rule holds: a capability with no key does not
+  half-work, it reports plainly that it is unavailable and offers what still
+  works.
+- **Launch wave 1 approved**, 14 subjects: English Language, Mathematics,
+  Physics, Chemistry, Biology, Economics, Commerce, Financial Accounting,
+  Government, Literature in English, Geography, Christian Religious Studies,
+  Islamic Religious Studies, Civic Education. A subject still only goes live
+  when it meets its verified-content threshold.
+
 ### Paystack's Starter Business cap is ₦8,000,000, lifetime
 
 Confirmed from Paystack's own support site. At a ₦2,000 plan that is roughly

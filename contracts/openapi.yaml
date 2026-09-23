@@ -1,0 +1,698 @@
+openapi: 3.1.0
+
+# FROZEN CONTRACT (master prompt v2 §10.2) between the FastAPI backend and the
+# Next.js front end. `openapi-typescript` generates web/lib/api-types.ts from
+# this, so a backend change that breaks the front end fails a typecheck rather
+# than production.
+#
+# DRAFT for Phase 0. It fixes the SHAPES — auth, identity, pagination, the exam
+# session, the tutor envelope — because those are what agents A, B, C, D and F
+# build against in parallel. Individual field lists will grow in Phase 1;
+# changing a shape goes through the lead.
+#
+# Four rules are visible in the design rather than left to implementations:
+#
+#   1. ONE ORIGIN. Next.js and FastAPI sit behind one domain with /api routed
+#      to FastAPI, so the session cookie is first-party and there is no CORS
+#      credential dance (v2 §5.3, trap 14). There are no bearer tokens.
+#   2. THE SERVER OWNS THE CLOCK AND THE MARKING. An exam response carries
+#      `seconds_remaining` from the server; the client only displays it. A
+#      client that lies about the time or the score changes nothing (trap 15).
+#   3. NOTHING UNVERIFIED IS SERVED. No endpoint can return a question whose
+#      status is not `verified` or whose licence is `dev_only`. Enforced in the
+#      query layer and tested, not left to a caller (trap 17).
+#   4. NO BULK EXPORT. Every list is paginated and rate-limited; offline packs
+#      are signed, expiring and tied to an account (§5.3).
+
+info:
+  title: Sabi API
+  version: 0.1.0-draft
+  description: |
+    Nigerian exam preparation: JAMB, WAEC, NECO, NABTEB and Post-UTME.
+
+    Most users are under 18. Under the NDPA 2023 that shapes sign-up, consent
+    and what may be collected — see `/auth/consent`. An account is optional:
+    anonymous practice works, as it did in v1, and signing up claims the
+    anonymous identity rather than creating a second one.
+
+servers:
+  - url: /api
+
+tags:
+  - name: auth
+  - name: onboarding
+  - name: catalog
+  - name: practice
+  - name: exam
+  - name: reading
+  - name: notebook
+  - name: tutor
+  - name: billing
+  - name: review
+
+security:
+  - sessionCookie: []
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      # __Host- prefix: HttpOnly, Secure, SameSite=Lax, path=/, no Domain.
+      # A server-side row, not a signed blob, so it can be revoked (v1).
+      name: __Host-sabi_session
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+      description: Opaque. Cursor rather than offset so a page cannot be skipped to.
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      description: Capped at 50. There is no "give me everything".
+
+  headers:
+    RateLimit:
+      description: Remaining allowance for this identity.
+      schema: { type: integer }
+
+  schemas:
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum:
+            [bad_request, unauthenticated, forbidden, not_found, conflict,
+             rate_limited, consent_required, capacity, unavailable]
+        message:
+          type: string
+          description: |
+            Shown to a student as written, so it is plain, specific and never a
+            dead end. A refusal says what it cannot do and what it can.
+        retry_after_seconds: { type: integer }
+
+    Viewer:
+      type: object
+      required: [authenticated, is_minor, consent_state, allowance]
+      properties:
+        authenticated: { type: boolean }
+        display_name: { type: string, nullable: true }
+        is_minor:
+          type: boolean
+          description: Under 18. Drives the consent gate, never shown as a label.
+        consent_state:
+          type: string
+          enum: [not_required, pending, granted]
+          description: |
+            A minor's account is limited until a guardian confirms with a
+            one-time code. `pending` means practice on free content only and no
+            personal data beyond sign-up.
+        allowance:
+          $ref: '#/components/schemas/Allowance'
+
+    Allowance:
+      type: object
+      description: |
+        What is left today, per capability. Separate counters on purpose: a
+        photo is a model call whether or not a question follows it, so reading
+        one must not spend a question the student has not asked.
+      properties:
+        questions_remaining: { type: integer }
+        questions_cap: { type: integer }
+        tutor_remaining: { type: integer }
+        photos_remaining: { type: integer }
+        exams_remaining: { type: integer }
+        resets_phrase: { type: string, description: "e.g. 'at midnight'" }
+
+    Subject:
+      type: object
+      required: [code, name, track, available]
+      properties:
+        code: { type: string, pattern: '^[A-Z]{2,3}$' }
+        name: { type: string }
+        track: { type: string, enum: [core, science, commercial, arts, trade, any] }
+        available:
+          type: boolean
+          description: |
+            False until the subject meets its verified-content threshold. A
+            subject in the catalog is not a subject a student may sit.
+        years_available:
+          type: array
+          items: { type: integer }
+          description: Only years with verified content. Never padded.
+
+    Question:
+      type: object
+      description: |
+        A question as a student sees it. Deliberately NOT the stored row: the
+        answer key, the licence and the whole verification block are absent,
+        and there is no endpoint that returns them to a student.
+      required: [id, type, stem]
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [objective, theory, practical, numeric_entry] }
+        stem: { type: string }
+        passage: { type: string, nullable: true }
+        assets:
+          type: array
+          items:
+            type: object
+            required: [kind, url, alt]
+            properties:
+              kind: { type: string }
+              url: { type: string }
+              alt: { type: string, description: Required; a diagram with no alt text is unusable. }
+        options:
+          type: array
+          description: Labels come from the exam's format config, not assumed A-D.
+          items:
+            type: object
+            required: [label, text]
+            properties:
+              label: { type: string }
+              text: { type: string }
+        topic: { type: string, nullable: true }
+        source_label:
+          type: string
+          description: "e.g. 'WAEC 2019 · Paper 2 · Question 7'. Shown, never inferred."
+
+    Marking:
+      type: object
+      description: Returned only after an answer is committed, and in exam mode only after submission.
+      required: [correct, correct_label]
+      properties:
+        correct: { type: boolean }
+        correct_label: { type: string }
+        explanation: { type: string }
+        why_wrong: { type: string, nullable: true }
+        locators:
+          type: array
+          items: { type: string }
+          description: Citations behind the explanation. An explanation with none is not shown.
+
+    ExamSession:
+      type: object
+      required: [id, format, seconds_remaining, state]
+      properties:
+        id: { type: string }
+        format:
+          type: object
+          description: The parts of the exam's format config the client needs.
+          properties:
+            exam_body: { type: string }
+            exam_name: { type: string }
+            option_labels: { type: array, items: { type: string } }
+            sections:
+              type: array
+              items:
+                type: object
+                properties:
+                  key: { type: string }
+                  title: { type: string }
+                  question_count: { type: integer }
+            keyboard:
+              type: object
+              description: |
+                Key bindings, sent as data so the client hard-codes none. JAMB's
+                are confirmed from its own manual: A/B/C/D select, N or Right
+                next, P or Left previous, Up/Down move, S submit, then Y to end
+                and R to continue.
+              additionalProperties: true
+            scale_max: { type: number }
+            show_attempted_count_on_submit: { type: boolean }
+        seconds_remaining:
+          type: integer
+          description: |
+            Authoritative, from the server, on every response. The client
+            displays it and never computes it. Changing the device clock does
+            nothing.
+        state: { type: string, enum: [active, submitted, expired] }
+        answered_count: { type: integer }
+        total_count: { type: integer }
+
+    AnswerSubmission:
+      type: object
+      required: [question_id, client_seq]
+      properties:
+        question_id: { type: string }
+        selected_label: { type: string, nullable: true }
+        value: { type: string, nullable: true, description: numeric_entry }
+        flagged: { type: boolean, default: false }
+        client_seq:
+          type: integer
+          description: |
+            Monotonic per session on the client. The server keeps the HIGHEST
+            seq per question and ignores anything lower. This is what stops an
+            offline queue replaying a stale answer over a newer one when the
+            connection returns — last-write-wins would silently lose the change
+            a student made on reconnection (trap 16).
+
+    TutorAnswer:
+      type: object
+      required: [text, citations, refused]
+      properties:
+        text: { type: string }
+        refused: { type: boolean }
+        refusal_kind:
+          type: string
+          nullable: true
+          enum: [out_of_subject, out_of_study, not_in_corpus, low_confidence, welfare, capacity]
+        citations:
+          type: array
+          description: |
+            Every factual claim traces to one of these. An answer that arrives
+            with no valid citation is DISCARDED by the server and never reaches
+            this field — the client cannot render an uncited answer because it
+            is never sent one.
+          items:
+            type: object
+            required: [locator, title, text]
+            properties:
+              locator: { type: string }
+              title: { type: string }
+              attribution: { type: string }
+              text: { type: string }
+              highlight: { type: string, nullable: true }
+        disclosure:
+          type: string
+          description: Carries the substring "Sabi can be wrong" (v1; three tests assert it).
+        request_id: { type: string, description: For feedback and for saving to the notebook. }
+
+    Page:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, items: {} }
+        next_cursor: { type: string, nullable: true }
+
+paths:
+
+  # -- auth and identity -----------------------------------------------------
+
+  /auth/viewer:
+    get:
+      tags: [auth]
+      summary: Who is viewing, and what they may do
+      security: []
+      responses:
+        '200':
+          description: Always succeeds; an anonymous viewer is a viewer.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Viewer' }
+
+  /auth/signup:
+    post:
+      tags: [auth]
+      security: []
+      summary: Create an account, claiming the anonymous identity
+      description: |
+        Does not create a second user row: the anonymous identity on this device
+        gains credentials. History follows with no backfill and the daily
+        allowance does not reset, which is both the honest reward and what stops
+        "clear cookies, sign up again" (v1).
+
+        A stated date of birth under 18 puts the account in `consent_state:
+        pending` until a guardian confirms.
+      responses:
+        '201': { description: Created }
+        '409':
+          description: Address already in use
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  /auth/login:
+    post:
+      tags: [auth]
+      security: []
+      summary: Log in
+      description: |
+        Throttled per account and per IP, with CGNAT in mind — a whole school
+        behind one address must not lock itself out. Timing is constant whether
+        or not the address exists.
+
+        Logging in on a second device does NOT merge that device's anonymous
+        history: it may belong to a sibling or a cybercafé. An explicit,
+        confirmed, one-time offer is made instead, defaulting to no.
+      responses:
+        '200': { description: Logged in }
+        '429':
+          description: Too many attempts
+          headers: { RateLimit: { $ref: '#/components/headers/RateLimit' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  /auth/consent/request:
+    post:
+      tags: [auth]
+      summary: Send a guardian a one-time consent code
+      description: |
+        SMS or email to the guardian. The SMS route must be the
+        transactional/DND one: over 30 million Nigerian numbers are on the NCC
+        Do-Not-Disturb list and a generic route fails silently for them.
+      responses:
+        '202': { description: Sent }
+        '503':
+          description: No messaging provider configured — says so plainly rather than pretending it sent.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  /auth/consent/confirm:
+    post:
+      tags: [auth]
+      summary: Confirm guardian consent with the code
+      description: Records who consented, when, and by which channel.
+      responses:
+        '200': { description: Granted }
+
+  /auth/logout:
+    post: { tags: [auth], summary: End this session, responses: { '204': { description: Ended } } }
+
+  /auth/sessions:
+    get: { tags: [auth], summary: Active devices, responses: { '200': { description: OK } } }
+    delete: { tags: [auth], summary: Log out everywhere else, responses: { '204': { description: Revoked } } }
+
+  # -- onboarding ------------------------------------------------------------
+
+  /onboarding:
+    get:
+      tags: [onboarding]
+      summary: The questions and the answers so far
+      responses: { '200': { description: OK } }
+    put:
+      tags: [onboarding]
+      summary: Save answers
+      description: |
+        Class, department, exams, subjects, exam dates, target, weak topics,
+        daily study time. Every one editable later in settings. Subject
+        combination rules are enforced here with a plain explanation of which
+        rule was broken, never a silent rejection.
+      responses:
+        '200': { description: Saved }
+        '422':
+          description: A combination rule was broken; the message names it.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  /dashboard:
+    get:
+      tags: [onboarding]
+      summary: The personalised dashboard
+      description: Countdowns, today's plan, recommendations, weak topics. All reads.
+      responses: { '200': { description: OK } }
+
+  # -- catalog ---------------------------------------------------------------
+
+  /catalog/exams:
+    get:
+      tags: [catalog]
+      security: []
+      summary: Exam bodies and their formats
+      responses: { '200': { description: OK } }
+
+  /catalog/subjects:
+    get:
+      tags: [catalog]
+      security: []
+      summary: Subjects, with honest availability
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Subject' } }
+
+  # -- practice --------------------------------------------------------------
+
+  /practice/sets:
+    post:
+      tags: [practice]
+      summary: Build a practice set
+      description: |
+        By subject and then year or topic. Weights toward weak topics when no
+        topic is chosen. Only `verified` questions are drawn.
+      responses:
+        '201': { description: Created }
+        '429': { description: Daily cap reached }
+
+  /practice/sets/{setId}:
+    get:
+      tags: [practice]
+      parameters: [{ name: setId, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+
+  /practice/sets/{setId}/answer:
+    post:
+      tags: [practice]
+      summary: Answer one practice question, and get it marked immediately
+      description: |
+        Practice marks as you go — that is what separates it from exam mode,
+        where nothing is marked until submission.
+      parameters: [{ name: setId, in: path, required: true, schema: { type: string } }]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnswerSubmission' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Marking' }
+
+  # -- exam mode -------------------------------------------------------------
+
+  /exam/sessions:
+    post:
+      tags: [exam]
+      summary: Start a timed exam
+      description: |
+        The server fixes the start time, draws the questions per the format
+        config, and returns the whole paper so the session survives going
+        offline. From here `seconds_remaining` comes only from the server.
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExamSession' }
+
+  /exam/sessions/{sessionId}:
+    get:
+      tags: [exam]
+      parameters: [{ name: sessionId, in: path, required: true, schema: { type: string } }]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExamSession' }
+
+  /exam/sessions/{sessionId}/answers:
+    post:
+      tags: [exam]
+      summary: Autosave answers, including a queue replayed after being offline
+      description: |
+        Accepts a batch, so a client that has been offline flushes its queue in
+        one request. Idempotent by `client_seq` per question: a lower sequence
+        for a question the server already has a higher one for is ignored, not
+        applied. Returns NO marking — an exam is not marked before submission.
+      parameters: [{ name: sessionId, in: path, required: true, schema: { type: string } }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: '#/components/schemas/AnswerSubmission' }
+      responses:
+        '200':
+          description: Accepted, with the authoritative clock and the server's view of each answer.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExamSession' }
+        '409':
+          description: The session is already submitted or expired.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  /exam/sessions/{sessionId}/submit:
+    post:
+      tags: [exam]
+      summary: Submit, and only now mark
+      description: |
+        Irreversible. The server marks, scores in the exam's own scale, and from
+        this point the review with explanations becomes available. A submitted
+        session accepts no further answers.
+      parameters: [{ name: sessionId, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: Submitted and marked } }
+
+  /exam/sessions/{sessionId}/result:
+    get:
+      tags: [exam]
+      summary: Score, per-subject and per-topic breakdown, time per question, full review
+      parameters: [{ name: sessionId, in: path, required: true, schema: { type: string } }]
+      responses:
+        '200': { description: OK }
+        '409': { description: Not submitted yet — a result before submission would be a leak. }
+
+  # -- reading ---------------------------------------------------------------
+
+  /reading/questions:
+    get:
+      tags: [reading]
+      summary: Past questions with answers and explanations visible
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Page' }
+
+  /reading/packs/{subjectCode}:
+    get:
+      tags: [reading]
+      summary: A signed, expiring offline pack
+      description: |
+        Tied to the account that requested it and time-limited. This is the one
+        endpoint that hands over a batch, which is exactly why it is signed,
+        scoped to one subject and rate-limited — there is no bulk export.
+      parameters: [{ name: subjectCode, in: path, required: true, schema: { type: string } }]
+      responses:
+        '200': { description: OK }
+        '403': { description: Plan does not include offline packs }
+
+  # -- notebook --------------------------------------------------------------
+
+  /notebook:
+    get:
+      tags: [notebook]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses: { '200': { description: OK } }
+    post:
+      tags: [notebook]
+      summary: Keep a question or a tutor answer
+      description: |
+        Snapshots what was shown, including the citations and the source text.
+        A saved answer must still say the same thing in three weeks even though
+        the corpus will have moved (v1).
+      responses: { '201': { description: Kept } }
+
+  /notebook/{entryId}:
+    delete:
+      tags: [notebook]
+      parameters: [{ name: entryId, in: path, required: true, schema: { type: string } }]
+      responses: { '204': { description: Removed } }
+
+  # -- tutor -----------------------------------------------------------------
+
+  /tutor/ask:
+    post:
+      tags: [tutor]
+      summary: Ask the tutor, within one subject
+      description: |
+        Runs the whole v1 path: welfare guardrail, rate limit, budget kill
+        switch, semantic cache with its numeric guard, retrieval scoped to the
+        selected subject, scope and refusal check, model routing, generation,
+        then citation validation.
+
+        The subject is chosen explicitly and never classified from the text: a
+        misclassified question retrieves the wrong corpus and then correctly
+        refuses, and the student cannot tell why.
+
+        Out of subject, out of study, or absent from the corpus all return 200
+        with `refused: true` and a kind — a refusal is an answer, not an error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question, subject_code]
+              properties:
+                question: { type: string, maxLength: 2000 }
+                subject_code: { type: string }
+                exam_body: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TutorAnswer' }
+        '429': { description: Daily tutor allowance used }
+        '503': { description: At capacity; says so rather than degrading silently. }
+
+  /tutor/photo:
+    post:
+      tags: [tutor]
+      summary: Read a question off a photograph
+      description: |
+        Transcribes and stops. The text is returned for the student to edit and
+        submit themselves; this endpoint never asks it. Image bytes are not
+        stored — only a hash, the media type, the size and the transcription.
+        Metered on its own allowance, because reading a photo is a model call
+        whether or not a question follows.
+      responses:
+        '200': { description: Transcribed }
+        '415': { description: Not an image, decided by magic bytes rather than the declared type. }
+        '503': { description: No vision model configured; offers the composer instead. }
+
+  /tutor/feedback:
+    post:
+      tags: [tutor]
+      summary: Mark an answer wrong
+      responses: { '201': { description: Recorded } }
+
+  # -- billing (Phase 8) -----------------------------------------------------
+
+  /billing/plans:
+    get:
+      tags: [billing]
+      security: []
+      summary: Plans and prices, from config
+      responses: { '200': { description: OK } }
+
+  /billing/checkout:
+    post:
+      tags: [billing]
+      summary: Begin hosted checkout
+      description: Card details never touch Sabi.
+      responses: { '201': { description: Redirect URL issued } }
+
+  /billing/webhook:
+    post:
+      tags: [billing]
+      security: []
+      summary: Provider webhook
+      description: |
+        Signature verified over the RAW body before parsing, compared in
+        constant time. Processed idempotently by reference, and the transaction
+        is re-verified against the provider's own API before any entitlement is
+        granted — an entitlement must never be granted from the redirect or
+        from the webhook body alone.
+      responses:
+        '204': { description: Accepted }
+        '400': { description: Signature did not verify }
+
+  # -- review (staff) --------------------------------------------------------
+
+  /review/queue:
+    get:
+      tags: [review]
+      summary: Questions awaiting human review
+      description: |
+        Role checked on the server on every request. Hiding a button is not
+        access control.
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { description: OK }
+        '403': { description: Not a reviewer }
+
+  /review/questions/{questionId}:
+    patch:
+      tags: [review]
+      summary: Approve, edit or reject
+      description: Every action is audit-logged with the reviewer and a reason.
+      parameters: [{ name: questionId, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: Recorded } }
