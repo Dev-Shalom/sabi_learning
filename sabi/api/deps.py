@@ -7,6 +7,8 @@ the masthead is the same number the limiter enforced.
 
 from __future__ import annotations
 
+import uuid
+
 from dataclasses import dataclass
 from typing import Any
 
@@ -214,6 +216,29 @@ def set_session_cookie(response: Any, token: str) -> None:
 
 def clear_session_cookie(response: Any) -> None:
     response.delete_cookie(sessions_mod.COOKIE, samesite="lax")
+
+
+def rotate_anon_cookie(response: Any) -> str:
+    """Give this device a brand new anonymous identity.
+
+    Signing up claims the anonymous row rather than creating a second one, so
+    that the questions asked before signing up follow the student in. The
+    consequence, which was not handled: after logging out, the device's
+    `sabi_id` still pointed at that same row, which now belongs to an account.
+
+    On a shared phone -- a sibling, a cybercafe, the normal case for this
+    audience -- the next person to pick it up was anonymous but *was the
+    previous student's user row*. They inherited that account's daily
+    allowance, their questions were written against that account's history,
+    and `/auth/viewer` handed them the account's email address.
+
+    So logging out mints a fresh anonymous id. Logging out means this device is
+    no longer that person, which is what a student pressing the button
+    believes it means.
+    """
+    anon_id = uuid.uuid4().hex
+    set_anon_cookie(response, anon_id)
+    return anon_id
 
 
 def finish(response: Any, v: Viewer) -> Any:

@@ -54,6 +54,11 @@ class AuthResult:
     # into a call on a string.
     field_name: str = ""
     recovery_codes: list[str] = field(default_factory=list)
+    # Why it failed, for a caller that has to choose a status code. The Jinja
+    # surface only ever shows `error`, but an API must tell 429 from 400 from
+    # 409, and matching on the prose would break the first time the wording is
+    # improved. One of: bad_request, conflict, rate_limited, unauthenticated.
+    reason: str = ""
 
 
 def normalise_email(email: str) -> str:
@@ -90,17 +95,18 @@ def sign_up(
     """Turn the identity in `user` into an account. No new row is created."""
     email = email.strip()
     if not EMAIL_RE.match(email):
-        return AuthResult(False, error="That does not look like an email address.", field_name="email")
+        return AuthResult(False, error="That does not look like an email address.", field_name="email", reason="bad_request")
 
     problem = _password_problem(password)
     if problem:
-        return AuthResult(False, error=problem, field_name="password")
+        return AuthResult(False, error=problem, field_name="password", reason="bad_request")
 
     if user.password_hash:
         return AuthResult(
             False,
             error="You are already signed in on this device.",
             field_name="email",
+            reason="conflict",
         )
 
     # Signing up was the one unthrottled path that costs real work. Each
@@ -114,6 +120,7 @@ def sign_up(
             False,
             error="Too many attempts from here. Wait fifteen minutes and try again.",
             field_name="email",
+            reason="rate_limited",
         )
 
     if find_by_email(s, email) is not None:
@@ -125,6 +132,7 @@ def sign_up(
             False,
             error="There is already an account with that address. Log in instead.",
             field_name="email",
+            reason="conflict",
         )
 
     user.email = email
@@ -159,7 +167,7 @@ def log_in(
     """
     email = email.strip()
     if not email or not password:
-        return AuthResult(False, error="Enter your email and password.", field_name="email")
+        return AuthResult(False, error="Enter your email and password.", field_name="email", reason="bad_request")
 
     gate = throttle.check(s, email, ip_hash)
     if not gate.allowed:
@@ -170,6 +178,7 @@ def log_in(
                 "one of your recovery codes."
             ),
             field_name="password",
+            reason="rate_limited",
         )
 
     user = find_by_email(s, email)
@@ -178,11 +187,11 @@ def log_in(
         # address has an account.
         passwords.waste_time()
         throttle.record(s, email, ip_hash, ok=False)
-        return AuthResult(False, error="Wrong email or password.", field_name="password")
+        return AuthResult(False, error="Wrong email or password.", field_name="password", reason="unauthenticated")
 
     if not passwords.verify_password(password, user.password_hash):
         throttle.record(s, email, ip_hash, ok=False)
-        return AuthResult(False, error="Wrong email or password.", field_name="password")
+        return AuthResult(False, error="Wrong email or password.", field_name="password", reason="unauthenticated")
 
     # Opportunistic upgrade: if the parameters have been raised since this hash
     # was written, rewrite it now that the password is in hand.
@@ -205,7 +214,7 @@ def change_password(
 ) -> AuthResult:
     problem = _password_problem(new_password)
     if problem:
-        return AuthResult(False, error=problem, field_name="password")
+        return AuthResult(False, error=problem, field_name="password", reason="bad_request")
     user.password_hash = passwords.hash_password(new_password)
     # Every other session goes: a password change that leaves an attacker
     # logged in has not changed anything.

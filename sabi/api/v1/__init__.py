@@ -15,10 +15,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from sabi.api.v1 import catalog, exam, study, tutor
+from sabi.api.v1 import auth, catalog, exam, study, tutor
 
 api_router = APIRouter(prefix="/api")
 
+api_router.include_router(auth.router)
 api_router.include_router(catalog.router)
 api_router.include_router(study.router)
 api_router.include_router(exam.router)

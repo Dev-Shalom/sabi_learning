@@ -62,6 +62,38 @@ class ViewerOut(BaseModel):
     allowance: Allowance
 
 
+
+class SignupIn(BaseModel):
+    """What a signup form sends.
+
+    Validation lives in `sabi/accounts/service.py`, not here, and that is
+    deliberate: the Jinja form and this endpoint must reject exactly the same
+    passwords. A `min_length` in this model would be a second, quieter rule
+    that only one of the two surfaces enforced.
+    """
+
+    email: str
+    password: str
+
+
+class LoginIn(BaseModel):
+    email: str
+    password: str
+
+
+class SignedUpOut(BaseModel):
+    """The only time the recovery codes exist in the clear.
+
+    They are hashed before they are stored, so this response is the single
+    occasion they can ever be shown. The client has to put them in front of
+    the student here or they are gone -- which is why they are returned in the
+    body rather than left for a follow-up call that might never be made.
+    """
+
+    viewer: ViewerOut
+    recovery_codes: list[str]
+
+
 # ------------------------------------------------------------------ catalog
 
 

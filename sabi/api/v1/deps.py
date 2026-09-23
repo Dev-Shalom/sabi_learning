@@ -151,7 +151,10 @@ def viewer_out(s: Session, v: Viewer) -> ViewerOut:
 
     return ViewerOut(
         authenticated=v.is_authenticated,
-        display_name=v.email,
+        # Only when signed in. Belt and braces alongside rotating the
+        # anonymous id on logout: a device that somehow still carried an
+        # account's row must not be told that account's email address.
+        display_name=v.email if v.is_authenticated else None,
         is_minor=is_minor(v),
         consent_state=consent_state(v),
         onboarded=bool(profile and profile.completed_at),

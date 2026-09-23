@@ -228,3 +228,25 @@ governed; it is the brief's specific figure that is not met.
 
 Worth settling before the exam UI is built in Phase 5, because the third
 option is much cheaper to choose before the code exists than after.
+
+---
+
+## 12. One endpoint is served but not in the frozen contract
+
+**Found:** Phase 2, republishing the contract after the auth endpoints landed.
+
+`tools/publish_openapi.py` reports:
+
+    served but not in the contract (add them, or they are untyped):
+      GET /catalog/topics/{subject_code}
+
+The contract is frozen (v2 §10.2), so adding a path to it is a lead decision
+rather than a tidy-up. Until it is in there, `openapi-typescript` generates no
+type for it and any frontend call to it is unchecked — which is precisely the
+thing the generated-types seam exists to prevent.
+
+**Status:** the tool warns and does not fail, so this has been passing quietly.
+
+**What to do:** either add the operation to `contracts/openapi.yaml`, or
+decide it is internal and stop serving it under `/api`. Then make the warning
+fail the build, because a warning nobody fails on is a warning nobody reads.

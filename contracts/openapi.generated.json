@@ -833,6 +833,24 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "LoginIn": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginIn",
+        "type": "object"
+      },
       "MarkingOut": {
         "description": "Returned only once an answer is committed, and in exam mode only after\nsubmission.",
         "properties": {
@@ -1383,6 +1401,46 @@
         "title": "QuestionOut",
         "type": "object"
       },
+      "SignedUpOut": {
+        "description": "The only time the recovery codes exist in the clear.\n\nThey are hashed before they are stored, so this response is the single\noccasion they can ever be shown. The client has to put them in front of\nthe student here or they are gone -- which is why they are returned in the\nbody rather than left for a follow-up call that might never be made.",
+        "properties": {
+          "recovery_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Recovery Codes",
+            "type": "array"
+          },
+          "viewer": {
+            "$ref": "#/components/schemas/ViewerOut"
+          }
+        },
+        "required": [
+          "viewer",
+          "recovery_codes"
+        ],
+        "title": "SignedUpOut",
+        "type": "object"
+      },
+      "SignupIn": {
+        "description": "What a signup form sends.\n\nValidation lives in `sabi/accounts/service.py`, not here, and that is\ndeliberate: the Jinja form and this endpoint must reject exactly the same\npasswords. A `min_length` in this model would be a second, quieter rule\nthat only one of the two surfaces enforced.",
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "SignupIn",
+        "type": "object"
+      },
       "SubjectOut": {
         "properties": {
           "available": {
@@ -1602,6 +1660,217 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/auth/login": {
+      "post": {
+        "description": "Log in.\n\nDeliberately does not merge whatever anonymous identity this device was\ncarrying: it may belong to a sibling, or to the last person on a cybercafe\nmachine, and importing a stranger's questions into someone's notebook is a\nreal leak. The merge is offered explicitly elsewhere, defaulting to no.",
+        "operationId": "login_api_auth_login_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewerOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "description": "End this session. Succeeds whether or not there was one to end.",
+        "operationId": "logout_api_auth_logout_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/signup": {
+      "post": {
+        "description": "Create an account on the identity this device already has.\n\nNo second user row: the anonymous row gains credentials. So the questions\nasked before signing up follow the student in with no backfill, and the\ndaily allowance does not reset -- which is both the honest reward and what\nstops \"clear the cookies and sign up again\".",
+        "operationId": "signup_api_auth_signup_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignedUpOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Signup",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/auth/viewer": {
       "get": {
         "description": "Who is viewing, and what they may do.\n\nAlways succeeds. An anonymous viewer is a viewer: asking questions without\nan account is the product's default, not a degraded mode.",

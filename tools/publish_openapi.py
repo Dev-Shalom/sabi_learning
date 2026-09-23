@@ -39,9 +39,6 @@ GENERATED = ROOT / "contracts" / "openapi.generated.json"
 # Paths the contract describes that are not built yet. Each one is a promise
 # with a phase attached rather than an oversight, and the list only shrinks.
 NOT_BUILT_YET = {
-    ("post", "/auth/signup"),          # Jinja route exists; JSON in Phase 3
-    ("post", "/auth/login"),
-    ("post", "/auth/logout"),
     ("get", "/auth/sessions"),
     ("delete", "/auth/sessions"),
     ("post", "/auth/consent/request"),  # Phase 3

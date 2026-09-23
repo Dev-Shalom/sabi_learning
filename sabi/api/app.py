@@ -44,6 +44,7 @@ from sabi.api.deps import (
     require_csrf,
     require_login,
     require_login_csrf,
+    rotate_anon_cookie,
     set_session_cookie,
     viewer,
 )
@@ -514,6 +515,10 @@ def logout(
     service.log_out(s, v.session)
     response = RedirectResponse("/", status_code=303)
     clear_session_cookie(response)
+    # The anonymous id as well: it still points at the row that just became an
+    # account, so leaving it would hand the next person on a shared phone this
+    # student's history and allowance.
+    rotate_anon_cookie(response)
     return response
 
 

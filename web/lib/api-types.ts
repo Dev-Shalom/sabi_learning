@@ -4,6 +4,76 @@
  */
 
 export interface paths {
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login
+         * @description Log in.
+         *
+         *     Deliberately does not merge whatever anonymous identity this device was
+         *     carrying: it may belong to a sibling, or to the last person on a cybercafe
+         *     machine, and importing a stranger's questions into someone's notebook is a
+         *     real leak. The merge is offered explicitly elsewhere, defaulting to no.
+         */
+        post: operations["login_api_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout
+         * @description End this session. Succeeds whether or not there was one to end.
+         */
+        post: operations["logout_api_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/signup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Signup
+         * @description Create an account on the identity this device already has.
+         *
+         *     No second user row: the anonymous row gains credentials. So the questions
+         *     asked before signing up follow the student in with no backfill, and the
+         *     daily allowance does not reset -- which is both the honest reward and what
+         *     stops "clear the cookies and sign up again".
+         */
+        post: operations["signup_api_auth_signup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/viewer": {
         parameters: {
             query?: never;
@@ -819,6 +889,13 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** LoginIn */
+        LoginIn: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+        };
         /**
          * MarkingOut
          * @description Returned only once an answer is committed, and in exam mode only after
@@ -1006,6 +1083,35 @@ export interface components {
             /** Type */
             type: string;
         };
+        /**
+         * SignedUpOut
+         * @description The only time the recovery codes exist in the clear.
+         *
+         *     They are hashed before they are stored, so this response is the single
+         *     occasion they can ever be shown. The client has to put them in front of
+         *     the student here or they are gone -- which is why they are returned in the
+         *     body rather than left for a follow-up call that might never be made.
+         */
+        SignedUpOut: {
+            /** Recovery Codes */
+            recovery_codes: string[];
+            viewer: components["schemas"]["ViewerOut"];
+        };
+        /**
+         * SignupIn
+         * @description What a signup form sends.
+         *
+         *     Validation lives in `sabi/accounts/service.py`, not here, and that is
+         *     deliberate: the Jinja form and this endpoint must reject exactly the same
+         *     passwords. A `min_length` in this model would be a second, quieter rule
+         *     that only one of the two surfaces enforced.
+         */
+        SignupIn: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+        };
         /** SubjectOut */
         SubjectOut: {
             /** Available */
@@ -1097,6 +1203,108 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    login_api_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                sabi_id?: string | null;
+                sabi_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewerOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_api_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                sabi_id?: string | null;
+                sabi_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    signup_api_auth_signup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                sabi_id?: string | null;
+                sabi_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignedUpOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_viewer_api_auth_viewer_get: {
         parameters: {
             query?: never;
