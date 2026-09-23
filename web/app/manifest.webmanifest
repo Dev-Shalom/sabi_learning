@@ -1,0 +1,15 @@
+{
+  "name": "Sabi — learn anything, pass with flying colours",
+  "short_name": "Sabi",
+  "description": "JAMB, WAEC, NECO, NABTEB and Post-UTME practice, timed mocks and a tutor that cites its sources.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F9FB",
+  "theme_color": "#0E1B2A",
+  "orientation": "portrait",
+  "lang": "en-NG",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
