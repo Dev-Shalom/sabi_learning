@@ -64,6 +64,13 @@ BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI(title="Sabi", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
+# The JSON API. Mounted alongside the Jinja routes for the whole migration:
+# a surface moves when its replacement and its test land together, so there is
+# never a window in which something is unreachable (docs/REDIRECTION.md).
+from sabi.api.v1 import api_router
+
+app.include_router(api_router)
+
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["anchor_id"] = anchor_id
 templates.env.globals["attribution_label"] = attribution_label

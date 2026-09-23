@@ -167,6 +167,10 @@ class Plan(Base):
     # question follows it, and a student who takes three blurry pictures of
     # the same page has not asked three questions.
     daily_ocr_cap: Mapped[int] = mapped_column(Integer, default=0)
+    # Timed sittings per day. Its own cap because an exam draws 180 questions
+    # and holds a session open for two hours, which is a different kind of
+    # cost from answering one question.
+    daily_exam_cap: Mapped[int] = mapped_column(Integer, default=0)
     # Price is null for free. The column exists so that adding a paid plan is a
     # row, not a migration.
     price_ngn_monthly: Mapped[int | None] = mapped_column(Integer)
@@ -213,6 +217,24 @@ class User(Base):
     )
     # The date they sit the paper, for the countdown. Volunteered, never required.
     exam_date: Mapped[date | None] = mapped_column(Date)
+
+    # Age and guardian consent, for the NDPA. A child is anyone under 18, and
+    # processing their personal data needs a guardian's consent plus
+    # reasonable age verification.
+    #
+    # Date of birth is volunteered and nullable, and absent it the account is
+    # NOT treated as a minor's -- guessing at a child from behavioural signals
+    # would be worse than asking. What absence means is "we do not know", and
+    # the honest handling of that is to ask rather than to infer.
+    date_of_birth: Mapped[date | None] = mapped_column(Date)
+    # Who consented, when and by which channel. The contact itself is stored
+    # one-way: it is needed to check that a confirming code came back from the
+    # address it was sent to, not to hold a parent's phone number on file.
+    guardian_contact_hash: Mapped[str | None] = mapped_column(String(64))
+    guardian_consent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    guardian_consent_channel: Mapped[str | None] = mapped_column(String(16))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
@@ -703,7 +725,11 @@ class PracticeItem(Base):
 
     template_id: Mapped[str] = mapped_column(String(64), index=True)
     source_doc_id: Mapped[str] = mapped_column(String(120))
-    source_locator: Mapped[str] = mapped_column(String(32))
+    # 160, not 32. A corpus locator is short ("EX 31"), but a practice item
+    # drawn from the question bank carries a full past-question label --
+    # "WAEC - 2019 - Paper 1 - Question 7" -- and the short column silently
+    # truncated nothing: it raised, which is how this was found.
+    source_locator: Mapped[str] = mapped_column(String(160))
     params: Mapped[dict] = mapped_column(JSONB, default=dict)
 
     topic: Mapped[str] = mapped_column(String(120), default="")

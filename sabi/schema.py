@@ -327,6 +327,7 @@ def sync_plans() -> list[str]:
                 daily_ip_cap=int(spec.get("daily_ip_cap", 100)),
                 burst_per_minute=int(spec.get("burst_per_minute", 6)),
                 daily_ocr_cap=int(spec.get("daily_ocr_cap", 0)),
+                daily_exam_cap=int(spec.get("daily_exam_cap", 0)),
                 monthly_cost_ceiling_usd_per_user=float(
                     spec.get("monthly_cost_ceiling_usd_per_user", 0.0)
                 ),
@@ -355,6 +356,7 @@ def sync_plans() -> list[str]:
                     daily_ip_cap=5000,
                     burst_per_minute=600,
                     daily_ocr_cap=500,
+                    daily_exam_cap=500,
                     monthly_cost_ceiling_usd_per_user=10.0,
                 )
             )
