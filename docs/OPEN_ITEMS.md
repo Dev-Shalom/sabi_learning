@@ -192,3 +192,39 @@ size and no copy claims a number.
 **What to do:** settle before Phase 8 writes landing-page copy. Either the
 positioning changes to simulation, tutor and honest explanations, or the legal
 consultation moves earlier.
+
+---
+
+## 11. The exam route cannot meet the page-weight budget the brief sets
+
+**Found:** Phase 2, measuring rather than estimating.
+
+The brief sets 120 KB for the exam route (v2 §5.5). Measured on an exam page
+that is still a placeholder, the route already costs **138.5 KB gzipped**, and
+essentially none of it is ours:
+
+| | gzip |
+|---|---|
+| react-dom | 70.1 KB |
+| Next App Router client runtime | 44.0 KB |
+| framework glue, CSS, route chunk | 24.4 KB |
+
+127.3 KB of that is shared by every route and cannot be paid down by anything
+written on the exam page. The 120 KB target and the decision to build the
+frontend in Next.js are simply in conflict; no amount of care on the route
+closes an 18 KB gap that exists before the first component.
+
+**Status:** `tools/web_budget.py` enforces 155 KB total for the route, and
+**18 KB for the route's own code** — the number the team can actually move,
+and the tightest own-code budget in the table. So the route is genuinely
+governed; it is the brief's specific figure that is not met.
+
+**What to do:** an owner decision, not an optimisation.
+- Accept ~138 KB as the floor and restate the brief's number, or
+- alias `react`/`react-dom` to `preact/compat` (saves roughly 30–35 KB
+  gzipped, and needs its own testing pass on hydration), or
+- serve the exam route outside the App Router as a small hand-written client,
+  which meets 120 KB comfortably but forks the frontend into two stacks.
+
+Worth settling before the exam UI is built in Phase 5, because the third
+option is much cheaper to choose before the code exists than after.

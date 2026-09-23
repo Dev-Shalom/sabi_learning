@@ -43,8 +43,18 @@
   --primary-tint: #E8F7F1;       /* --primary-text on it 4.82:1 */
 
   /* -- gold: achievement -------------------------------------------------- */
-  --gold: #F4B740;               /* fill only; --ink on it is 9.67:1 */
+  --gold: #F4B740;               /* fill only; --on-gold on it is 9.67:1 */
   --gold-text: #8A5A0B;          /*  5.61:1 on paper */
+
+  /* Text ON a filled control, and it does NOT flip with the theme.
+   *
+   * The gold and the green are the same bright colours in dark mode, so a
+   * label that followed --ink would turn near-white on them: --ink on --gold
+   * measures 1.52:1 in dark, which is unreadable. Found by the contrast
+   * checker rather than by looking, which is the whole reason it reads both
+   * themes. A fill keeps its own foreground. */
+  --on-primary: #0E1B2A;         /*  6.80:1 on --primary */
+  --on-gold: #0E1B2A;            /*  9.67:1 on --gold */
 
   /* -- danger: wrong, error ----------------------------------------------- */
   --danger: #B42318;             /*  6.23:1 on paper */

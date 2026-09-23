@@ -20,6 +20,11 @@
   --color-primary-tint: var(--primary-tint);
   --color-gold: var(--gold);
   --color-gold-text: var(--gold-text);
+  /* A label sitting ON a fill. `bg-primary text-on-primary`, never
+   * `bg-primary text-ink` -- ink flips with the theme and the fills do not,
+   * so ink on gold measures 1.52:1 in dark mode. */
+  --color-on-primary: var(--on-primary);
+  --color-on-gold: var(--on-gold);
   --color-danger: var(--danger);
   --color-danger-tint: var(--danger-tint);
   --color-focus: var(--focus);

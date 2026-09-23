@@ -65,6 +65,13 @@ jobs:
       - name: Design -- palette contrast
         run: python tools/contrast_check.py
 
+      # The same two jobs for the Next app's palette: AA in both themes, and
+      # no colour literal outside the token file. It runs before the tests
+      # because it is cheap and because a failure here is a design regression,
+      # not a broken test.
+      - name: Design -- web palette contrast
+        run: python tools/contrast_web.py
+
       - name: Tests
         run: python -m pytest -q
 
@@ -159,3 +166,48 @@ jobs:
           if [ ! -d ../prev ]; then exit 0; fi
           python -c "from sabi.schema import bootstrap; bootstrap()"
           python tools/schema_drift.py
+
+  # The web app builds, typechecks, and stays inside its page-weight budgets.
+  #
+  # A separate job because none of it needs Postgres: it is a build and three
+  # file-size assertions. It runs in parallel with the test job rather than
+  # queueing behind a corpus ingest.
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # The budget checker is Python, and this job has no other reason to
+      # install it. No dependencies: it reads the build output with the
+      # standard library.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: npm ci
+
+      # The generated API types are the seam between the two halves of this
+      # repo. A backend change that breaks the frontend fails here rather than
+      # in production, which is the entire reason they are generated.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      # Page weight is a product requirement, not a performance nicety: the
+      # audience is on a cheap Android phone paying for megabytes.
+      - name: Page-weight budgets
+        working-directory: .
+        run: python tools/web_budget.py

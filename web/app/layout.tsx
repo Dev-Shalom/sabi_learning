@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, DM_Sans } from "next/font/google";
 import { TabBar } from "@/components/tab-bar";
+import { PAPER_DARK, PAPER_LIGHT } from "@/lib/theme-colors";
 import "./globals.css";
 
 /* Self-hosted at build time by next/font: the files are served from this
@@ -38,9 +39,12 @@ export const viewport: Viewport = {
   // for two hours needs it, and locking it is a WCAG failure for the sake of
   // an app-like feel nobody asked for.
   maximumScale: 5,
+  // A meta tag is read before the stylesheet exists, so these cannot be
+  // var(--paper). They come from the one module allowed to name a colour, and
+  // the contrast checker fails if they drift from the tokens.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F7F9FB" },
-    { media: "(prefers-color-scheme: dark)", color: "#0E1B2A" },
+    { media: "(prefers-color-scheme: light)", color: PAPER_LIGHT },
+    { media: "(prefers-color-scheme: dark)", color: PAPER_DARK },
   ],
 };
 
