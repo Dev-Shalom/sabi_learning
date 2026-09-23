@@ -1,21 +1,39 @@
 """Schema bootstrap.
 
-Deliberately not Alembic *yet*. The schema is created by `create_all`, plus the
-statements SQLAlchemy does not express (the vector extension, the HNSW indexes,
-the trigram index), plus a forward-only list of idempotent ALTERs for columns
-added after a table already existed somewhere.
+**Now Alembic.** The old note here said this would become Alembic "the day
+there is production data worth preserving". Launch is the goal and the schema
+is about to grow from 19 tables to a full exam catalog, so that day arrived.
 
-That last list is a migration system in miniature, and saying so is more honest
-than pretending `create_all` is enough -- it silently ignores columns added to
-an existing table, which is exactly the bug that made this list necessary. It
-works because every statement is `IF NOT EXISTS` and the corpus is rebuilt by
-re-ingesting rather than migrated. The day there is production data worth
-preserving, this becomes Alembic. Noted in DECISIONS.md.
+`bootstrap` handles the three situations a database can be in:
+
+* **fresh** -- nothing there; run the migrations.
+* **adopt** -- tables exist but Alembic has never seen them. Every database
+  built by the old `create_all` + `MIGRATIONS` path is in this state, and they
+  already match the baseline revision, so they are *stamped* rather than
+  upgraded. Running the baseline against them would try to create tables that
+  are already there.
+* **managed** -- already under Alembic; upgrade normally.
+
+Two things stay out of Alembic deliberately, and `bootstrap` still does them:
+
+* **The extensions** (`vector`, `pg_trgm`). They precede the schema and are a
+  property of the database rather than of a schema version -- and the baseline
+  cannot create a vector column or a gin_trgm index before they exist.
+* **The per-scope partial HNSW indexes** from `scope_index_ddl()`. There is one
+  per live `(board, subject)`, so the set changes when a subject is switched on
+  in `config/limits.yaml`. That is a configuration change, not a schema
+  migration; under Alembic it would mean a migration every time a subject is
+  added.
+
+`tools/schema_drift.py` stays. It catches ORM/database divergence, which is a
+different failure from a missing migration, and it is what caught two real
+omissions before any of this existed.
 """
 
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 from sqlalchemy import text
 
@@ -28,7 +46,16 @@ EXTRA_DDL = [
     "CREATE EXTENSION IF NOT EXISTS pg_trgm",
 ]
 
-# Forward-only, idempotent, append-only. Never edit an entry, only add one.
+# RETIRED, and kept on purpose. Alembic owns the schema from the baseline
+# revision onward; this list is no longer executed by `bootstrap`.
+#
+# It is not deleted because it is the written record of how the schema reached
+# the state the baseline captures, and several entries carry the reasoning for
+# a column that would otherwise look arbitrary -- why `chunks.subject` is
+# denormalised, why `users.email_normalised` is unique only among unmerged
+# rows. Deleting it would delete that.
+#
+# Add nothing here. New schema changes are Alembic revisions.
 MIGRATIONS = [
     # 001: distinguish billed spend from price-list estimates (offline provider).
     """ALTER TABLE requests
@@ -165,19 +192,90 @@ DROP_DDL = [
 ]
 
 
+def _alembic_config():
+    """Alembic's config, pointed at this repo rather than at a cwd."""
+    from alembic.config import Config
+
+    root = Path(__file__).resolve().parent.parent
+    cfg = Config(str(root / "alembic.ini"))
+    cfg.set_main_option("script_location", str(root / "alembic"))
+    cfg.set_main_option("sqlalchemy.url", settings().database_url)
+    return cfg
+
+
+def _schema_state() -> str:
+    """Which of the three situations this database is in.
+
+    * `fresh`   -- nothing here; run the migrations.
+    * `adopt`   -- tables exist but Alembic has never seen them. This is every
+                   database built by the old `create_all` + `MIGRATIONS` path.
+                   They already match the baseline, so they are *stamped*, not
+                   upgraded: running the baseline against them would try to
+                   create tables that are already there.
+    * `managed` -- already under Alembic; upgrade normally.
+    """
+    with engine().connect() as c:
+        has_table = c.execute(
+            text("SELECT to_regclass('public.alembic_version')")
+        ).scalar_one_or_none()
+        # The presence of `alembic_version` is not enough: running
+        # `alembic revision --autogenerate` against a database creates the
+        # table and leaves it EMPTY. Treating that as "managed" makes the next
+        # bootstrap run the baseline against a populated database and try to
+        # create tables that are already there. What counts is a stamped
+        # revision, so the row is what is checked.
+        stamped = False
+        if has_table:
+            stamped = (
+                c.execute(text("SELECT version_num FROM alembic_version LIMIT 1"))
+                .scalar_one_or_none()
+                is not None
+            )
+        if stamped:
+            return "managed"
+        has_tables = c.execute(
+            text("SELECT to_regclass('public.documents')")
+        ).scalar_one_or_none()
+        return "adopt" if has_tables else "fresh"
+
+
 def bootstrap(seed_plans: bool = True) -> None:
+    """Bring the database to the current schema.
+
+    Alembic owns the tables, the columns and the static indexes. Two things
+    stay here, and the split is deliberate:
+
+    * **The extensions.** They precede the schema and are a property of the
+      database rather than of a schema version.
+    * **The per-scope partial HNSW indexes.** There is one per live
+      `(board, subject)`, so the set changes when a subject is switched on in
+      `config/limits.yaml`. That is a configuration change, not a schema
+      migration, and putting them under Alembic would mean a migration every
+      time a subject is added.
+
+    `MIGRATIONS` is retained but no longer executed -- see the note on it
+    above. The baseline revision captures the schema it produced.
+    """
+    from alembic import command
+
+    # Extensions first: the baseline creates a vector column and a gin_trgm
+    # index, and neither can exist before its extension does.
     with engine().begin() as c:
         for stmt in EXTRA_DDL:
             c.execute(text(stmt))
 
-    Base.metadata.create_all(engine())
+    cfg = _alembic_config()
+    state = _schema_state()
+    if state == "adopt":
+        # Built by the pre-Alembic path and already matching the baseline.
+        command.stamp(cfg, "head")
+    else:
+        command.upgrade(cfg, "head")
 
     with engine().begin() as c:
-        for stmt in MIGRATIONS:
-            c.execute(text(stmt))
         for stmt in DROP_DDL:
             c.execute(text(stmt))
-        for stmt in POST_DDL + scope_index_ddl():
+        for stmt in scope_index_ddl():
             c.execute(text(stmt))
 
     if seed_plans:
