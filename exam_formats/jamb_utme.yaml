@@ -1,0 +1,114 @@
+# JAMB UTME — the first exam format config.
+#
+# Every field here was read from JAMB's own Step-by-Step CBT Manual on
+# 2026-09-23, not from memory or from a blog. The keyboard bindings and the
+# End Examination dialog are transcribed verbatim from screenshots embedded in
+# that PDF; the account of how they were recovered is in
+# docs/research/EXAM_FORMATS.md.
+#
+# This is the 2024 manual. JAMB's downloads page references a newer
+# "2027 JAMB Test Manual (Updated 18-09-2026)" whose path was not resolved.
+# Re-check before Phase 6 ships. `verified_on` exists so that is possible.
+
+exam_body: JAMB
+exam_name: UTME
+series: utme
+delivery: cbt
+
+total_duration_minutes: 120
+
+# One clock across all four subjects, with free movement between them, so no
+# section carries its own duration.
+sections:
+  - key: use_of_english
+    title: Use of English
+    subject: English Language
+    question_count: 60
+    question_type: objective
+    compulsory: true
+    duration_minutes: null
+    # Comprehension passages are shared by several questions and are stored
+    # once rather than repeated per question.
+    shared_passages: true
+
+  # The three electives a candidate chose. Counts are not stated verbatim in
+  # the manual; they follow from 180 total minus 60 for Use of English, over
+  # three subjects. Marked in `notes` below as the one inferred figure.
+  - key: subject_2
+    title: Second subject
+    question_count: 40
+    question_type: objective
+    duration_minutes: null
+  - key: subject_3
+    title: Third subject
+    question_count: 40
+    question_type: objective
+    duration_minutes: null
+  - key: subject_4
+    title: Fourth subject
+    question_count: 40
+    question_type: objective
+    duration_minutes: null
+
+option_labels: [A, B, C, D]
+
+navigation:
+  free_movement: true
+  cross_section_movement: true      # subject tabs; answers survive switching
+  question_grid: true
+  flagging: true
+  calculator: basic
+  submit_requires_confirmation: true
+  show_attempted_count_on_submit: true   # "Total Questions Attempted is 43"
+  reentry_after_submit: false
+
+  # Transcribed from the "Keyboard Usage" panel, page 46 of the manual.
+  # Note the arrow-key aliases: several widely-cited secondary walkthroughs
+  # list only the letter keys and omit these. JAMB's own panel includes them.
+  keyboard:
+    select_option:
+      A: a
+      B: b
+      C: c
+      D: d
+    next: [n, ArrowRight]
+    previous: [p, ArrowLeft]
+    move_up: [ArrowUp]
+    move_down: [ArrowDown]
+    submit: [s]
+    # From the End Examination dialog, page 50:
+    # "Press R to continue Exam, Press Y to end Exam"
+    confirm_submit: [y]
+    cancel_submit: [r]
+
+scoring:
+  scale_max: 400
+  per_section_max: 100
+  negative_marking: false
+  method: per_section_scaled
+
+subject_rules:
+  min_subjects: 4
+  max_subjects: 4
+  compulsory:
+    - English Language
+
+source_url: https://jamb.gov.ng/PDFs/2024/RAPID_TEST_MULTILENT_JAMB_2024_CBT_Manual.pdf
+source_type: official
+verified_on: "2026-09-23"   # quoted: bare YAML dates parse to date objects, not strings
+verified_by: lead
+confidence: confirmed
+
+notes: >
+  Confirmed verbatim from the manual: 2-hour duration, four subjects, Use of
+  English 60 questions, 180 questions in total, the full keyboard map, and the
+  End Examination dialog with its attempted-count and Y/R keys.
+
+  Inferred rather than stated: the 40-question count for each of the three
+  elective subjects. It follows from 180 minus 60 across three subjects and
+  matches every secondary source, but the manual's screenshots only show the
+  Use of English figure directly. Confirm against a per-subject screenshot or
+  the current manual before relying on it for scoring.
+
+  This is the 2024 manual; a 2027 edition is referenced on jamb.gov.ng and
+  should replace this.

@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sabi.ng/contracts/exam_format.schema.json",
+  "title": "Sabi exam format",
+  "description": "One exam's rules, as data rather than code (master prompt v2 §3.2). FROZEN CONTRACT between the content pipeline and exam mode.\n\nExam mode reads this and nothing else: question counts, durations, option labels, keyboard bindings, navigation and scoring all come from here, so adding NECO or a university's Post-UTME is a config file rather than a branch in the simulator. The conformance test for each exam is generated from its own config, which is only meaningful if the simulator has no hard-coded knowledge to disagree with it.\n\n`source_url` and `verified_on` are REQUIRED. Nigerian exam formats change between seasons -- WAEC's CBT transition moved twice while this was being written -- so a config nobody can trace to an official page is a config nobody can re-check. A test fails any config without them.",
+  "type": "object",
+  "required": ["exam_body", "exam_name", "sections", "scoring", "navigation", "source_url", "verified_on"],
+  "additionalProperties": false,
+
+  "properties": {
+    "exam_body": { "enum": ["WAEC", "NECO", "JAMB", "NABTEB", "POSTUTME", "BECE", "NCEE", "JUPEB", "IJMB"] },
+    "exam_name": { "type": "string", "examples": ["UTME", "WASSCE", "SSCE", "NBC", "Post-UTME screening"] },
+    "series": { "enum": ["may_june", "nov_dec", "internal", "external", "utme", "de", "screening"] },
+    "institution": {
+      "type": "string",
+      "description": "Required for POSTUTME: there is no national format, so each institution is its own config."
+    },
+    "delivery": {
+      "enum": ["cbt", "paper", "hybrid"],
+      "description": "`hybrid` is real and not a placeholder: WAEC's Nov/Dec GCE has run objective papers on screen with essays answered in physical booklets. A hybrid exam can only be partly simulated, and the UI must say which part."
+    },
+
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "description": "A section is usually a subject (JAMB) or a paper (WASSCE Paper 1/2/3).",
+      "items": {
+        "type": "object",
+        "required": ["key", "title", "question_count", "question_type"],
+        "additionalProperties": false,
+        "properties": {
+          "key": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+          "title": { "type": "string" },
+          "subject": { "type": "string", "description": "Canonical name from contracts/subject_codes.yaml." },
+          "question_count": { "type": "integer", "minimum": 1 },
+          "question_type": { "enum": ["objective", "theory", "practical", "mixed"] },
+          "compulsory": { "type": "boolean", "default": false },
+          "duration_minutes": {
+            "type": ["integer", "null"],
+            "description": "Per-section limit where the exam enforces one. Null means the section shares the exam-level clock, which is how JAMB works: one 2-hour timer across all four subjects, with free movement between them."
+          },
+          "answer_choose": {
+            "type": ["integer", "null"],
+            "description": "For theory papers that say 'answer any 4 of 6'. Null means answer everything."
+          },
+          "marks_per_question": { "type": "number" },
+          "shared_passages": {
+            "type": "boolean",
+            "default": false,
+            "description": "Comprehension sections where several questions hang off one passage. The passage is stored once and referenced."
+          }
+        }
+      }
+    },
+
+    "option_labels": {
+      "type": "array",
+      "default": ["A", "B", "C", "D"],
+      "minItems": 2,
+      "maxItems": 6,
+      "items": { "type": "string", "pattern": "^[A-F]$" },
+      "description": "NOT assumed to be A-D. Research indicates NECO objective papers use five options (A-E) while JAMB and WAEC use four, so any shared options component reads this rather than hard-coding four. Getting this wrong means a student practises eliminating three distractors when the real paper has four."
+    },
+
+    "total_duration_minutes": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The whole sitting. For JAMB this is 120 and it is the only clock."
+    },
+
+    "navigation": {
+      "type": "object",
+      "required": ["free_movement", "keyboard"],
+      "additionalProperties": false,
+      "properties": {
+        "free_movement": { "type": "boolean", "description": "May a candidate return to an earlier question?" },
+        "cross_section_movement": { "type": "boolean", "description": "May they move between subjects/papers mid-exam? True for JAMB's subject tabs." },
+        "question_grid": { "type": "boolean", "default": true, "description": "A numbered grid to jump to any question. Answered/unanswered/flagged state must be shown with a symbol AND a word, never colour alone (v2 §4.2)." },
+        "flagging": { "type": "boolean", "default": true },
+        "calculator": { "enum": ["none", "basic", "scientific"], "default": "none" },
+        "submit_requires_confirmation": { "type": "boolean", "default": true },
+        "show_attempted_count_on_submit": {
+          "type": "boolean",
+          "default": true,
+          "description": "JAMB's End Examination dialog states 'Total Questions Attempted is N' before committing. It is the last thing a candidate sees and it should be reproduced."
+        },
+        "reentry_after_submit": { "type": "boolean", "default": false, "description": "Once submitted, no going back." },
+
+        "keyboard": {
+          "type": "object",
+          "description": "Key bindings, as data, so a conformance test can assert them. JAMB's are confirmed verbatim from its own Step-by-Step CBT Manual (see docs/research/EXAM_FORMATS.md): A/B/C/D select, N or RightArrow next, P or LeftArrow previous, Up/Down move, S submit, then Y to end and R to continue on the confirmation dialog.",
+          "additionalProperties": false,
+          "properties": {
+            "select_option": {
+              "type": "object",
+              "additionalProperties": { "type": "string" },
+              "description": "Map of option label to key, e.g. {\"A\": \"a\", \"B\": \"b\"}."
+            },
+            "next": { "type": "array", "items": { "type": "string" } },
+            "previous": { "type": "array", "items": { "type": "string" } },
+            "move_up": { "type": "array", "items": { "type": "string" } },
+            "move_down": { "type": "array", "items": { "type": "string" } },
+            "submit": { "type": "array", "items": { "type": "string" } },
+            "confirm_submit": { "type": "array", "items": { "type": "string" } },
+            "cancel_submit": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+
+    "scoring": {
+      "type": "object",
+      "required": ["scale_max"],
+      "additionalProperties": false,
+      "properties": {
+        "scale_max": { "type": "number", "description": "The exam's own scale. 400 for UTME -- a result must be reported the way the real exam reports it, or a student cannot calibrate against a target like 'JAMB 280+'." },
+        "per_section_max": { "type": "number", "description": "100 per subject for UTME." },
+        "negative_marking": { "type": "boolean", "default": false },
+        "method": { "enum": ["equal_weight", "per_section_scaled", "raw_marks"], "default": "per_section_scaled" },
+        "grade_bands": {
+          "type": "array",
+          "description": "WASSCE reports A1-F9 rather than a number.",
+          "items": {
+            "type": "object",
+            "required": ["grade", "min_percent"],
+            "additionalProperties": false,
+            "properties": {
+              "grade": { "type": "string" },
+              "min_percent": { "type": "number" },
+              "label": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "subject_rules": {
+      "type": "object",
+      "description": "Combination rules, enforced in onboarding with a plain explanation when one is broken rather than a silent rejection.",
+      "additionalProperties": false,
+      "properties": {
+        "min_subjects": { "type": "integer" },
+        "max_subjects": { "type": "integer" },
+        "compulsory": { "type": "array", "items": { "type": "string" } },
+        "requires_trade_subject": { "type": "boolean", "description": "WAEC reportedly introduced this for 2026. Verify before enforcing it against a student." },
+        "restricted": {
+          "type": "array",
+          "description": "Subjects only open to certain tracks. WAEC reportedly restricted Economics to Commercial candidates for 2026 -- a rule that would block a Science student from a subject they may already be studying, so it must be verified at source before it is enforced.",
+          "items": {
+            "type": "object",
+            "required": ["subject", "tracks"],
+            "additionalProperties": false,
+            "properties": {
+              "subject": { "type": "string" },
+              "tracks": { "type": "array", "items": { "enum": ["science", "commercial", "arts", "core", "trade", "any"] } }
+            }
+          }
+        }
+      }
+    },
+
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "The official page or PDF this was taken from. Required. A format nobody can trace cannot be re-checked next season."
+    },
+    "source_type": { "enum": ["official", "news", "community"], "default": "official" },
+    "verified_on": { "type": "string", "format": "date", "description": "ISO date as a STRING. YAML parses a bare 2026-09-23 into a date object, which is not a JSON string and fails validation, so the loader coerces date and datetime to ISO strings before validating and configs quote them anyway." },
+    "verified_by": { "type": "string" },
+    "confidence": {
+      "enum": ["confirmed", "probable", "unconfirmed"],
+      "default": "probable",
+      "description": "`unconfirmed` fields must not drive a student-facing simulation. A config may ship at `probable` with the gaps named in `notes`."
+    },
+    "notes": { "type": "string", "description": "What is uncertain, and what to re-check." }
+  },
+
+  "allOf": [
+    {
+      "if": { "properties": { "exam_body": { "const": "POSTUTME" } }, "required": ["exam_body"] },
+      "then": { "required": ["institution"] }
+    },
+    {
+      "if": { "properties": { "delivery": { "const": "cbt" } }, "required": ["delivery"] },
+      "then": {
+        "properties": { "navigation": { "required": ["keyboard"] } },
+        "description": "A CBT simulation without key bindings is not a simulation of a CBT exam."
+      }
+    }
+  ]
+}
