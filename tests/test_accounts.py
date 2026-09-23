@@ -310,3 +310,28 @@ def test_a_dashboard_is_not_reachable_without_logging_in(client):
     r = client.get("/dashboard", follow_redirects=False)
     assert r.status_code == 303
     assert "/login" in r.headers["location"]
+
+
+def test_the_signup_form_states_the_minimum_the_server_enforces():
+    """The hint on the form and the rule in the service must be one number.
+
+    They were not: the form said 12 while `MIN_PASSWORD` was 10. A student
+    typing an eleven-character password would have been told it was too short
+    by the page and then accepted by the server -- and the error message, which
+    is generated from the constant, would have contradicted the hint sitting
+    directly above it.
+
+    Checked by reading the component, because the two live in different
+    languages and nothing else connects them.
+    """
+    from pathlib import Path
+
+    from sabi.accounts.service import MIN_PASSWORD
+
+    form = Path(__file__).resolve().parent.parent / "web" / "components" / "auth-form.tsx"
+    text = form.read_text(encoding="utf-8")
+
+    assert f"At least {MIN_PASSWORD} characters" in text, (
+        f"web/components/auth-form.tsx does not state the real minimum "
+        f"({MIN_PASSWORD}). Update the hint, or MIN_PASSWORD."
+    )

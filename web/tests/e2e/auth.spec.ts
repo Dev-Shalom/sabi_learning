@@ -15,10 +15,40 @@ const alertOf = (page: Page) => page.locator('form [role="alert"]');
  * that only exists in the rendered page — labels joined to inputs, a failure
  * that reaches a screen reader, and a form a keyboard can drive.
  *
- * FastAPI is not running, so every submission fails. That is the point: the
- * failure path is the one most likely to ship broken, because it is the one
- * nobody clicks through by hand.
+ * The API is intercepted rather than relied on. The first version of this file
+ * assumed FastAPI was *down*, so every submission failed and the error path
+ * was exercised for free -- and then passed or failed depending on whether
+ * somebody happened to have the backend running, which is not a test. Routing
+ * the call here makes both paths deterministic and lets the success path be
+ * checked too, which no amount of "just do not start the server" would.
  */
+
+/** Make every auth call fail the way a busy server does. */
+async function apiFails(page: Page) {
+  await page.route("**/api/auth/viewer", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        authenticated: false,
+        csrf_token: "test-token",
+        is_minor: false,
+        consent_state: "not_required",
+        onboarded: false,
+        allowance: {
+          questions_remaining: 15,
+          questions_cap: 15,
+          tutor_remaining: 15,
+          photos_remaining: 0,
+          exams_remaining: 0,
+          resets_phrase: "at midnight",
+        },
+      }),
+    }),
+  );
+  await page.route("**/api/auth/signup", (route) => route.abort("failed"));
+  await page.route("**/api/auth/login", (route) => route.abort("failed"));
+}
 
 for (const [path, heading] of [
   ["/login", /welcome back/i],
@@ -52,7 +82,12 @@ for (const [path, heading] of [
     test("can be filled and submitted from the keyboard alone", async ({
       page,
     }) => {
+      await apiFails(page);
       await page.goto(path);
+      // Hydration: the button is disabled until React has attached, which is
+      // what stops an early Enter from navigating away and wiping the form.
+      await expect(page.getByRole("button", { name: /log in|create account/i }))
+        .toBeEnabled();
 
       await page.getByLabel("Email").focus();
       await page.keyboard.type("someone@example.test");
@@ -66,7 +101,10 @@ for (const [path, heading] of [
     });
 
     test("a failure is announced, and says nothing was lost", async ({ page }) => {
+      await apiFails(page);
       await page.goto(path);
+      await expect(page.getByRole("button", { name: /log in|create account/i }))
+        .toBeEnabled();
       await page.getByLabel("Email").fill("someone@example.test");
       await page.getByLabel("Password").fill("a-long-enough-password-2026");
       await page.getByRole("button", { name: /log in|create account/i }).click();
@@ -86,7 +124,10 @@ for (const [path, heading] of [
     });
 
     test("the email typed is still there after a failure", async ({ page }) => {
+      await apiFails(page);
       await page.goto(path);
+      await expect(page.getByRole("button", { name: /log in|create account/i }))
+        .toBeEnabled();
       await page.getByLabel("Email").fill("typed@example.test");
       await page.getByLabel("Password").fill("a-long-enough-password-2026");
       await page.getByRole("button", { name: /log in|create account/i }).click();
@@ -95,6 +136,10 @@ for (const [path, heading] of [
       // Retyping an address on a phone because the server was busy is the
       // kind of small insult that makes people give up.
       await expect(page.getByLabel("Email")).toHaveValue("typed@example.test");
+      // And the page did not navigate. A submit that escapes the handler --
+      // which is what an un-hydrated form does with the Enter key -- reloads
+      // this URL and takes everything typed with it.
+      await expect(page).toHaveURL(new RegExp(`${path}$`));
     });
 
     test("each page offers the other", async ({ page }) => {

@@ -41,7 +41,7 @@ const COPY = {
     swapPrompt: "Already have an account?",
     swapLabel: "Log in",
     swapHref: "/login",
-    passwordHint: "At least 12 characters. A short phrase you will remember is ideal.",
+    passwordHint: "At least 10 characters. A short phrase you will remember is ideal.",
     autoComplete: "new-password",
   },
 } as const;
@@ -52,6 +52,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const emailId = useId();
   const passwordId = useId();
   const errorId = useId();
+
+  // Hydration. Until React has attached its handler, this is an ordinary
+  // <form> with no action, so pressing Enter navigates to the same URL and
+  // silently wipes everything typed. On a cheap phone on a slow connection
+  // that window is real, and a student who types fast is exactly who loses
+  // their password to it. The submit button is disabled until then, which
+  // also suppresses implicit submission from the Enter key.
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
@@ -141,11 +150,27 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
       <button
         type="submit"
-        disabled={busy}
+        disabled={busy || !ready}
         className="mt-2 w-full rounded-xl bg-primary px-4 py-3 font-semibold text-on-primary disabled:opacity-70"
       >
         {busy ? copy.busy : copy.submit}
       </button>
+
+      {/* This form needs JavaScript, because the API answers JSON and the
+          submit goes through fetch. Saying so beats a disabled button with no
+          explanation.
+
+          It deliberately does not offer a link "to the page that works
+          without JavaScript": only /api is proxied to FastAPI, so this route
+          IS the login page on this origin, and a link here would point at
+          itself. Reading and the landing page stay server-rendered; signing
+          in does not, and that is stated rather than implied. */}
+      <noscript>
+        <p className="mt-3 rounded-xl border border-danger/40 bg-danger-tint p-3 text-sm text-danger">
+          Signing in needs JavaScript turned on. Reading and practice work
+          without it.
+        </p>
+      </noscript>
 
       <p className="mt-6 text-sm text-muted">
         {copy.swapPrompt}{" "}

@@ -250,3 +250,23 @@ thing the generated-types seam exists to prevent.
 **What to do:** either add the operation to `contracts/openapi.yaml`, or
 decide it is internal and stop serving it under `/api`. Then make the warning
 fail the build, because a warning nobody fails on is a warning nobody reads.
+
+---
+
+## 13. The bottom tab bar is a phone pattern, shown on desktop too
+
+**Found:** Phase 2, looking at `docs/screenshots/home-1440-light.png`.
+
+The brief asks for a bottom tab bar on phones (v2 §5.4), and that is what was
+built — but there is no separate desktop navigation, so at 1440px the tab bar
+sits pinned across the bottom of a wide screen where a top bar is conventional.
+
+Nothing is broken: every section is reachable, the targets are large, keyboard
+navigation works, and the e2e suite covers 1440px as well as 360px. It is a
+question of whether it looks considered.
+
+**Status:** deliberate for now. The audience is overwhelmingly on phones, and a
+second navigation is a second thing to keep reachable and tested.
+
+**What to do:** decide before the landing page in Phase 8, since that is the
+surface most likely to be opened on a laptop — by a parent, or by a school.
