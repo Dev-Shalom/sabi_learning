@@ -1,0 +1,247 @@
+# Subject codes — FROZEN CONTRACT (master prompt v2 §10.2)
+#
+# One file so that two subjects cannot collide on a code, because a collision
+# means two different subjects citing the same locator and a student following
+# a citation into the wrong syllabus.
+#
+# The code is 2-3 uppercase letters and appears in every locator for that
+# subject (docs/LOCATORS.md): `BIO A1` for a syllabus section, `BIOX 4` for a
+# worked example.
+#
+# ---------------------------------------------------------------------------
+# STATUS: DRAFTED, NOT YET VERIFIED.
+#
+# This list is drafted from general knowledge of the Nigerian senior-secondary
+# curriculum. It has NOT been checked against WAEC's, NECO's, NABTEB's or
+# JAMB's published subject lists. Before Phase 4 authors content for any
+# subject here, that subject's row must be confirmed against the exam body's
+# own syllabus and its `verified` flag set to true with a source.
+#
+# A wrong subject name is not cosmetic: it is what a student picks in
+# onboarding and what the exam's combination rules are enforced against.
+# ---------------------------------------------------------------------------
+
+meta:
+  drafted_on: 2026-09-23
+  verified_against_official_lists: false
+  verify_before: "Phase 4 content authoring"
+
+# Waves come from master prompt v2 §9.5. A subject goes live only when it meets
+# the verified-content threshold, not when it appears here.
+waves:
+  1: "Most SS1-SS3 students take these for WAEC and JAMB"
+  2: "Remaining core and elective subjects"
+  3: "Second-wave exams (BECE, NCEE, JUPEB, IJMB)"
+
+subjects:
+
+  # -- compulsory core -------------------------------------------------------
+  - code: ENG
+    name: English Language
+    track: core
+    wave: 1
+    verified: false
+  - code: MTH
+    name: Mathematics
+    track: core
+    wave: 1
+    verified: false
+    # The Mathematics corpus predates this file and uses bare `SYL`/`EX`
+    # prefixes rather than `MTH`/`MTHX`. Existing locators are NOT renumbered
+    # (docs/LOCATORS.md §2.1); MTH applies to new Mathematics content only.
+    legacy_prefixes: [SYL, EX]
+  - code: CIV
+    name: Civic Education
+    track: core
+    wave: 1
+    verified: false
+
+  # -- science ---------------------------------------------------------------
+  - code: PHY
+    name: Physics
+    track: science
+    wave: 1
+    verified: false
+    legacy_prefixes: [PHY, PEX]
+  - code: CHM
+    name: Chemistry
+    track: science
+    wave: 1
+    verified: false
+    legacy_prefixes: [CHM, CEX]
+  - code: BIO
+    name: Biology
+    track: science
+    wave: 1
+    verified: false
+  - code: AGR
+    name: Agricultural Science
+    track: science
+    wave: 2
+    verified: false
+  - code: FMT
+    name: Further Mathematics
+    track: science
+    wave: 2
+    verified: false
+  - code: PHE
+    name: Physical and Health Education
+    track: science
+    wave: 2
+    verified: false
+  - code: TDR
+    name: Technical Drawing
+    track: science
+    wave: 2
+    verified: false
+
+  # -- commercial / social science -------------------------------------------
+  - code: ECO
+    name: Economics
+    track: commercial
+    wave: 1
+    verified: false
+  - code: COM
+    name: Commerce
+    track: commercial
+    wave: 1
+    verified: false
+  - code: ACC
+    name: Financial Accounting
+    track: commercial
+    wave: 1
+    verified: false
+  - code: BKP
+    name: Book Keeping
+    track: commercial
+    wave: 2
+    verified: false
+  - code: OFP
+    name: Office Practice
+    track: commercial
+    wave: 2
+    verified: false
+  - code: INS
+    name: Insurance
+    track: commercial
+    wave: 2
+    verified: false
+  - code: MKT
+    name: Marketing
+    track: commercial
+    wave: 2
+    verified: false
+
+  # -- arts ------------------------------------------------------------------
+  - code: LIT
+    name: Literature in English
+    track: arts
+    wave: 1
+    verified: false
+  - code: GOV
+    name: Government
+    track: arts
+    wave: 1
+    verified: false
+  - code: GEO
+    name: Geography
+    track: arts
+    wave: 1
+    verified: false
+  - code: CRS
+    name: Christian Religious Studies
+    track: arts
+    wave: 1
+    verified: false
+  - code: IRS
+    name: Islamic Religious Studies
+    track: arts
+    wave: 1
+    verified: false
+  - code: HIS
+    name: History
+    track: arts
+    wave: 2
+    verified: false
+  - code: ART
+    name: Visual Arts
+    track: arts
+    wave: 2
+    verified: false
+  - code: MUS
+    name: Music
+    track: arts
+    wave: 2
+    verified: false
+  - code: FRE
+    name: French
+    track: arts
+    wave: 2
+    verified: false
+  - code: ARB
+    name: Arabic
+    track: arts
+    wave: 2
+    verified: false
+
+  # -- Nigerian languages ----------------------------------------------------
+  - code: YOR
+    name: Yoruba
+    track: arts
+    wave: 2
+    verified: false
+  - code: IGB
+    name: Igbo
+    track: arts
+    wave: 2
+    verified: false
+  - code: HAU
+    name: Hausa
+    track: arts
+    wave: 2
+    verified: false
+
+  # -- computing -------------------------------------------------------------
+  - code: DPR
+    name: Data Processing
+    track: any
+    wave: 2
+    verified: false
+  - code: CMP
+    name: Computer Studies
+    track: any
+    wave: 2
+    verified: false
+
+  # -- trade subjects --------------------------------------------------------
+  # WAEC requires one trade/entrepreneurship subject. NABTEB's NTC/NBC
+  # certificates lean heavily on these. Content is wave 2 at the earliest;
+  # the codes are registered now so nothing else claims them.
+  - { code: AUT, name: Auto Mechanics,                     track: trade, wave: 2, verified: false }
+  - { code: BLD, name: Building Construction,              track: trade, wave: 2, verified: false }
+  - { code: CAT, name: Catering Craft Practice,            track: trade, wave: 2, verified: false }
+  - { code: ELI, name: Electrical Installation,            track: trade, wave: 2, verified: false }
+  - { code: GRM, name: Garment Making,                     track: trade, wave: 2, verified: false }
+  - { code: GSM, name: GSM Phone Maintenance and Repairs,  track: trade, wave: 2, verified: false }
+  - { code: PLM, name: Plumbing and Pipe Fitting,          track: trade, wave: 2, verified: false }
+  - { code: RAC, name: Refrigeration and Air Conditioning, track: trade, wave: 2, verified: false }
+  - { code: WLD, name: Welding and Fabrication,            track: trade, wave: 2, verified: false }
+  - { code: SAL, name: Salesmanship,                       track: trade, wave: 2, verified: false }
+  - { code: TOU, name: Tourism,                            track: trade, wave: 2, verified: false }
+  - { code: PHO, name: Photography,                        track: trade, wave: 2, verified: false }
+  - { code: ANH, name: Animal Husbandry,                   track: trade, wave: 2, verified: false }
+  - { code: FSH, name: Fisheries,                          track: trade, wave: 2, verified: false }
+
+# Codes deliberately NOT used, so they are never accidentally assigned:
+#   SYL, EX  -- legacy Mathematics prefixes still in the corpus
+#   PEX, CEX -- legacy Physics and Chemistry worked-example prefixes
+#   WAEC, NECO, JAMB, NABTEB -- reserved for past-question locators
+reserved:
+  - SYL
+  - EX
+  - PEX
+  - CEX
+  - WAEC
+  - NECO
+  - JAMB
+  - NABTEB

@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sabi.ng/contracts/question.schema.json",
+  "title": "Sabi question",
+  "description": "One question in the bank. FROZEN CONTRACT between the content pipeline, the backend and the web app (master prompt v2 §10.2). Changing it goes through the lead, and every agent that builds against it is told.\n\nTwo fields decide whether a student may ever see this: `status` must be `verified` and `licence` must not be `dev_only`. That pair is enforced in the query layer and tested, not left to a caller to remember (v2 trap 17).",
+  "type": "object",
+  "required": [
+    "id", "exam_body", "subject", "year", "paper", "question_number",
+    "type", "stem", "answer", "provenance", "status", "licence"
+  ],
+  "additionalProperties": false,
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]{2,8}-[0-9]{4}-[a-z0-9-]+-[0-9]{1,4}$",
+      "description": "Stable and derived from the question's identity, not a surrogate: '<body>-<year>-<subject-paper>-<number>'. A re-import of the same question produces the same id, which is what makes de-duplication and re-review idempotent.",
+      "examples": ["waec-2019-chemistry-p1-7", "jamb-2021-english-45"]
+    },
+
+    "exam_body": { "enum": ["WAEC", "NECO", "JAMB", "NABTEB", "POSTUTME", "BECE", "NCEE", "JUPEB", "IJMB"] },
+    "series": {
+      "enum": ["may_june", "nov_dec", "internal", "external", "utme", "de", "screening"],
+      "description": "The sitting. WAEC school candidates are may_june; GCE/private are nov_dec."
+    },
+    "institution": {
+      "type": "string",
+      "description": "Only for POSTUTME, which has no national format — the config is per institution (v2 §2.3)."
+    },
+
+    "subject": { "type": "string", "description": "Canonical subject name from contracts/subject_codes.yaml." },
+    "subject_code": { "type": "string", "pattern": "^[A-Z]{2,3}$" },
+    "year": { "type": "integer", "minimum": 1978, "maximum": 2100 },
+    "paper": { "type": "string", "examples": ["1", "2", "3", "alt"] },
+    "question_number": { "type": "integer", "minimum": 1 },
+
+    "type": {
+      "enum": ["objective", "theory", "practical", "numeric_entry"],
+      "description": "`objective` carries options and exactly one correct key. `theory` carries a model answer and a marking guide. `practical` covers practical and alternative-to-practical papers. `numeric_entry` has no options and is marked by value, using the shared matcher in sabi/valuematch.py rather than a second notion of whether 1/2 equals 0.5."
+    },
+
+    "stem": { "type": "string", "minLength": 1, "description": "The question as a student reads it. Plain text with the corpus's ASCII mathematics conventions (x^2, root 3, 1/2)." },
+
+    "passage_id": {
+      "type": "string",
+      "description": "Set when several questions share one comprehension passage. The passage is stored once and referenced, so a passage correction fixes every question at once."
+    },
+
+    "assets": {
+      "type": "array",
+      "description": "Diagrams and figures. Stored as files; the question holds only references, so a question row is always small enough to page cheaply.",
+      "items": {
+        "type": "object",
+        "required": ["kind", "path", "alt"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": { "enum": ["diagram", "figure", "table", "graph"] },
+          "path": { "type": "string" },
+          "alt": { "type": "string", "minLength": 1, "description": "Required. A diagram with no alternative text is unusable to a screen reader and fails WCAG 2.2 AA (v2 §5.5)." }
+        }
+      }
+    },
+
+    "options": {
+      "type": "array",
+      "description": "Required for `objective`. The count comes from the paper's format config, not from an assumption that every exam is A-D (v2 §2.3 warns explicitly about NECO).",
+      "minItems": 2,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["label", "text"],
+        "additionalProperties": false,
+        "properties": {
+          "label": { "type": "string", "pattern": "^[A-F]$" },
+          "text": { "type": "string", "minLength": 1 },
+          "why_wrong": {
+            "type": "string",
+            "description": "Why this distractor tempts people. Shown after marking (v2 §4.3). Optional, because it must be written rather than invented — an empty field is better than a guessed one."
+          }
+        }
+      }
+    },
+
+    "answer": {
+      "type": "object",
+      "description": "How the question is marked. Exactly one of these branches is populated, matching `type`.",
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string", "pattern": "^[A-F]$", "description": "objective" },
+        "value": { "type": "string", "description": "numeric_entry — compared with sabi.valuematch, never string equality" },
+        "value_kind": { "enum": ["number", "number_set", "number_list", "text"], "default": "number" },
+        "model_answer": { "type": "string", "description": "theory / practical" },
+        "marking_guide": { "type": "string", "description": "theory / practical — how marks are actually awarded" },
+        "max_marks": { "type": "integer", "minimum": 1 }
+      }
+    },
+
+    "explanation": {
+      "type": "object",
+      "description": "Why the answer is right. Written from retrieved sources and carrying at least one locator, then reviewed. An explanation that contradicts the key is discarded, never reconciled automatically (v2 §9.3).",
+      "required": ["text", "locators"],
+      "additionalProperties": false,
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "locators": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^[A-Z]{2,4}\\s?[A-Z]?\\d{1,4}([.-]\\d{1,3}){0,2}$" },
+          "description": "Must match the anchored citation form in docs/LOCATORS.md. A locator that validates here but fails extraction downstream is silently stripped from the rendered answer."
+        },
+        "author": { "enum": ["model", "human"] }
+      }
+    },
+
+    "topic": { "type": "string" },
+    "subtopic": { "type": "string" },
+    "difficulty": { "enum": ["easy", "medium", "hard"] },
+
+    "provenance": {
+      "type": "object",
+      "description": "Where this came from. Every question carries it so that anything can be pulled if challenged (v2 §2.5).",
+      "required": ["source", "retrieved_on"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "enum": ["original", "licensed", "official_public", "owned_paper", "dev_api"] },
+        "source_detail": { "type": "string", "description": "Publisher, URL, or the paper Sabi owns. Free text, but never empty for anything but `original`." },
+        "source_url": { "type": "string", "format": "uri" },
+        "retrieved_on": { "type": "string", "format": "date" },
+        "drafted_by": { "type": "string", "description": "For `original`: the model and prompt version that drafted it." }
+      }
+    },
+
+    "licence": {
+      "enum": ["original", "licensed", "official_public", "owned_paper", "dev_only"],
+      "description": "The publish gate. `dev_only` covers free-tier API sample data used for development and tests; the publish step REFUSES it and a test proves it (v2 §9.1, §15). Until the owner's legal consultation, `original` is the only value that may go live."
+    },
+
+    "status": {
+      "enum": ["draft", "needs_review", "verified", "rejected"],
+      "description": "Only `verified` is ever served to a student. Enforced in the query layer, not by callers."
+    },
+
+    "verification": {
+      "type": "object",
+      "description": "The audit trail behind `status`. Every review action is logged (v2 §9.4).",
+      "additionalProperties": false,
+      "properties": {
+        "answer_check": {
+          "enum": ["computed_match", "computed_mismatch", "independent_agree", "independent_disagree", "not_applicable"],
+          "description": "For numeric questions the answer is recomputed in Python from the PARSED QUESTION TEXT, not from stored parameters — the v1 lesson that a checker fed params reproduces the intended quantity perfectly while the sentence on screen asks something else. A mismatch goes to the review queue and is never auto-resolved."
+        },
+        "reviewer": { "type": "string" },
+        "reviewed_on": { "type": "string", "format": "date" },
+        "reviewer_action": { "enum": ["approved", "edited", "rejected"] },
+        "reviewer_note": { "type": "string" },
+        "duplicate_of": { "type": "string", "description": "Set when text or embedding de-duplication matched an existing question." }
+      }
+    },
+
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "objective" } }, "required": ["type"] },
+      "then": {
+        "required": ["options"],
+        "properties": { "answer": { "required": ["key"] } }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "numeric_entry" } }, "required": ["type"] },
+      "then": { "properties": { "answer": { "required": ["value"] } } }
+    },
+    {
+      "if": { "properties": { "type": { "enum": ["theory", "practical"] } }, "required": ["type"] },
+      "then": { "properties": { "answer": { "required": ["model_answer", "marking_guide"] } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "verified" } }, "required": ["status"] },
+      "then": {
+        "required": ["explanation", "verification"],
+        "properties": {
+          "licence": { "not": { "const": "dev_only" } },
+          "verification": { "required": ["reviewer", "reviewed_on", "reviewer_action"] }
+        },
+        "description": "A verified question must have a reviewed explanation and a named reviewer, and cannot be dev-only. This is the schema half of the publish gate; the query layer is the other half."
+      }
+    },
+    {
+      "if": { "properties": { "exam_body": { "const": "POSTUTME" } }, "required": ["exam_body"] },
+      "then": { "required": ["institution"] }
+    }
+  ]
+}

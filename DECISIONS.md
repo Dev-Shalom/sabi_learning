@@ -503,6 +503,139 @@ engineering consequences:
 
 ---
 
+## The redirection (master prompt v2) — Phase 0
+
+Sabi becomes a Nigerian exam-preparation platform: JAMB, WAEC, NECO, NABTEB and
+Post-UTME, every Science/Commercial/Arts subject, practice + exam + reading
+modes, a subject-bound tutor, on a Next.js front end. The grounded-answer
+machinery, the eval harness and the honesty rules are kept unchanged. Full
+reasoning in `docs/REDIRECTION.md`.
+
+### Reversed from v1, each with its argument
+
+- **No JS framework → Next.js + React.** Exam mode is a real application:
+  keyboard control, autosave, offline tolerance, a server-authoritative timer.
+  A document-shaped UI cannot do it. *Kept in spirit:* the landing page,
+  pricing and reading mode must render and be readable with JavaScript off, and
+  that is a test rather than an intention.
+- **Jinja UI → FastAPI as a JSON API.** Two UIs would rot; one is maintained.
+- **Byte-exact HTML assertions → Playwright.** Retired in the same commit that
+  adds the replacement, never quietly — otherwise the old tests either block
+  the migration or get deleted without anyone noticing what they protected.
+- **Adire indigo → "Verdant Ink".** Owner's call, product and audience changed.
+  The stated contrast figures are re-measured from the real token file by
+  `tools/contrast_check.py` before Phase 2 ships; a number in a brief is not a
+  measurement.
+- **No Alembic → Alembic.** The original reason was "no production data worth
+  preserving". Launch is now the goal and 19 tables become a full catalog.
+  `tools/schema_drift.py` stays anyway: it catches ORM/DB divergence, which is
+  a different failure from a missing migration.
+- **No password-reset email → email and SMS arrive.** The original reason was
+  that no transport existed. Guardian consent requires one, so it now does.
+  Ships switched off until tested end to end; recovery codes stay as the
+  offline path.
+- **No client-side image downscaling → downscale before upload.** The reason
+  was "it would be the first JavaScript". That reason is gone, and it saves a
+  student real money on metered data.
+- **Three subjects, one board → all subjects, five bodies.** The product.
+
+### Retrieval scopes by subject, not by (board, subject)
+
+v1 built one partial HNSW index per `(exam_board, subject)` because a filter
+the ANN index does not cover makes the walk exhaust `ef_search` and silently
+return fewer rows than `LIMIT` asked for. At v2's scale that is 5 bodies ×
+~40 subjects = up to 200 partial indexes.
+
+Measured before deciding: a partial HNSW index builds at **1.67 ms/chunk** and
+costs ~440–690 KB at ~180 chunks. Projected to 200,000 chunks that is ~5–6
+minutes and ~100 MB — and **build time tracks total rows, not index count**,
+because each row belongs to exactly one scope. So index count is not the
+problem.
+
+The problem is content. Per-`(board, subject)` scoping implies a separate
+corpus per board per subject, and WAEC, NECO, NABTEB and JAMB examine
+substantially the same Chemistry. Four corpora for one subject is four times
+the authoring and human-review bill, which is the binding constraint on this
+whole project.
+
+So: **one partial index per subject**; documents tagged with the boards that
+examine them, defaulting to all; **board filtered in Python after retrieval**,
+exactly as exclusion chunks already are. That does not reintroduce the ANN
+trap, because the filter runs on rows already returned. Exclusions stay
+board-specific — "not on this syllabus" genuinely differs between boards — and
+they are already on a separate query path with their own index. The answer
+cache keeps the board in its key: v1 was right that a NECO answer must not
+serve a WAEC question, because the refusal boundary differs even where the
+teaching does not.
+
+**The measurement that must accompany it**, written down now so it cannot be
+rationalised later: Phase 7 reports the proportion of retrieved candidates
+discarded by the board filter, per subject. Past a threshold fixed before the
+measurement, this decision is wrong and we pay the content bill instead.
+
+### The citation regex is extended, and de-duplicated
+
+`docs/LOCATORS.md` is the contract. Two findings from the Phase 0 audit:
+
+- The existing `(?:\.\d+)?` branch is **dead** — no locator in 170 documents
+  uses it — so widening the pattern breaks nothing that exists.
+- The regex is **copied five times in three variants** across `generator.py`,
+  `render.py`, `scorers.py` and two corpus tests, with nothing keeping them in
+  step. A locator that validates in the corpus test but fails extraction is
+  silently stripped from the rendered answer, leaving an uncited claim on
+  screen — the exact failure citation validation exists to prevent. It becomes
+  one constant, imported, in Phase 1.
+
+Existing locators are **not renumbered**: 170 documents, 157 golden items and a
+committed baseline reference them, and the gain would be cosmetic.
+
+### Email and SMS: Termii for SMS, Postmark for email
+
+The deciding factor is not price. Over 30 million Nigerian numbers sit on the
+NCC Do-Not-Disturb list, and a guardian-consent code that silently fails for a
+third of guardians is a broken feature rather than a degraded one. Termii is
+Nigerian-founded and documents the DND/transactional route and the sender-ID
+whitelisting that route requires. Sendchamp is a close runner-up on the same
+logic.
+
+Caveat recorded rather than hidden: Termii has withdrawn its public rate card
+in favour of "talk to sales" plus a platform subscription, so the real cost to
+Sabi is unknown. Get both rate cards before committing. Per-operator sender-ID
+registration in Nigeria takes weeks and needs CAC — start it before Phase 3,
+not during it.
+
+### Tailwind v4 versus the cheap-Android promise
+
+Tailwind v4 requires Chrome 111+, and the brief's third stated priority is that
+Sabi works on a cheap Android phone. Chrome on Android auto-updates, so most
+users are fine; the tail is Opera Mini, UC Browser and vendor WebViews pinned
+to old Chromium — and Opera Mini is genuinely popular in Nigeria because it
+saves data.
+
+Resolution: **the app requires a modern browser and says so plainly; the
+landing page, pricing and reading mode must remain legible without modern CSS
+and without JavaScript.** Opera Mini's extreme mode renders server-side and
+would not run a React application whatever Tailwind version we chose, so the
+constraint binds on the public pages, not the app. This needs a real
+device-and-browser measurement in Phase 2 before it is locked in.
+
+### Paystack's Starter Business cap is ₦8,000,000, lifetime
+
+Confirmed from Paystack's own support site. At a ₦2,000 plan that is roughly
+4,000 paid subscriptions — reachable. The admin alert fires at **₦6,000,000
+(75%)**, not at 95%, because CAC registration, the Paystack compliance upgrade
+and per-operator SMS sender-ID registration are all multi-week processes.
+Payments being disabled mid-term with no fallback is the worst available
+outcome.
+
+Noted for whoever writes the payment code: `paystack.com/docs/*` is behind
+Cloudflare and returns 403 to automated fetchers, so every *technical* claim
+about webhook signing is corroborated from independent secondary sources rather
+than read at source. Open the docs in a real browser and confirm before
+writing the handler.
+
+---
+
 ## Things deliberately not done
 
 - **Alembic.** The schema is `create_all` plus a forward-only list of idempotent

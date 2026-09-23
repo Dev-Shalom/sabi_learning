@@ -1,0 +1,119 @@
+/* Verdant Ink — the design tokens.
+ *
+ * FROZEN CONTRACT (master prompt v2 §10.2), between the design system and
+ * every feature. Changing a token goes through the lead.
+ *
+ * Every colour in the product is named here. `tools/contrast_check.py` fails
+ * on any colour literal in a property value anywhere else — that check is
+ * what keeps a design system a system, because a ratio table can only vouch
+ * for colours it knows the names of (carried over from v1).
+ *
+ * The ratios below are MEASURED, on 2026-09-23, not copied from the brief.
+ * Two of the brief's stated figures were slightly off and are corrected here.
+ *
+ * Meaning is fixed and never carried by colour alone (v2 §5.1, §7.1):
+ *   green = primary action / correct
+ *   gold  = achievement
+ *   red   = wrong / error
+ * Each always appears with a word or an icon beside it, because roughly one
+ * student in twelve cannot tell the green and the red apart.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* -- surfaces ---------------------------------------------------------- */
+  --paper: #F7F9FB;              /* page background */
+  --surface: #FFFFFF;            /* cards, sheets */
+
+  /* -- text -------------------------------------------------------------- */
+  --ink: #0E1B2A;                /* 16.46:1 on paper */
+  --muted: #5B6B7B;              /*  5.19:1 on paper */
+
+  /* -- primary: green ----------------------------------------------------
+   * TWO tokens, and the split is not decoration. --primary is a FILL:
+   * #12B886 as text on paper measures 2.42:1, which fails AA badly. The
+   * brief estimated ~2.6; it is worse than that. Any green text on a light
+   * ground uses --primary-text.
+   *
+   * Do not reintroduce #0E8F6A, an earlier draft: it is exactly 4.07:1 on
+   * white and fails AA for body text. */
+  --primary: #12B886;            /* fill only; --ink on it is 6.80:1 */
+  --primary-text: #0B7A5A;       /*  5.04:1 on paper; white on it 5.32:1 */
+  --primary-tint: #E8F7F1;       /* --primary-text on it 4.82:1 */
+
+  /* -- gold: achievement -------------------------------------------------- */
+  --gold: #F4B740;               /* fill only; --ink on it is 9.67:1 */
+  --gold-text: #8A5A0B;          /*  5.61:1 on paper */
+
+  /* -- danger: wrong, error ----------------------------------------------- */
+  --danger: #B42318;             /*  6.23:1 on paper */
+  --danger-tint: #FEEDEC;        /* --danger on it 5.80:1 */
+
+  /* -- focus --------------------------------------------------------------
+   * Its own token rather than reusing --primary, so that a focus ring stays
+   * visible if the primary colour is ever retuned. Keyboard use is not
+   * optional here: the JAMB simulator is driven entirely from the keyboard. */
+  --focus: #0B7A5A;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0E1B2A;
+    --surface: #162536;
+    --ink: #E6EDF3;              /* 14.70:1 on paper, 13.15:1 on surface */
+    --muted: #9AA8B6;            /*  7.16:1 on paper,  6.40:1 on surface */
+
+    /* On dark, one green serves as both fill and text: 9.04:1 on paper. */
+    --primary: #34D399;
+    --primary-text: #34D399;
+    --primary-tint: #16342B;
+
+    --gold: #F4B740;             /*  9.67:1 on paper */
+    --gold-text: #F4B740;
+
+    --danger: #F97066;           /*  6.24:1 on paper */
+    --danger-tint: #3A1D1B;
+
+    --focus: #34D399;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #0E1B2A;
+  --surface: #162536;
+  --ink: #E6EDF3;
+  --muted: #9AA8B6;
+  --primary: #34D399;
+  --primary-text: #34D399;
+  --primary-tint: #16342B;
+  --gold: #F4B740;
+  --gold-text: #F4B740;
+  --danger: #F97066;
+  --danger-tint: #3A1D1B;
+  --focus: #34D399;
+}
+
+/* -- motion ---------------------------------------------------------------
+ * v2 §7.3. Exam mode is calm: selection feedback within --t-tap, and never an
+ * animation between a key press and the answer being saved. */
+:root {
+  --t-tap: 120ms;    /* pressed, selected: must feel instant */
+  --t-fast: 180ms;   /* a control changing state */
+  --t-mid: 250ms;    /* something appearing or moving */
+  --t-page: 400ms;   /* a whole route transition */
+
+  --ease-out: cubic-bezier(0.32, 0.72, 0, 1);   /* entry: arrives already settling */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);        /* exit */
+}
+
+/* Every animation has an instant equivalent, and it is tested rather than
+ * intended (v2 §5.5). */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-tap: 0.01ms;
+    --t-fast: 0.01ms;
+    --t-mid: 0.01ms;
+    --t-page: 0.01ms;
+  }
+}
