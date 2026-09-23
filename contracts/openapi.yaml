@@ -436,20 +436,20 @@ paths:
         '201': { description: Created }
         '429': { description: Daily cap reached }
 
-  /practice/sets/{setId}:
+  /practice/sets/{set_id}:
     get:
       tags: [practice]
-      parameters: [{ name: setId, in: path, required: true, schema: { type: string } }]
+      parameters: [{ name: set_id, in: path, required: true, schema: { type: string } }]
       responses: { '200': { description: OK } }
 
-  /practice/sets/{setId}/answer:
+  /practice/sets/{set_id}/answer:
     post:
       tags: [practice]
       summary: Answer one practice question, and get it marked immediately
       description: |
         Practice marks as you go — that is what separates it from exam mode,
         where nothing is marked until submission.
-      parameters: [{ name: setId, in: path, required: true, schema: { type: string } }]
+      parameters: [{ name: set_id, in: path, required: true, schema: { type: string } }]
       requestBody:
         content:
           application/json:
@@ -476,17 +476,17 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ExamSession' }
 
-  /exam/sessions/{sessionId}:
+  /exam/sessions/{session_id}:
     get:
       tags: [exam]
-      parameters: [{ name: sessionId, in: path, required: true, schema: { type: string } }]
+      parameters: [{ name: session_id, in: path, required: true, schema: { type: string } }]
       responses:
         '200':
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ExamSession' }
 
-  /exam/sessions/{sessionId}/answers:
+  /exam/sessions/{session_id}/answers:
     post:
       tags: [exam]
       summary: Autosave answers, including a queue replayed after being offline
@@ -495,7 +495,7 @@ paths:
         one request. Idempotent by `client_seq` per question: a lower sequence
         for a question the server already has a higher one for is ignored, not
         applied. Returns NO marking — an exam is not marked before submission.
-      parameters: [{ name: sessionId, in: path, required: true, schema: { type: string } }]
+      parameters: [{ name: session_id, in: path, required: true, schema: { type: string } }]
       requestBody:
         content:
           application/json:
@@ -512,7 +512,7 @@ paths:
           description: The session is already submitted or expired.
           content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
 
-  /exam/sessions/{sessionId}/submit:
+  /exam/sessions/{session_id}/submit:
     post:
       tags: [exam]
       summary: Submit, and only now mark
@@ -520,14 +520,14 @@ paths:
         Irreversible. The server marks, scores in the exam's own scale, and from
         this point the review with explanations becomes available. A submitted
         session accepts no further answers.
-      parameters: [{ name: sessionId, in: path, required: true, schema: { type: string } }]
+      parameters: [{ name: session_id, in: path, required: true, schema: { type: string } }]
       responses: { '200': { description: Submitted and marked } }
 
-  /exam/sessions/{sessionId}/result:
+  /exam/sessions/{session_id}/result:
     get:
       tags: [exam]
       summary: Score, per-subject and per-topic breakdown, time per question, full review
-      parameters: [{ name: sessionId, in: path, required: true, schema: { type: string } }]
+      parameters: [{ name: session_id, in: path, required: true, schema: { type: string } }]
       responses:
         '200': { description: OK }
         '409': { description: Not submitted yet — a result before submission would be a leak. }
@@ -547,7 +547,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Page' }
 
-  /reading/packs/{subjectCode}:
+  /reading/packs/{subject_code}:
     get:
       tags: [reading]
       summary: A signed, expiring offline pack
@@ -555,7 +555,7 @@ paths:
         Tied to the account that requested it and time-limited. This is the one
         endpoint that hands over a batch, which is exactly why it is signed,
         scoped to one subject and rate-limited — there is no bulk export.
-      parameters: [{ name: subjectCode, in: path, required: true, schema: { type: string } }]
+      parameters: [{ name: subject_code, in: path, required: true, schema: { type: string } }]
       responses:
         '200': { description: OK }
         '403': { description: Plan does not include offline packs }
@@ -578,10 +578,10 @@ paths:
         the corpus will have moved (v1).
       responses: { '201': { description: Kept } }
 
-  /notebook/{entryId}:
+  /notebook/{entry_id}:
     delete:
       tags: [notebook]
-      parameters: [{ name: entryId, in: path, required: true, schema: { type: string } }]
+      parameters: [{ name: entry_id, in: path, required: true, schema: { type: string } }]
       responses: { '204': { description: Removed } }
 
   # -- tutor -----------------------------------------------------------------
@@ -689,10 +689,10 @@ paths:
         '200': { description: OK }
         '403': { description: Not a reviewer }
 
-  /review/questions/{questionId}:
+  /review/questions/{question_id}:
     patch:
       tags: [review]
       summary: Approve, edit or reject
       description: Every action is audit-logged with the reviewer and a reason.
-      parameters: [{ name: questionId, in: path, required: true, schema: { type: string } }]
+      parameters: [{ name: question_id, in: path, required: true, schema: { type: string } }]
       responses: { '200': { description: Recorded } }

@@ -29,6 +29,7 @@ from sabi.api.v1.schemas import (
     PracticeItemOut,
     PracticeSetOut,
     PracticeSetRequest,
+    NotebookSaveRequest,
 )
 from sabi.models import (
     Passage,
@@ -449,3 +450,107 @@ def _check_combinations(s: Session, body: OnboardingIn) -> list[str]:
                 problems.append(f"{name} is compulsory for {exam_body}.")
 
     return problems
+
+
+# ------------------------------------------------------------------ notebook
+
+
+@router.get("/notebook", response_model=PageOut, tags=["notebook"])
+def list_notebook(
+    subject: str | None = None,
+    cursor: str | None = None,
+    limit: int = Query(default=20, ge=1, le=50),
+    s: Session = Depends(api_deps.db),
+    v: Viewer = Depends(api_deps.require_account),
+) -> PageOut:
+    """Kept answers, rendered from their snapshot rather than from the corpus.
+
+    The snapshot is the whole point: the corpus will have moved by the time a
+    student revises from this, and re-rendering live would quietly change what
+    they saved. That is the failure this product exists to prevent, arriving
+    by a side door.
+    """
+    from sabi import notebook
+
+    entries = notebook.listing(s, user=v.user, subject=subject, limit=limit + 1)
+    if cursor:
+        entries = [e for e in entries if str(e.id) < cursor]
+    has_more = len(entries) > limit
+    entries = entries[:limit]
+
+    return PageOut(
+        items=[
+            {
+                "id": e.id,
+                "question": e.question,
+                "answer": e.answer,
+                "subject": e.subject,
+                "topic": e.topic,
+                "note": e.note,
+                "created_at": e.created_at.isoformat(),
+                "citations": [
+                    {
+                        "locator": c.locator,
+                        "title": c.title,
+                        "attribution": c.attribution,
+                        "text": c.text,
+                        "highlight": c.highlight,
+                    }
+                    for c in e.citations
+                ],
+                "disclosure": e.disclosure,
+            }
+            for e in entries
+        ],
+        next_cursor=str(entries[-1].id) if has_more and entries else None,
+    )
+
+
+@router.post("/notebook", status_code=201, tags=["notebook"])
+def save_to_notebook(
+    body: NotebookSaveRequest,
+    s: Session = Depends(api_deps.db),
+    v: Viewer = Depends(api_deps.require_account_csrf),
+) -> dict:
+    """Keep an answer.
+
+    Rebuilt from the stored request rather than re-answered, so saving costs
+    nothing and cannot produce different text from what the student read.
+    """
+    import uuid as _uuid
+
+    from sabi import notebook
+    from sabi.models import Request as RequestRow
+
+    if not body.request_id:
+        raise api_deps.problem(
+            400, "bad_request", "Nothing to keep: no answer was named."
+        )
+    try:
+        rid = _uuid.UUID(body.request_id)
+    except ValueError:
+        raise api_deps.problem(400, "bad_request", "That is not an answer id.")
+
+    row = s.get(RequestRow, rid)
+    if row is None:
+        raise api_deps.problem(404, "not_found", "That answer no longer exists.")
+    if row.user_id != v.user.id:
+        # You can only keep your own answers, same rule as feedback.
+        raise api_deps.problem(403, "forbidden", "That is not your answer.")
+
+    saved = notebook.save_from_request(s, user=v.user, request=row, note=body.note)
+    s.flush()
+    return {"id": saved.id}
+
+
+@router.delete("/notebook/{entry_id}", status_code=204, tags=["notebook"])
+def remove_from_notebook(
+    entry_id: int,
+    s: Session = Depends(api_deps.db),
+    v: Viewer = Depends(api_deps.require_account_csrf),
+) -> None:
+    from sabi import notebook
+
+    # Scoped to the owner, so an id alone is not enough to delete somebody
+    # else's revision notes.
+    notebook.remove(s, user=v.user, entry_id=entry_id)

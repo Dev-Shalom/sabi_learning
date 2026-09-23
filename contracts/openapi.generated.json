@@ -1,0 +1,3031 @@
+{
+  "components": {
+    "schemas": {
+      "Allowance": {
+        "description": "What is left today, per capability.\n\nSeparate counters on purpose: reading a photo is a model call whether or\nnot a question follows it, so it must not spend a question the student has\nnot asked.",
+        "properties": {
+          "exams_remaining": {
+            "title": "Exams Remaining",
+            "type": "integer"
+          },
+          "photos_remaining": {
+            "title": "Photos Remaining",
+            "type": "integer"
+          },
+          "questions_cap": {
+            "title": "Questions Cap",
+            "type": "integer"
+          },
+          "questions_remaining": {
+            "title": "Questions Remaining",
+            "type": "integer"
+          },
+          "resets_phrase": {
+            "title": "Resets Phrase",
+            "type": "string"
+          },
+          "tutor_remaining": {
+            "title": "Tutor Remaining",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "questions_remaining",
+          "questions_cap",
+          "tutor_remaining",
+          "photos_remaining",
+          "exams_remaining",
+          "resets_phrase"
+        ],
+        "title": "Allowance",
+        "type": "object"
+      },
+      "Body_ask_ask_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "exam_board": {
+            "default": "",
+            "title": "Exam Board",
+            "type": "string"
+          },
+          "question": {
+            "default": "",
+            "title": "Question",
+            "type": "string"
+          },
+          "subject": {
+            "default": "",
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "title": "Body_ask_ask_post",
+        "type": "object"
+      },
+      "Body_feedback_feedback_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "vote": {
+            "title": "Vote",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "request_id",
+          "vote"
+        ],
+        "title": "Body_feedback_feedback_post",
+        "type": "object"
+      },
+      "Body_login_login_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "email": {
+            "default": "",
+            "title": "Email",
+            "type": "string"
+          },
+          "next": {
+            "default": "",
+            "title": "Next",
+            "type": "string"
+          },
+          "password": {
+            "default": "",
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "title": "Body_login_login_post",
+        "type": "object"
+      },
+      "Body_logout_everywhere_dashboard_logout_everywhere_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          }
+        },
+        "title": "Body_logout_everywhere_dashboard_logout_everywhere_post",
+        "type": "object"
+      },
+      "Body_logout_logout_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          }
+        },
+        "title": "Body_logout_logout_post",
+        "type": "object"
+      },
+      "Body_notebook_remove_notebook__entry_id__remove_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          }
+        },
+        "title": "Body_notebook_remove_notebook__entry_id__remove_post",
+        "type": "object"
+      },
+      "Body_notebook_save_notebook_save_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id"
+        ],
+        "title": "Body_notebook_save_notebook_save_post",
+        "type": "object"
+      },
+      "Body_photo_upload_photo_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "exam_board": {
+            "default": "",
+            "title": "Exam Board",
+            "type": "string"
+          },
+          "photo": {
+            "contentMediaType": "application/octet-stream",
+            "title": "Photo",
+            "type": "string"
+          },
+          "subject": {
+            "default": "",
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "photo"
+        ],
+        "title": "Body_photo_upload_photo_post",
+        "type": "object"
+      },
+      "Body_practice_answer_practice__set_id__answer_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "given": {
+            "default": "",
+            "title": "Given",
+            "type": "string"
+          },
+          "item_id": {
+            "title": "Item Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "item_id"
+        ],
+        "title": "Body_practice_answer_practice__set_id__answer_post",
+        "type": "object"
+      },
+      "Body_practice_finish_practice__set_id__finish_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          }
+        },
+        "title": "Body_practice_finish_practice__set_id__finish_post",
+        "type": "object"
+      },
+      "Body_practice_start_practice_start_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "subject": {
+            "default": "Mathematics",
+            "title": "Subject",
+            "type": "string"
+          },
+          "topic": {
+            "default": "",
+            "title": "Topic",
+            "type": "string"
+          }
+        },
+        "title": "Body_practice_start_practice_start_post",
+        "type": "object"
+      },
+      "Body_promote_admin_review__feedback_id__promote_post": {
+        "properties": {
+          "answerable": {
+            "default": "yes",
+            "title": "Answerable",
+            "type": "string"
+          },
+          "corrected_answer": {
+            "default": "",
+            "title": "Corrected Answer",
+            "type": "string"
+          },
+          "expected_value": {
+            "default": "",
+            "title": "Expected Value",
+            "type": "string"
+          }
+        },
+        "title": "Body_promote_admin_review__feedback_id__promote_post",
+        "type": "object"
+      },
+      "Body_set_exam_date_dashboard_exam_date_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "exam_date": {
+            "default": "",
+            "title": "Exam Date",
+            "type": "string"
+          }
+        },
+        "title": "Body_set_exam_date_dashboard_exam_date_post",
+        "type": "object"
+      },
+      "Body_signup_signup_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "email": {
+            "default": "",
+            "title": "Email",
+            "type": "string"
+          },
+          "next": {
+            "default": "",
+            "title": "Next",
+            "type": "string"
+          },
+          "password": {
+            "default": "",
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "title": "Body_signup_signup_post",
+        "type": "object"
+      },
+      "Body_waitlist_save_waitlist_post": {
+        "properties": {
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "email": {
+            "default": "",
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "title": "Body_waitlist_save_waitlist_post",
+        "type": "object"
+      },
+      "CitationOut": {
+        "properties": {
+          "attribution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attribution"
+          },
+          "highlight": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Highlight"
+          },
+          "locator": {
+            "title": "Locator",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "locator",
+          "title",
+          "text"
+        ],
+        "title": "CitationOut",
+        "type": "object"
+      },
+      "ExamAnswerIn": {
+        "description": "One answer, with the sequence number that makes replay safe.\n\n`client_seq` is monotonic per session on the client. The server keeps the\nhighest per question and ignores anything lower, so an offline queue\nreplaying out of order cannot overwrite a newer answer with a stale one.",
+        "properties": {
+          "client_seq": {
+            "default": 0,
+            "title": "Client Seq",
+            "type": "integer"
+          },
+          "flagged": {
+            "default": false,
+            "title": "Flagged",
+            "type": "boolean"
+          },
+          "question_id": {
+            "title": "Question Id",
+            "type": "string"
+          },
+          "selected_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Label"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "question_id"
+        ],
+        "title": "ExamAnswerIn",
+        "type": "object"
+      },
+      "ExamFormatOut": {
+        "properties": {
+          "delivery": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery"
+          },
+          "exam_body": {
+            "title": "Exam Body",
+            "type": "string"
+          },
+          "exam_name": {
+            "title": "Exam Name",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "keyboard": {
+            "additionalProperties": true,
+            "title": "Keyboard",
+            "type": "object"
+          },
+          "option_labels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Option Labels",
+            "type": "array"
+          },
+          "scale_max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale Max"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/ExamSectionOut"
+            },
+            "title": "Sections",
+            "type": "array"
+          },
+          "show_attempted_count_on_submit": {
+            "default": true,
+            "title": "Show Attempted Count On Submit",
+            "type": "boolean"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          },
+          "total_duration_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Duration Minutes"
+          },
+          "verified_on": {
+            "title": "Verified On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "exam_body",
+          "exam_name",
+          "option_labels",
+          "sections",
+          "verified_on",
+          "source_url"
+        ],
+        "title": "ExamFormatOut",
+        "type": "object"
+      },
+      "ExamItemOut": {
+        "properties": {
+          "flagged": {
+            "default": false,
+            "title": "Flagged",
+            "type": "boolean"
+          },
+          "marking": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MarkingOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "question": {
+            "$ref": "#/components/schemas/QuestionOut"
+          },
+          "section_key": {
+            "title": "Section Key",
+            "type": "string"
+          },
+          "selected_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Label"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "position",
+          "section_key",
+          "question"
+        ],
+        "title": "ExamItemOut",
+        "type": "object"
+      },
+      "ExamResultOut": {
+        "properties": {
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "scale_max": {
+            "title": "Scale Max",
+            "type": "number"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "seconds_taken": {
+            "title": "Seconds Taken",
+            "type": "integer"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/ExamResultSection"
+            },
+            "title": "Sections",
+            "type": "array"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "weakest_topics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Weakest Topics",
+            "type": "array"
+          }
+        },
+        "required": [
+          "session_id",
+          "score",
+          "scale_max",
+          "correct",
+          "total",
+          "seconds_taken",
+          "sections"
+        ],
+        "title": "ExamResultOut",
+        "type": "object"
+      },
+      "ExamResultSection": {
+        "properties": {
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "correct",
+          "total",
+          "score"
+        ],
+        "title": "ExamResultSection",
+        "type": "object"
+      },
+      "ExamSectionOut": {
+        "properties": {
+          "compulsory": {
+            "default": false,
+            "title": "Compulsory",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "question_type": {
+            "title": "Question Type",
+            "type": "string"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "question_count",
+          "question_type"
+        ],
+        "title": "ExamSectionOut",
+        "type": "object"
+      },
+      "ExamSessionOut": {
+        "properties": {
+          "answered_count": {
+            "title": "Answered Count",
+            "type": "integer"
+          },
+          "format": {
+            "$ref": "#/components/schemas/ExamFormatOut"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ExamItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "scale_max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale Max"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "seconds_remaining": {
+            "title": "Seconds Remaining",
+            "type": "integer"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "active",
+              "submitted",
+              "expired"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "format",
+          "seconds_remaining",
+          "state",
+          "answered_count",
+          "total_count",
+          "started_at"
+        ],
+        "title": "ExamSessionOut",
+        "type": "object"
+      },
+      "ExamStartRequest": {
+        "properties": {
+          "format_key": {
+            "title": "Format Key",
+            "type": "string"
+          },
+          "subject_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Subject Codes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "format_key"
+        ],
+        "title": "ExamStartRequest",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "MarkingOut": {
+        "description": "Returned only once an answer is committed, and in exam mode only after\nsubmission.",
+        "properties": {
+          "correct": {
+            "title": "Correct",
+            "type": "boolean"
+          },
+          "correct_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correct Label"
+          },
+          "correct_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correct Value"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "locators": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Locators",
+            "type": "array"
+          },
+          "why_wrong": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Why Wrong"
+          }
+        },
+        "required": [
+          "correct"
+        ],
+        "title": "MarkingOut",
+        "type": "object"
+      },
+      "NotebookSaveRequest": {
+        "properties": {
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "question_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Id"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          }
+        },
+        "title": "NotebookSaveRequest",
+        "type": "object"
+      },
+      "OnboardingIn": {
+        "properties": {
+          "daily_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Minutes"
+          },
+          "exam_dates": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Exam Dates",
+            "type": "object"
+          },
+          "exams": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Exams",
+            "type": "array"
+          },
+          "school_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "School Class"
+          },
+          "subjects": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Subjects",
+            "type": "object"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          },
+          "track": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Track"
+          },
+          "weak_topics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Weak Topics",
+            "type": "array"
+          }
+        },
+        "title": "OnboardingIn",
+        "type": "object"
+      },
+      "OnboardingOut": {
+        "properties": {
+          "completed": {
+            "default": false,
+            "title": "Completed",
+            "type": "boolean"
+          },
+          "daily_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Minutes"
+          },
+          "exam_dates": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Exam Dates",
+            "type": "object"
+          },
+          "exams": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Exams",
+            "type": "array"
+          },
+          "school_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "School Class"
+          },
+          "subjects": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Subjects",
+            "type": "object"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          },
+          "track": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Track"
+          },
+          "weak_topics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Weak Topics",
+            "type": "array"
+          }
+        },
+        "title": "OnboardingOut",
+        "type": "object"
+      },
+      "OptionOut": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "text"
+        ],
+        "title": "OptionOut",
+        "type": "object"
+      },
+      "PageOut": {
+        "properties": {
+          "items": {
+            "items": {},
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "PageOut",
+        "type": "object"
+      },
+      "PracticeAnswerRequest": {
+        "properties": {
+          "question_id": {
+            "title": "Question Id",
+            "type": "string"
+          },
+          "selected_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Label"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "question_id"
+        ],
+        "title": "PracticeAnswerRequest",
+        "type": "object"
+      },
+      "PracticeItemOut": {
+        "properties": {
+          "answered": {
+            "default": false,
+            "title": "Answered",
+            "type": "boolean"
+          },
+          "given": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Given"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "marking": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MarkingOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "question": {
+            "$ref": "#/components/schemas/QuestionOut"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "question"
+        ],
+        "title": "PracticeItemOut",
+        "type": "object"
+      },
+      "PracticeSetOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "exam_body": {
+            "title": "Exam Body",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PracticeItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "subject_code": {
+            "title": "Subject Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "subject_code",
+          "exam_body",
+          "created_at",
+          "items"
+        ],
+        "title": "PracticeSetOut",
+        "type": "object"
+      },
+      "PracticeSetRequest": {
+        "properties": {
+          "count": {
+            "default": 10,
+            "maximum": 40.0,
+            "minimum": 1.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "exam_body": {
+            "default": "WAEC",
+            "title": "Exam Body",
+            "type": "string"
+          },
+          "subject_code": {
+            "title": "Subject Code",
+            "type": "string"
+          },
+          "topic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "required": [
+          "subject_code"
+        ],
+        "title": "PracticeSetRequest",
+        "type": "object"
+      },
+      "QuestionOut": {
+        "additionalProperties": false,
+        "description": "A question as a student sees it.\n\nNo answer key, no licence, no verification block. Their absence is the\nsafety property: an endpoint cannot leak a field this model does not have.",
+        "properties": {
+          "assets": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Assets",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionOut"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "passage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passage"
+          },
+          "source_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Label"
+          },
+          "stem": {
+            "title": "Stem",
+            "type": "string"
+          },
+          "topic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "stem"
+        ],
+        "title": "QuestionOut",
+        "type": "object"
+      },
+      "SubjectOut": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "track": {
+            "title": "Track",
+            "type": "string"
+          },
+          "years_available": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Years Available",
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "track",
+          "available"
+        ],
+        "title": "SubjectOut",
+        "type": "object"
+      },
+      "TutorAnswerOut": {
+        "properties": {
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/CitationOut"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "disclosure": {
+            "default": "",
+            "title": "Disclosure",
+            "type": "string"
+          },
+          "refusal_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refusal Kind"
+          },
+          "refused": {
+            "title": "Refused",
+            "type": "boolean"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "refused"
+        ],
+        "title": "TutorAnswerOut",
+        "type": "object"
+      },
+      "TutorAskRequest": {
+        "properties": {
+          "exam_body": {
+            "default": "WAEC",
+            "title": "Exam Body",
+            "type": "string"
+          },
+          "question": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          },
+          "subject_code": {
+            "title": "Subject Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "subject_code"
+        ],
+        "title": "TutorAskRequest",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "ViewerOut": {
+        "properties": {
+          "allowance": {
+            "$ref": "#/components/schemas/Allowance"
+          },
+          "authenticated": {
+            "title": "Authenticated",
+            "type": "boolean"
+          },
+          "consent_state": {
+            "default": "not_required",
+            "enum": [
+              "not_required",
+              "pending",
+              "granted"
+            ],
+            "title": "Consent State",
+            "type": "string"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "is_minor": {
+            "default": false,
+            "title": "Is Minor",
+            "type": "boolean"
+          },
+          "onboarded": {
+            "default": false,
+            "title": "Onboarded",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "authenticated",
+          "allowance"
+        ],
+        "title": "ViewerOut",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Sabi",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/auth/viewer": {
+      "get": {
+        "description": "Who is viewing, and what they may do.\n\nAlways succeeds. An anonymous viewer is a viewer: asking questions without\nan account is the product's default, not a degraded mode.",
+        "operationId": "get_viewer_api_auth_viewer_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewerOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Viewer",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/catalog/exams": {
+      "get": {
+        "description": "Every exam format, including the key bindings its simulator needs.\n\nThe keyboard map is sent rather than compiled in, so the client hard-codes\nnothing: JAMB's bindings came from JAMB's own manual and another body's\nwill differ.",
+        "operationId": "list_exams_api_catalog_exams_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExamFormatOut"
+                  },
+                  "title": "Response List Exams Api Catalog Exams Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Exams",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/catalog/subjects": {
+      "get": {
+        "description": "Subjects, with honest availability.\n\n`available` is false until a subject has enough verified content. Years\nare the years that actually hold servable questions -- never padded, so a\nstudent choosing 2019 cannot land on an empty set.",
+        "operationId": "list_subjects_api_catalog_subjects_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_unavailable",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Unavailable",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubjectOut"
+                  },
+                  "title": "Response List Subjects Api Catalog Subjects Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Subjects",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/catalog/topics/{subject_code}": {
+      "get": {
+        "description": "Topics with servable questions, and how many each has.\n\nThe count is shown because a topic with four questions is not a topic a\nstudent should be offered a set of ten from.",
+        "operationId": "list_topics_api_catalog_topics__subject_code__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subject_code",
+            "required": true,
+            "schema": {
+              "title": "Subject Code",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response List Topics Api Catalog Topics  Subject Code  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Topics",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/exam/sessions": {
+      "post": {
+        "description": "Start a timed sitting.\n\nThe whole paper is drawn and stored now, so the session survives going\noffline: a student on an intermittent connection must not lose the exam\nbecause the next question could not be fetched.",
+        "operationId": "start_session_api_exam_sessions_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExamStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamSessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Session",
+        "tags": [
+          "exam"
+        ]
+      }
+    },
+    "/api/exam/sessions/{session_id}": {
+      "get": {
+        "operationId": "get_session_api_exam_sessions__session_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamSessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Session",
+        "tags": [
+          "exam"
+        ]
+      }
+    },
+    "/api/exam/sessions/{session_id}/answers": {
+      "post": {
+        "description": "Autosave, including a queue replayed after being offline.\n\nAccepts a batch so a client that has been offline flushes in one request.\nReturns no marking: an exam is not marked before submission.",
+        "operationId": "save_answers_api_exam_sessions__session_id__answers_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/ExamAnswerIn"
+                },
+                "title": "Body",
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamSessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Answers",
+        "tags": [
+          "exam"
+        ]
+      }
+    },
+    "/api/exam/sessions/{session_id}/result": {
+      "get": {
+        "description": "Score in the exam's own scale, broken down by section and topic.",
+        "operationId": "get_result_api_exam_sessions__session_id__result_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamResultOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Result",
+        "tags": [
+          "exam"
+        ]
+      }
+    },
+    "/api/exam/sessions/{session_id}/submit": {
+      "post": {
+        "description": "Submit, and only now mark. Irreversible.",
+        "operationId": "submit_session_api_exam_sessions__session_id__submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamSessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Session",
+        "tags": [
+          "exam"
+        ]
+      }
+    },
+    "/api/notebook": {
+      "get": {
+        "description": "Kept answers, rendered from their snapshot rather than from the corpus.\n\nThe snapshot is the whole point: the corpus will have moved by the time a\nstudent revises from this, and re-rendering live would quietly change what\nthey saved. That is the failure this product exists to prevent, arriving\nby a side door.",
+        "operationId": "list_notebook_api_notebook_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "subject",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subject"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Notebook",
+        "tags": [
+          "notebook"
+        ]
+      },
+      "post": {
+        "description": "Keep an answer.\n\nRebuilt from the stored request rather than re-answered, so saving costs\nnothing and cannot produce different text from what the student read.",
+        "operationId": "save_to_notebook_api_notebook_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotebookSaveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Save To Notebook Api Notebook Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save To Notebook",
+        "tags": [
+          "notebook"
+        ]
+      }
+    },
+    "/api/notebook/{entry_id}": {
+      "delete": {
+        "operationId": "remove_from_notebook_api_notebook__entry_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove From Notebook",
+        "tags": [
+          "notebook"
+        ]
+      }
+    },
+    "/api/onboarding": {
+      "get": {
+        "operationId": "get_onboarding_api_onboarding_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Onboarding",
+        "tags": [
+          "onboarding"
+        ]
+      },
+      "put": {
+        "description": "Save the answers, enforcing each exam's combination rules.\n\nA broken rule is explained rather than silently rejected: the message says\nwhich rule and why, because a student who cannot see the rule cannot fix\ntheir choice.",
+        "operationId": "save_onboarding_api_onboarding_put",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Onboarding",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/practice/sets": {
+      "post": {
+        "description": "Draw a practice set from the bank.\n\nOnly servable questions, and `func.random()` rather than a fixed order so\ntwo sets on the same topic are not the same set.",
+        "operationId": "build_set_api_practice_sets_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PracticeSetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticeSetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Build Set",
+        "tags": [
+          "practice"
+        ]
+      }
+    },
+    "/api/practice/sets/{set_id}": {
+      "get": {
+        "operationId": "get_set_api_practice_sets__set_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "set_id",
+            "required": true,
+            "schema": {
+              "title": "Set Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticeSetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Set",
+        "tags": [
+          "practice"
+        ]
+      }
+    },
+    "/api/practice/sets/{set_id}/answer": {
+      "post": {
+        "description": "Answer one practice question, and get it marked immediately.\n\nThis is what separates practice from exam mode, and it is the only place\nthe two behave differently on purpose.",
+        "operationId": "answer_practice_api_practice_sets__set_id__answer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "set_id",
+            "required": true,
+            "schema": {
+              "title": "Set Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PracticeAnswerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Answer Practice",
+        "tags": [
+          "practice"
+        ]
+      }
+    },
+    "/api/reading/questions": {
+      "get": {
+        "description": "Past questions with their answers and explanations visible.\n\nCursor-paginated and capped at 50. There is no \"give me everything\": the\nquestion bank is the asset, and a bulk export endpoint would hand it over.",
+        "operationId": "read_questions_api_reading_questions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "subject_code",
+            "required": true,
+            "schema": {
+              "title": "Subject Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "exam_body",
+            "required": false,
+            "schema": {
+              "default": "WAEC",
+              "title": "Exam Body",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          },
+          {
+            "in": "query",
+            "name": "topic",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Topic"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Questions",
+        "tags": [
+          "reading"
+        ]
+      }
+    },
+    "/api/tutor/ask": {
+      "post": {
+        "description": "Ask the tutor, within one subject.",
+        "operationId": "ask_api_tutor_ask_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "sabi_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Id"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "sabi_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sabi Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TutorAskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TutorAnswerOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ask",
+        "tags": [
+          "tutor"
+        ]
+      }
+    }
+  }
+}

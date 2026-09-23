@@ -603,3 +603,61 @@ def _user(session):
     return session.execute(
         select(User).where(User.email_normalised.is_not(None))
     ).scalars().first()
+
+
+# ------------------------------------------------- the contract, kept honest
+
+
+def test_the_published_openapi_is_current():
+    """The generated document must match what the server actually serves.
+
+    `web/lib/api-types.ts` is generated from it, so a stale file types the
+    front end against an API that no longer exists -- and the failure surfaces
+    as a runtime 404 rather than a typecheck error, which is exactly backwards
+    from why the types exist.
+    """
+    import json
+    from pathlib import Path
+
+    from sabi.api.app import app
+
+    published = json.loads(
+        (Path(__file__).resolve().parent.parent / "contracts" / "openapi.generated.json")
+        .read_text(encoding="utf-8")
+    )
+    live = {
+        path: item
+        for path, item in app.openapi()["paths"].items()
+        if path.startswith("/api")
+    }
+    assert set(published["paths"]) == set(live), (
+        "contracts/openapi.generated.json is stale. Run "
+        "`python tools/publish_openapi.py` and regenerate web/lib/api-types.ts."
+    )
+
+
+def test_the_published_document_carries_no_html_routes():
+    """Typing an HTML route tells the front end it can fetch JSON from it."""
+    import json
+    from pathlib import Path
+
+    published = json.loads(
+        (Path(__file__).resolve().parent.parent / "contracts" / "openapi.generated.json")
+        .read_text(encoding="utf-8")
+    )
+    stray = [p for p in published["paths"] if not p.startswith("/api")]
+    assert not stray, f"non-API paths published: {stray}"
+
+
+def test_every_promised_path_is_either_served_or_named_as_pending():
+    """A path in the contract the server does not serve is a broken promise."""
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    result = subprocess.run(
+        [sys.executable, str(root / "tools" / "publish_openapi.py"), "--check"],
+        cwd=root, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
