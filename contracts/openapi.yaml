@@ -99,9 +99,21 @@ components:
 
     Viewer:
       type: object
-      required: [authenticated, is_minor, consent_state, allowance]
+      required: [authenticated, is_minor, consent_state, allowance, csrf_token]
       properties:
         authenticated: { type: boolean }
+        csrf_token:
+          type: string
+          description: |
+            The token to send back in `X-Sabi-CSRF` on every mutating request.
+
+            Safe to return in this response because there is no CORS policy on
+            `/api`: a cross-origin reader cannot see it, and the web app is
+            served from the same origin. It is tied to the session for a
+            signed-in viewer and to the signed anonymous id otherwise, so it
+            changes when the viewer does — which is why it is delivered here,
+            on the endpoint a client already calls to learn who it is, rather
+            than on a separate one that could be read at the wrong moment.
         display_name: { type: string, nullable: true }
         is_minor:
           type: boolean

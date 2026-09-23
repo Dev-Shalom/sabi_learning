@@ -1623,6 +1623,11 @@
             "title": "Consent State",
             "type": "string"
           },
+          "csrf_token": {
+            "default": "",
+            "title": "Csrf Token",
+            "type": "string"
+          },
           "display_name": {
             "anyOf": [
               {

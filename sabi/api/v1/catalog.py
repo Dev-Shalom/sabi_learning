@@ -8,11 +8,11 @@ rather than remembered eight times.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
-from sabi.api.deps import Viewer
+from sabi.api.deps import Viewer, finish
 from sabi.api.v1 import deps as api_deps
 from sabi.api.v1.schemas import (
     ExamFormatOut,
@@ -38,6 +38,7 @@ def servable(stmt: Select) -> Select:
 
 @router.get("/auth/viewer", response_model=ViewerOut, tags=["auth"])
 def get_viewer(
+    response: Response,
     s: Session = Depends(api_deps.db),
     v: Viewer = Depends(api_deps.api_viewer),
 ) -> ViewerOut:
@@ -45,7 +46,15 @@ def get_viewer(
 
     Always succeeds. An anonymous viewer is a viewer: asking questions without
     an account is the product's default, not a degraded mode.
+
+    `finish` is what makes the CSRF token in this response usable. A first-time
+    visitor has no `sabi_id`, so one is minted while answering -- and the token
+    handed out here is derived from it. Without persisting that cookie the next
+    request mints a *different* id, the secrets do not match, and every write
+    is refused as stale. That is the entire signup flow for anyone arriving
+    with a clean browser, and it is invisible until the API is actually run.
     """
+    finish(response, v)
     return api_deps.viewer_out(s, v)
 
 

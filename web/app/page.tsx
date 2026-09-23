@@ -121,6 +121,21 @@ export default async function Home() {
               {!viewer.authenticated &&
                 " You can ask without an account — signing up gives you more and keeps your notebook."}
             </p>
+            {!viewer.authenticated && (
+              /* The only route to the auth pages. They are deliberately not
+                 tabs: an account is not a section of the product, and putting
+                 it in the tab bar would push one of the five things a student
+                 actually came for off a 360px screen. */
+              <p className="mt-3 text-sm">
+                <Link href="/signup" className="font-medium text-primary-text">
+                  Create an account
+                </Link>
+                <span className="text-muted"> or </span>
+                <Link href="/login" className="font-medium text-primary-text">
+                  log in
+                </Link>
+              </p>
+            )}
           </Panel>
         </Section>
       )}

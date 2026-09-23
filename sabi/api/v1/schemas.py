@@ -54,6 +54,11 @@ class Allowance(BaseModel):
 
 class ViewerOut(BaseModel):
     authenticated: bool
+    # Sent back in X-Sabi-CSRF on every mutating request. It belongs here
+    # rather than on an endpoint of its own because it is tied to *this*
+    # viewer: it changes the moment they log in or out, and a client that
+    # cached it separately would start being refused with no idea why.
+    csrf_token: str = ""
     display_name: str | None = None
     # Under 18. Drives the consent gate; never rendered as a label on anyone.
     is_minor: bool = False

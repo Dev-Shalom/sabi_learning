@@ -151,6 +151,7 @@ def viewer_out(s: Session, v: Viewer) -> ViewerOut:
 
     return ViewerOut(
         authenticated=v.is_authenticated,
+        csrf_token=v.csrf_token,
         # Only when signed in. Belt and braces alongside rotating the
         # anonymous id on logout: a device that somehow still carried an
         # account's row must not be told that account's email address.

@@ -1181,6 +1181,11 @@ export interface components {
              * @enum {string}
              */
             consent_state: "not_required" | "pending" | "granted";
+            /**
+             * Csrf Token
+             * @default
+             */
+            csrf_token: string;
             /** Display Name */
             display_name?: string | null;
             /**

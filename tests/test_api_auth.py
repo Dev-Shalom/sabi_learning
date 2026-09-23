@@ -33,6 +33,38 @@ def headers(client) -> dict:
     return {CSRF_HEADER: csrf(client)}
 
 
+# ------------------------------------------------------------ the JSON-only path
+
+
+def test_a_client_that_has_only_ever_spoken_json_can_write(client):
+    """The path the Next app actually takes, with no Jinja page involved.
+
+    Every other test here gets its CSRF token from `csrf()`, which reads a
+    rendered Jinja page. That page sets the anonymous cookie on its way out, so
+    those tests never exercised the case where `/api/auth/viewer` is the first
+    thing a client ever calls -- which is exactly what a browser loading the
+    Next app does.
+
+    It was broken. The viewer endpoint minted an anonymous id to derive the
+    token from and then did not set the cookie, so the next request minted a
+    different one, the secrets did not match, and every write came back 403
+    "This page has gone stale." Signing up from a clean browser was impossible,
+    and no test could see it because they all went through Jinja first.
+    """
+    first = client.get("/api/auth/viewer")
+    token = first.json()["csrf_token"]
+    assert token, "the viewer endpoint must hand out a usable token"
+
+    r = client.post(
+        "/api/auth/signup",
+        json={"email": "json-only@example.test", "password": PASSWORD},
+        headers={CSRF_HEADER: token},
+    )
+    assert r.status_code == 201, (
+        f"a JSON-only client was refused: {r.status_code} {r.text}"
+    )
+
+
 # ------------------------------------------------------------------ signing up
 
 
