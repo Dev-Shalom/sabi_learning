@@ -200,6 +200,18 @@ jobs:
       # The generated API types are the seam between the two halves of this
       # repo. A backend change that breaks the frontend fails here rather than
       # in production, which is the entire reason they are generated.
+      #
+      # Typechecking alone does not prove the types still describe the API: a
+      # stale api-types.ts typechecks perfectly against the frontend that was
+      # written for it. So regenerate from the published contract and require
+      # the result to be byte-identical to what is committed. If this step
+      # fails, run `npm run types:api` and commit the result.
+      - name: API types match the contract
+        run: |
+          cp lib/api-types.ts /tmp/api-types.committed.ts
+          npm run types:api
+          diff /tmp/api-types.committed.ts lib/api-types.ts
+
       - name: Typecheck
         run: npm run typecheck
 

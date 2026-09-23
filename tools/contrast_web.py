@@ -36,7 +36,15 @@ WEB = ROOT / "web"
 # MIRRORED checks that what it says still matches the tokens, so the escape
 # hatch cannot quietly become a second palette.
 THEME_COLOURS = ROOT / "web" / "lib" / "theme-colors.ts"
-ALLOWED_FILES = {TOKENS, THEME_COLOURS}
+
+# The web app manifest is the third place a colour has to be written as a
+# literal, for the same reason as the second: the browser reads it to paint the
+# install splash screen and the standalone title bar, long before any
+# stylesheet. It was missed at first because the literal scan only looked at
+# CSS and TypeScript, so a JSON file quietly held two unchecked colours.
+MANIFEST = ROOT / "web" / "app" / "manifest.webmanifest"
+
+ALLOWED_FILES = {TOKENS, THEME_COLOURS, MANIFEST}
 
 # (exported constant, token it must equal, theme)
 MIRRORED = [
@@ -44,6 +52,11 @@ MIRRORED = [
     ("PAPER_DARK", "paper", "dark"),
 ]
 EXPORTED = re.compile(r"export const ([A-Z_][A-Z0-9_]*)\s*=\s*\"(#[0-9A-Fa-f]{6})\"")
+
+# The manifest carries no media queries, so both of its colours are the light
+# theme's. Where a browser supports the media-aware <meta name="theme-color">
+# tags in layout.tsx, those win; this is the fallback and the splash screen.
+MANIFEST_COLOURS = {"background_color": "paper", "theme_color": "paper"}
 
 # Directories that are not ours to police.
 SKIP_DIRS = {"node_modules", ".next", "out", "dist"}
@@ -138,7 +151,21 @@ def stray_literals() -> list[str]:
             continue
         if any(part in SKIP_DIRS for part in path.parts):
             continue
-        if path.suffix not in {".css", ".ts", ".tsx", ".js", ".jsx"}:
+        # .webmanifest and .json are in the list because the manifest's two
+        # colours sat unchecked for a while purely because the scan looked at
+        # CSS and TypeScript. A lockfile is skipped: it is generated, and
+        # nobody picks a colour in it.
+        if path.suffix not in {
+            ".css",
+            ".ts",
+            ".tsx",
+            ".js",
+            ".jsx",
+            ".json",
+            ".webmanifest",
+        }:
+            continue
+        if path.name in {"package-lock.json", "tsconfig.tsbuildinfo"}:
             continue
         if path.resolve() in {p.resolve() for p in ALLOWED_FILES}:
             continue
@@ -178,6 +205,40 @@ def mirrored_drift(tables: dict[str, dict[str, str]]) -> list[str]:
         f"{name} is exported but nothing checks it against a token"
         for name in unchecked
     ]
+
+    problems += manifest_drift(tables)
+    return problems
+
+
+def manifest_drift(tables: dict[str, dict[str, str]]) -> list[str]:
+    """Colours in the web app manifest that no longer match their token."""
+    if not MANIFEST.exists():
+        return [f"{MANIFEST.relative_to(ROOT)} is missing"]
+
+    import json
+
+    data = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    problems: list[str] = []
+
+    for key, token in MANIFEST_COLOURS.items():
+        want = tables["light"][token].upper()
+        got = data.get(key)
+        if got is None:
+            problems.append(f"{MANIFEST.name}: {key} is not set")
+        elif str(got).upper() != want:
+            problems.append(
+                f"{MANIFEST.name}: {key} is {got}, but --{token} is {want}"
+            )
+
+    # Any other colour in there is one nothing vouches for.
+    for key, value in data.items():
+        if key in MANIFEST_COLOURS:
+            continue
+        if isinstance(value, str) and ANY_HEX.fullmatch(value.strip()):
+            problems.append(
+                f"{MANIFEST.name}: {key} is a colour nothing checks against a token"
+            )
+
     return problems
 
 
@@ -253,7 +314,7 @@ def main() -> int:
 
     drift = mirrored_drift(tables)
     if drift:
-        print(f"\n{THEME_COLOURS.relative_to(ROOT)} has drifted from the tokens:")
+        print("\na colour written outside the token file has drifted from it:")
         for d in drift:
             print(f"  {d}")
         failures += len(drift)
