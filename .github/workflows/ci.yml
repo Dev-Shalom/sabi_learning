@@ -223,3 +223,22 @@ jobs:
       - name: Page-weight budgets
         working-directory: .
         run: python tools/web_budget.py
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+
+      # This phase's two acceptance criteria that a build cannot prove:
+      # every section reachable at 360px, and keyboard navigation that works.
+      # They run against the production build above, and against a real
+      # browser, because both failures they exist to catch are failures of
+      # rendered layout and focus rather than of code.
+      - name: Reachability and keyboard navigation
+        run: npm run e2e
+
+      - name: Upload the failure trace
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: web/playwright-report
+          if-no-files-found: ignore

@@ -15,3 +15,7 @@ var/
 #   npx -y skills add anthropics/skills --skill frontend-design --agent claude-code
 .claude/
 .agents/
+
+# Playwright output
+web/test-results/
+web/playwright-report/
