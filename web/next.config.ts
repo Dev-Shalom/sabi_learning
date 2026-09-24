@@ -16,6 +16,10 @@ const config: NextConfig = {
   // JavaScript, which is why those routes are server components with no
   // client boundary.
   reactStrictMode: true,
+  // Dev only: the owner watches the dev server remotely through a Cloudflare
+  // quick tunnel, and Next refuses dev resources (HMR, dev chunks) to an
+  // origin it does not know. Has no effect on `next build` / `next start`.
+  allowedDevOrigins: ["*.trycloudflare.com"],
 };
 
 export default config;

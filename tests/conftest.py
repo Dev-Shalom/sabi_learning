@@ -18,14 +18,21 @@ from pathlib import Path
 import psycopg
 import pytest
 
-TEST_DB = "sabi_test"
 ADMIN_URL = os.environ.get(
     "SABI_TEST_ADMIN_URL", "postgresql://sabi:sabi@localhost:5433/postgres"
 )
 TEST_URL = os.environ.get(
     "SABI_TEST_DATABASE_URL",
-    f"postgresql+psycopg://sabi:sabi@localhost:5433/{TEST_DB}",
+    "postgresql+psycopg://sabi:sabi@localhost:5433/sabi_test",
 )
+# The database to create is read from the URL, not hardcoded. It used to be the
+# literal "sabi_test" whatever the URL said, so pointing a run at its own
+# database -- which parallel work needs, because every test truncates the
+# tables it shares -- created the wrong one and then failed to connect, or
+# quietly shared "sabi_test" and wiped another run's data mid-test.
+TEST_DB = TEST_URL.rsplit("/", 1)[-1].split("?", 1)[0]
+if not re.fullmatch(r"[a-z0-9_]+", TEST_DB):
+    raise RuntimeError(f"refusing an unexpected test database name: {TEST_DB!r}")
 
 
 def _ensure_database() -> None:
