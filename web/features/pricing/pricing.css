@@ -1,0 +1,84 @@
+/* The plan cards. Tokens only. */
+
+@layer components {
+
+.plans {
+  display: grid;
+  gap: var(--s-4);
+  margin: var(--s-6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 60rem) {
+  .plans { grid-template-columns: 1fr 1.08fr 1fr; align-items: start; gap: var(--s-5); }
+}
+
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+}
+.plan-rec {
+  background: var(--indigo-8);
+  border-color: var(--indigo-5);
+  box-shadow: var(--shadow-lift);
+}
+@media (min-width: 60rem) {
+  /* The recommended plan stands a little proud of the others. */
+  .plan-rec { margin-top: calc(-1 * var(--s-4)); padding-block: var(--s-6); }
+}
+
+.plan-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
+.plan h3 { font-size: var(--step-2); font-weight: 800; letter-spacing: -0.03em; }
+.plan-badge {
+  padding: 2px var(--s-3);
+  border-radius: var(--r-pill);
+  background: var(--saffron);
+  color: var(--indigo-9);
+  font-size: var(--step--1);
+  font-weight: 700;
+}
+.plan-summary { color: var(--muted); }
+.plan-rec .plan-summary, .plan-rec .plan-yearly, .plan-rec .plan-per { color: var(--indigo-2); }
+
+.plan-price { display: flex; align-items: baseline; gap: var(--s-2); margin-top: var(--s-2); }
+.plan-amount {
+  font-family: var(--font-sans);
+  font-size: var(--step-5);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.plan-rec .plan-amount { color: var(--saffron); }
+.plan-per { color: var(--muted); }
+.plan-yearly { font-size: var(--step--1); color: var(--muted); min-height: 1.6em; }
+
+.plan-features { display: grid; gap: var(--s-2); margin: var(--s-3) 0 var(--s-4); padding: 0; list-style: none; }
+.plan-features li { display: grid; grid-template-columns: 18px 1fr; gap: var(--s-2); align-items: start; font-size: var(--step--1); line-height: 1.5; }
+.plan-tick { margin-top: 2px; color: var(--success); }
+.plan-rec .plan-tick { color: var(--saffron); }
+.plan-features .is-coming { color: var(--muted); }
+.plan-rec .plan-features .is-coming { color: var(--indigo-2); }
+.plan-features .is-coming .plan-tick { color: var(--muted); }
+.plan-rec .plan-features .is-coming .plan-tick { color: var(--indigo-2); }
+.plan-features .tag { margin-left: var(--s-2); }
+
+.plan-btn { margin-top: auto; }
+.plan-rec .plan-btn { background: var(--saffron); color: var(--indigo-9); }
+.plan-closed {
+  margin-top: auto;
+  padding: var(--s-3);
+  border: 1px dashed var(--rule);
+  border-radius: var(--r-control);
+  font-size: var(--step--1);
+  text-align: center;
+  color: var(--muted);
+}
+.plan-rec .plan-closed { border-color: var(--indigo-5); color: var(--indigo-2); }
+.plans-missing { margin-top: var(--s-5); color: var(--muted); }
+
+}

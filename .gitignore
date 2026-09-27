@@ -19,3 +19,7 @@ var/
 # Playwright output
 web/test-results/
 web/playwright-report/
+
+.venv/
+__pycache__/
+.env

@@ -1,0 +1,99 @@
+/* The public pages' masthead and footer. Tokens only. */
+
+@layer components {
+
+.site-mast {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--indigo-9);
+  border-bottom: 1px solid transparent;
+}
+/* The rule under the masthead appears once the page has scrolled under it,
+ * driven by scroll position in CSS -- no listener, no JavaScript. Browsers
+ * without scroll timelines keep the plain bar, which is fine. */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .site-mast {
+      animation: mast-settle linear both;
+      animation-timeline: scroll();
+      animation-range: 0 120px;
+    }
+  }
+}
+@keyframes mast-settle {
+  to { border-bottom-color: var(--indigo-7); }
+}
+
+.site-mast-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: 64px;
+}
+.site-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  margin-right: auto;
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--cotton);
+  text-decoration: none;
+}
+.site-mark { color: var(--saffron); transition: transform var(--t-slow) var(--ease); }
+@media (hover: hover) and (pointer: fine) {
+  .site-wordmark:hover .site-mark { transform: rotate(-35deg); }
+}
+
+.site-nav { display: none; }
+@media (min-width: 60rem) {
+  .site-nav { display: flex; gap: var(--s-1); margin-right: var(--s-4); }
+}
+.site-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--s-3);
+  border-radius: var(--r-control);
+  font-size: var(--step--1);
+  font-weight: 500;
+  color: var(--indigo-2);
+  text-decoration: none;
+}
+.site-nav-link:hover { color: var(--cotton); }
+.site-mast :focus-visible { outline-color: var(--saffron); }
+.site-cta { min-height: 44px; padding: var(--s-2) var(--s-4); font-size: var(--step--1); font-weight: 700; }
+
+/* ------------------------------------------------------------ footer */
+
+.site-footer {
+  background: var(--indigo-9);
+  color: var(--indigo-2);
+  padding-block: var(--s-8) var(--s-6);
+  font-size: var(--step--1);
+}
+.site-footer .footer-grid { display: grid; gap: var(--s-6); }
+@media (min-width: 46rem) {
+  .site-footer .footer-grid { grid-template-columns: 2fr 1fr 1fr; }
+}
+.site-footer-brand {
+  font-family: var(--font-display);
+  font-size: var(--step-4);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  color: var(--cotton);
+}
+.site-footer-line { margin-top: var(--s-2); color: var(--indigo-2); }
+.site-footer h2 { margin-bottom: var(--s-2); font-size: var(--step-0); color: var(--cotton); letter-spacing: 0; }
+.site-footer ul { list-style: none; margin: 0; padding: 0; }
+.site-footer li a { display: inline-block; min-height: 44px; line-height: 44px; color: var(--indigo-2); text-decoration: none; }
+.site-footer li a:hover { color: var(--cotton); }
+.site-footer :focus-visible { outline-color: var(--saffron); }
+.site-footer .footer-note { margin-top: var(--s-7); padding-top: var(--s-4); border-top: 1px solid var(--indigo-7); max-width: 62ch; }
+
+}

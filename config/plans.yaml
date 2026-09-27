@@ -1,0 +1,107 @@
+# What Sabi costs, and what each plan gives. The ONE place a price lives.
+#
+# The pricing page, the pricing section of the landing page and the amount a
+# checkout charges are all read from this file through `GET /api/billing/plans`
+# and `sabi/billing/plans.py`. Changing a number here changes all three with no
+# code change and no deploy: the loader re-reads the file when its mtime moves,
+# the same way config/limits.yaml works. `tests/test_plans.py` proves it.
+#
+# Prices are whole naira. Kobo only exist inside the payment code, where
+# Paystack wants them, and they are computed there, never written here.
+#
+# The owner-approved ranges (master prompt v2 §4.6) are enforced by a test, so
+# a typo that makes Plus cost ₦12,000 a month fails the build instead of a
+# parent's card:
+#   Plus  ₦1,000 – ₦1,500 a month
+#   Pro   ₦2,000 – ₦2,500 a month
+#   yearly strictly cheaper than twelve months
+#
+# The yearly saving shown on the page is computed from these two numbers by
+# the API. It is never typed, so it cannot disagree with the price.
+
+currency: NGN
+
+# Checkout has two switches and BOTH must be on before a card is ever charged:
+#   1. SABI_PAYSTACK_SECRET_KEY set in the environment (the owner's key), and
+#   2. `enabled: true` here.
+# The second exists because a key being present is not a decision to sell.
+# With either off, the pricing page says plainly that payments are not open
+# yet and that everything on Free works now. A new metered capability arrives
+# switched off (v2 §5.1).
+checkout:
+  enabled: false
+
+# Paystack's Starter Business lifetime collection cap, confirmed from
+# support.paystack.com (DECISIONS.md). The admin alert fires at 75%, not 95%,
+# because CAC registration and the compliance upgrade take weeks. At the cap
+# itself checkout stops offering itself rather than failing at Paystack.
+# Only LIVE payments count: test-mode money is not money.
+paystack:
+  starter_lifetime_cap_ngn: 8000000
+  alert_at_fraction: 0.75
+
+# Feature lines may name a limit from config/limits.yaml as {plan.field}, and
+# the API fills it in from the file the limiter actually enforces. So "25
+# tutor questions a day" cannot drift from the cap that stops the 26th.
+#
+# `ready: false` marks something the plan includes that is not built yet. The
+# page shows it as "Coming", because a parent paying for offline packs that do
+# not exist yet is being sold something false.
+#
+# `limits_plan` names the row in the `plans` table a payment moves the student
+# onto -- the row the limiter reads on every request. A paid plan whose limits
+# row does not exist cannot be bought: checkout refuses rather than taking
+# money for a plan the server would enforce as Free. The Plus and Pro rows are
+# not in config/limits.yaml yet, on purpose -- their tutor allowances are an
+# owner decision waiting on measured cost per answer (v2 §15).
+plans:
+  - key: free
+    name: Free
+    summary: Everything you need to start, for nothing.
+    monthly_ngn: 0
+    limits_plan: free_account
+    features:
+      - text: Onboarding that builds the app around your exams and subjects
+        ready: true
+      - text: "The tutor: {free.daily_question_cap} questions a day, {free_account.daily_question_cap} with a free account"
+        ready: true
+      - text: A daily allowance of practice questions
+        ready: true
+      - text: Reading mode on sample years
+        ready: true
+      # The brief says "one timed mock a week"; the limiter enforces a daily
+      # cap. The page states what is enforced, not what was planned.
+      - text: "Timed mocks: {free.daily_exam_cap} a day, {free_account.daily_exam_cap} with a free account"
+        ready: true
+
+  - key: plus
+    name: Plus
+    summary: For steady revision across the whole year.
+    monthly_ngn: 1200
+    yearly_ngn: 12000
+    limits_plan: plus
+    features:
+      - text: Unlimited practice and reading
+        ready: false
+      - text: Every year we have, for every subject you take
+        ready: false
+      - text: Unlimited timed mocks
+        ready: false
+      - text: Full progress and topic analytics
+        ready: false
+
+  - key: pro
+    name: Pro
+    summary: For the last months before the exam.
+    monthly_ngn: 2200
+    yearly_ngn: 22000
+    limits_plan: pro
+    features:
+      - text: Everything in Plus
+        ready: false
+      - text: A much larger tutor allowance
+        ready: false
+      - text: Offline question packs
+        ready: false
+      - text: Every Post-UTME simulator
+        ready: false
