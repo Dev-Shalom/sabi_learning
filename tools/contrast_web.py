@@ -80,21 +80,23 @@ REQUIREMENTS = [
     # Body copy and headings.
     ("ink", "paper", 4.5, "body text on the page", BOTH),
     ("ink", "surface", 4.5, "body text on a card", BOTH),
+    ("ink", "surface-2", 4.5, "body text on a quiet band", BOTH),
     ("muted", "paper", 4.5, "secondary text", BOTH),
     ("muted", "surface", 4.5, "secondary text on a card", BOTH),
-    # Green. Two tokens, and the split is the whole point: `primary` is a fill
-    # and fails badly as text, so only `primary-text` is checked against a
-    # light ground.
-    ("primary-text", "paper", 4.5, "a link or green text", BOTH),
-    ("primary-text", "surface", 4.5, "green text on a card", BOTH),
-    ("primary-text", "primary-tint", 4.5, "text on a selected row", BOTH),
-    # A fill keeps its own foreground, in BOTH themes. --ink on --gold is
-    # 1.52:1 in dark, so a label that followed the theme would be unreadable.
+    # Action. `primary` is a fill; its label is `on-primary`, which does not
+    # flip with the theme -- ink on a fill inverts in dark mode, and ink on
+    # the saffron measured 1.52:1 before this rule existed.
     ("on-primary", "primary", 4.5, "a label on the primary button", BOTH),
-    # Achievement.
-    ("gold-text", "paper", 4.5, "gold-meaning text", BOTH),
-    ("on-gold", "gold", 4.5, "a label on a gold fill", BOTH),
-    # Wrong, and errors.
+    ("primary-text", "paper", 4.5, "a link or emphasis", BOTH),
+    ("primary-text", "surface", 4.5, "a link on a card", BOTH),
+    ("primary-text", "primary-tint", 4.5, "text on a selected row", BOTH),
+    # Evidence and achievement.
+    ("gold-text", "paper", 4.5, "a locator or measured figure", BOTH),
+    ("gold-text", "surface", 4.5, "a locator on a card", BOTH),
+    ("on-gold", "gold", 4.5, "a label on a saffron fill", BOTH),
+    # Right and wrong, always with a word beside them.
+    ("success", "paper", 4.5, "a right answer", BOTH),
+    ("success", "surface", 4.5, "a right answer on a card", BOTH),
     ("danger", "paper", 4.5, "an error message", BOTH),
     ("danger", "surface", 4.5, "an error on a card", BOTH),
     ("danger", "danger-tint", 4.5, "text on a wrong-answer row", BOTH),
@@ -103,6 +105,22 @@ REQUIREMENTS = [
     # driven entirely from the keyboard.
     ("focus", "paper", 3.0, "the focus ring", BOTH),
     ("focus", "surface", 3.0, "the focus ring on a card", BOTH),
+    # The cloth: the hero, the dark bands and the answer cards are the same
+    # objects in both themes, so these are checked in both and must pass in
+    # both. The landing page is built almost entirely from these pairs.
+    ("cotton", "indigo-9", 4.5, "a headline on the hero", BOTH),
+    ("cotton", "indigo-8", 4.5, "text on a dark band", BOTH),
+    ("indigo-2", "indigo-9", 4.5, "a lede on the hero", BOTH),
+    ("indigo-2", "indigo-8", 4.5, "a lede on a dark band", BOTH),
+    ("saffron", "indigo-9", 4.5, "a locator or figure on the hero", BOTH),
+    ("saffron", "indigo-8", 4.5, "a locator on a dark band", BOTH),
+    ("indigo-9", "saffron", 4.5, "a label on the saffron button", BOTH),
+    ("indigo-9", "cotton", 4.5, "text on an answer card", BOTH),
+    ("indigo-9", "cotton-2", 4.5, "a card's header", BOTH),
+    ("indigo-5", "cotton-2", 4.5, "a card's status line", BOTH),
+    ("bronze", "cotton", 4.5, "a locator on an answer card", BOTH),
+    ("bronze", "cotton-2", 4.5, "the cited source on a card", BOTH),
+    ("saffron", "indigo-9", 3.0, "the focus ring on the hero", BOTH),
 ]
 
 

@@ -2,6 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  BookmarkSimple,
+  ChatCircleDots,
+  House,
+  PencilSimpleLine,
+  Timer,
+  type Icon,
+} from "@phosphor-icons/react";
 
 /* The navigation, and the bug it exists to not repeat.
  *
@@ -10,44 +18,55 @@ import { usePathname } from "next/navigation";
  * on a phone -- on a product whose entire audience is on phones. It was found
  * by looking at a screenshot at 360px, not by a test.
  *
- * So: a bottom tab bar, always present, thumb-reachable, and
- * `tests/e2e/reachability.spec.ts` asserts every section can be reached at
- * 360px from the home screen. Reachability is a test now rather than an
- * intention.
+ * So: one list of sections, always present. Below 1024px it is a bottom bar a
+ * thumb can reach; from 1024px it is a rail down the left edge. It is the same
+ * <nav> in both, so `tests/e2e/reachability.spec.ts` covers both widths.
+ *
+ * The saffron marker slides to the current section. It is one element moved
+ * by `transform` along a track of equal cells -- no layout animation library,
+ * nothing measured in JavaScript, and it composites on a cheap phone. It moves
+ * because the student asked to go somewhere: a tab changes a few times a
+ * visit, which is the frequency the design brief says motion is for.
  */
 
-const TABS = [
-  { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/practice", label: "Practice", icon: PracticeIcon },
-  { href: "/exam", label: "Mocks", icon: ExamIcon },
-  { href: "/tutor", label: "Tutor", icon: TutorIcon },
-  { href: "/notebook", label: "Saved", icon: SavedIcon },
+const TABS: { href: string; label: string; icon: Icon }[] = [
+  { href: "/dashboard", label: "Home", icon: House },
+  { href: "/practice", label: "Practice", icon: PencilSimpleLine },
+  { href: "/exam", label: "Mocks", icon: Timer },
+  { href: "/tutor", label: "Tutor", icon: ChatCircleDots },
+  { href: "/notebook", label: "Saved", icon: BookmarkSimple },
 ];
+
+/** Routes that belong to a section without being its root. Reading mode is
+ * reached from Practice, so Practice stays lit while a student reads. */
+const ALSO = { "/reading": "/practice" } as Record<string, string>;
 
 export function TabBar() {
   const pathname = usePathname();
+  const owner =
+    Object.entries(ALSO).find(([p]) => pathname.startsWith(p))?.[1] ?? pathname;
+  const current = TABS.findIndex(({ href }) => owner.startsWith(href));
 
   return (
-    <nav
-      aria-label="Sections"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-black/10 bg-surface/95 backdrop-blur dark:border-white/10"
-    >
-      <ul className="mx-auto flex max-w-3xl items-stretch justify-between px-2 pb-[env(safe-area-inset-bottom)]">
-        {TABS.map(({ href, label, icon: Icon }) => {
-          const active =
-            href === "/" ? pathname === "/" : pathname.startsWith(href);
+    <nav aria-label="Sections" className="tabbar">
+      <Link href="/dashboard" className="tabbar-mark" aria-label="Sabi, home">
+        Sabi
+      </Link>
+      <ul
+        className="tabbar-list"
+        style={{ "--tab": Math.max(current, 0), "--tabs": TABS.length } as React.CSSProperties}
+      >
+        {current >= 0 && <li className="tabbar-marker" aria-hidden="true" />}
+        {TABS.map(({ href, label, icon: Icon }, i) => {
+          const active = i === current;
           return (
-            <li key={href} className="flex-1">
+            <li key={href}>
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={[
-                  "flex min-h-[56px] flex-col items-center justify-center gap-1",
-                  "px-1 py-2 text-[0.7rem] font-medium no-underline",
-                  active ? "text-primary-text" : "text-muted",
-                ].join(" ")}
+                className="tabbar-link"
               >
-                <Icon aria-hidden />
+                <Icon aria-hidden weight={active ? "fill" : "regular"} className="tabbar-icon" />
                 {/* The label is always shown, never icon-only. An icon on its
                     own is a guess, and this audience should not have to guess
                     where the mocks are. */}
@@ -58,60 +77,5 @@ export function TabBar() {
         })}
       </ul>
     </nav>
-  );
-}
-
-/* Inline SVG rather than an icon package: five icons do not justify a
- * dependency on the route that has the tightest JS budget in the product. */
-
-const strokeProps = {
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 1.75,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-};
-
-function HomeIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" {...strokeProps}>
-      <path d="M3 10.5 12 3l9 7.5" />
-      <path d="M5.5 9.5V20h13V9.5" />
-    </svg>
-  );
-}
-
-function PracticeIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" {...strokeProps}>
-      <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H18v16H5.5A1.5 1.5 0 0 1 4 18.5Z" />
-      <path d="M8 9h6M8 13h4" />
-    </svg>
-  );
-}
-
-function ExamIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" {...strokeProps}>
-      <circle cx="12" cy="13" r="8" />
-      <path d="M12 9v4l2.5 2M9 2h6" />
-    </svg>
-  );
-}
-
-function TutorIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" {...strokeProps}>
-      <path d="M4 5h16v11H9l-5 4Z" />
-      <path d="M9 10h6" />
-    </svg>
-  );
-}
-
-function SavedIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" {...strokeProps}>
-      <path d="M6 3h12v18l-6-4.5L6 21Z" />
-    </svg>
   );
 }

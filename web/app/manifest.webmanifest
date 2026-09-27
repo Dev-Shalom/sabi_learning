@@ -4,8 +4,8 @@
   "description": "JAMB, WAEC, NECO, NABTEB and Post-UTME practice, timed mocks and a tutor that cites its sources.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F7F9FB",
-  "theme_color": "#F7F9FB",
+  "background_color": "#F4F6FB",
+  "theme_color": "#F4F6FB",
   "orientation": "portrait",
   "lang": "en-NG",
   "icons": [

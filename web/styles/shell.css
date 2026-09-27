@@ -1,0 +1,164 @@
+/* The app shell: navigation and the page transition.
+ *
+ * Owned by the design system (lead). Feature folders style their own screens
+ * in their own files and use tokens from tokens.css; they do not restyle this.
+ */
+
+@layer components {
+
+/* ============================================================ app frame */
+
+.app-frame { min-height: 100dvh; }
+.app-main {
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: var(--s-5) var(--s-4) calc(88px + env(safe-area-inset-bottom));
+}
+@media (min-width: 1024px) {
+  .app-frame { display: grid; grid-template-columns: 15rem 1fr; }
+  .app-main { padding: var(--s-7) var(--s-6) var(--s-8); max-width: 56rem; }
+}
+
+/* ============================================================ tab bar
+ * Phone: a bar pinned to the bottom, on the indigo cloth so it reads as the
+ * same object as the landing page's hero. Desktop: a rail down the left. */
+
+.tabbar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 40;
+  background: var(--indigo-9);
+  color: var(--indigo-2);
+  border-top: 1px solid var(--indigo-7);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabbar-mark { display: none; }
+
+.tabbar-list {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--tabs), 1fr);
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 6px 6px;
+  list-style: none;
+}
+
+/* The marker: one cell wide, moved by transform to the current cell. */
+.tabbar-marker {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  width: calc((100% - 12px) / var(--tabs));
+  border-radius: var(--r-panel);
+  background: var(--indigo-7);
+  box-shadow: inset 0 -2px 0 var(--saffron);
+  transform: translateX(calc(var(--tab) * 100%));
+  transition: transform var(--t-mid) var(--ease);
+  pointer-events: none;
+}
+
+.tabbar-link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 6px 2px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--indigo-2);
+  text-decoration: none;
+  border-radius: var(--r-panel);
+  -webkit-tap-highlight-color: transparent;
+}
+.tabbar-link[aria-current="page"] { color: var(--cotton); }
+.tabbar-icon { width: 24px; height: 24px; transition: transform var(--t-fast) var(--ease); }
+.tabbar-link:active .tabbar-icon { transform: scale(0.9); transition-duration: var(--t-tap); }
+.tabbar-link[aria-current="page"] .tabbar-icon { color: var(--saffron); }
+.tabbar :focus-visible { outline-color: var(--saffron); outline-offset: -2px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .tabbar-link:hover { color: var(--cotton); }
+}
+
+@media (min-width: 1024px) {
+  .tabbar {
+    position: sticky;
+    inset: auto;
+    top: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-6);
+    padding: var(--s-6) var(--s-4);
+    border-top: 0;
+    border-right: 1px solid var(--indigo-7);
+  }
+  .tabbar-mark {
+    display: block;
+    padding-inline: var(--s-3);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--step-2);
+    letter-spacing: -0.035em;
+    color: var(--cotton);
+    text-decoration: none;
+  }
+  .tabbar-list {
+    grid-template-columns: 1fr;
+    grid-auto-rows: 52px;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  .tabbar-marker {
+    top: 0;
+    bottom: auto;
+    left: 0;
+    width: 100%;
+    height: 52px;
+    box-shadow: inset 3px 0 0 var(--saffron);
+    transform: translateY(calc(var(--tab) * 100%));
+  }
+  .tabbar-link {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--s-3);
+    min-height: 52px;
+    padding: 0 var(--s-3);
+    font-size: var(--step-0);
+  }
+}
+
+/* ============================================================ page transition
+ * React's <ViewTransition> (app/(app)/layout.tsx) names the page region
+ * `page`. Leaving is quick and goes nowhere; arriving rises a few pixels and
+ * un-blurs, so two pages never read as two objects overlapping. The tab bar is
+ * outside the region and does not move -- the one fixed thing is the anchor.
+ * Browsers without the View Transitions API simply swap the page. */
+
+::view-transition-old(.page) {
+  animation: var(--t-fast) var(--ease-exit) both vt-fade-out;
+}
+::view-transition-new(.page) {
+  animation: var(--t-slow) var(--ease) both vt-rise-in;
+}
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-rise-in {
+  from { opacity: 0; transform: translateY(12px); filter: blur(3px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}
+
+}

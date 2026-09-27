@@ -1,0 +1,628 @@
+/* Adire — the shared components and the one motion layer.
+ *
+ * Ported from the v1 stylesheet (sabi/api/static/sabi.css), which the owner
+ * chose as the look for the whole product. Every rule here uses a token from
+ * tokens.css; `tools/contrast_web.py` fails the build on a colour literal.
+ *
+ * The motion rules in this file are the ONLY motion in the app. A component
+ * that wants something to move uses one of these classes (.reveal, .rise,
+ * .words, .page-in, the deck) or the duration and easing tokens — it does not
+ * invent a curve. That is what makes the landing page, the tab bar and the
+ * exam screen feel like one product.
+ *
+ * Transform and opacity only, everywhere: both are composited, so none of it
+ * touches layout and none of it can cost a frame on a cheap handset.
+ */
+
+@layer components {
+
+/* ============================================================ motion layer */
+
+/* Lets a <details> panel animate open instead of snapping. Without it
+ * `height: auto` is not animatable and the rule simply does nothing, which is
+ * the correct fallback. */
+:root { interpolate-size: allow-keywords; }
+
+a, button, summary, input, textarea, select {
+  transition:
+    color var(--t-fast) var(--ease),
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease),
+    transform var(--t-fast) var(--ease-settle),
+    opacity var(--t-fast) var(--ease);
+}
+
+/* The focus ring must never animate its position: a ring that slides in lags
+ * behind the key that summoned it. */
+:focus-visible { transition: none; }
+
+/* A page arriving. Mounted fresh on every navigation by app/template.tsx, so
+ * this runs once per page with no JavaScript of its own. */
+@media (prefers-reduced-motion: no-preference) {
+  .page-in { animation: page-in var(--t-slow) var(--ease-settle) both; }
+}
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Content settling as it scrolls into view. Deliberately small: a long
+ * travel on every block is the thing that reads as generated. Only opacity
+ * and a few pixels move, and only once. */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity var(--t-slow) var(--ease-ink),
+              transform var(--t-slow) var(--ease-settle);
+}
+.reveal.is-in { opacity: 1; transform: none; }
+/* Without JavaScript nothing adds `is-in`, so content is visible by default
+ * and the rule above only applies once the observer says it is in charge. */
+:root:not([data-reveal]) .reveal { opacity: 1; transform: none; transition: none; }
+
+/* A group that arrives in order on load: lede, then actions, then the note. */
+@media (prefers-reduced-motion: no-preference) {
+  .rise { animation: page-in var(--t-slow) var(--ease-settle) both; }
+  .rise-2 { animation-delay: 620ms; }
+  .rise-3 { animation-delay: 720ms; }
+  .rise-4 { animation-delay: 820ms; }
+}
+
+/* ============================================================ headline
+ * Each word masked by its own box and rising out of it: stamped, not faded.
+ * Written out word by word in the markup rather than split by script, so it
+ * works with JavaScript off and never flashes unstyled. */
+.words { display: block; }
+.words .word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  /* Room for descenders, or the mask clips the tail of a 'g'. */
+  padding-bottom: 0.14em;
+}
+.words .word > b { display: inline-block; font-weight: inherit; }
+@media (prefers-reduced-motion: no-preference) {
+  .words .word > b {
+    transform: translateY(115%);
+    animation: word-rise 900ms var(--ease-settle) forwards;
+  }
+  .words .word:nth-child(1) > b { animation-delay: 180ms; }
+  .words .word:nth-child(2) > b { animation-delay: 270ms; }
+  .words .word:nth-child(3) > b { animation-delay: 360ms; }
+  .words .word:nth-child(4) > b { animation-delay: 450ms; }
+}
+@keyframes word-rise { to { transform: none; } }
+
+/* ============================================================ layout */
+
+.wrap {
+  width: 100%;
+  max-width: var(--wide);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+@media (min-width: 46rem) { .wrap { padding-inline: 1.5rem; } }
+
+.lede {
+  font-size: var(--step-1);
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: var(--measure);
+}
+
+/* A band is a full-bleed change of ground. Structure comes from the cloth
+ * changing colour, not from a grid of cards. */
+.band {
+  position: relative;
+  isolation: isolate;
+  padding-block: var(--s-8);
+}
+.band-quiet { background: var(--surface-2); }
+.band-dark { background: var(--indigo-8); }
+.band-deep { background: var(--indigo-9); }
+
+/* Everything on a dark ground in one place, so the next component added to a
+ * dark band does not have to rediscover it. The cloth is the same in both
+ * themes, so these use raw palette tokens, not the semantic ones. */
+.on-cloth { color: var(--cotton); }
+.on-cloth :is(h1, h2, h3, h4) { color: var(--cotton); }
+.on-cloth .lede, .on-cloth .muted-on-cloth { color: var(--indigo-2); }
+.on-cloth a { text-decoration-color: var(--saffron); }
+.on-cloth :focus-visible { outline-color: var(--saffron); }
+
+/* An editorial split: what the section is stays on the left, the section
+ * itself runs down the right. One column below the breakpoint, in the same
+ * reading order, so no markup changes between the two. */
+.band-split > * + * { margin-top: var(--s-6); }
+.band-intro h2 { margin-bottom: var(--s-4); }
+.band-intro .lede { font-size: var(--step-0); }
+@media (min-width: 60rem) {
+  .band-split {
+    display: grid;
+    grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr);
+    gap: var(--s-6) var(--s-8);
+    align-items: start;
+  }
+  .band-split > * + * { margin-top: 0; }
+  /* The intro stays put while its section scrolls past, which is what makes
+   * the two columns read as one thing. */
+  .band-intro { position: sticky; top: calc(var(--s-6) + 64px); }
+  .band-intro .lede { max-width: none; }
+}
+
+/* The adire ground: bundled lines, concentric rings, a dotted grid and small
+ * crosses, tiled behind a dark band. Always behind a solid content surface,
+ * never under body text. */
+.adire {
+  position: absolute;
+  inset: 0;
+  /* An <svg> with no size attribute lays out at 300x150 whatever its box, so
+   * the pattern covers one corner. Only visible by looking at a screenshot. */
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  color: var(--indigo-3);
+  opacity: 0.14;
+}
+/* On a wide screen the copy sits left, so the ground is masked away from
+ * under it and shows along the right edge. */
+@media (min-width: 46rem) {
+  .adire {
+    opacity: 0.3;
+    -webkit-mask-image: linear-gradient(95deg, transparent 0 34%, black 78%);
+    mask-image: linear-gradient(95deg, transparent 0 34%, black 78%);
+  }
+}
+
+/* The resist-dye boundary. Filled with the colour of the band ABOVE, so that
+ * ground reads as having run down into this one. */
+.dye-edge {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 100%;
+  height: 2.25rem;
+  z-index: -1;
+  pointer-events: none;
+}
+@media (min-width: 46rem) { .dye-edge { height: 3.5rem; } }
+.dye-from-deep { color: var(--indigo-9); }
+.dye-from-dark { color: var(--indigo-8); }
+.dye-from-paper { color: var(--paper); }
+.dye-from-quiet { color: var(--surface-2); }
+
+/* ============================================================ controls */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 48px;
+  padding: var(--s-3) var(--s-5);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 0 0 0 transparent;
+}
+/* A filled button lifts a little on hover, so it reads as a physical control
+ * rather than a coloured rectangle — and gives on press, tracking the finger.
+ * The lift is for a mouse only: on a touch screen hover fires on tap and
+ * sticks, so a phone would show a button stuck in mid-air. */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-press); }
+}
+.btn:active { transform: scale(0.97); transition-duration: var(--t-tap); }
+.btn:disabled { opacity: 0.7; transform: none; box-shadow: none; cursor: default; }
+
+.btn-saffron { background: var(--saffron); color: var(--indigo-9); }
+.btn-quiet { background: transparent; color: var(--ink); border-color: var(--rule); }
+.on-cloth .btn-quiet { color: var(--cotton); border-color: var(--indigo-5); }
+.btn-block { width: 100%; }
+
+/* ============================================================ masthead */
+
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--indigo-9) 92%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid color-mix(in srgb, var(--indigo-5) 55%, transparent);
+}
+.masthead-inner { display: flex; align-items: center; gap: var(--s-2); min-height: 64px; }
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-right: auto;
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--cotton);
+  text-decoration: none;
+}
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--s-3);
+  border-radius: var(--r-control);
+  font-size: var(--step--1);
+  color: var(--cotton);
+  text-decoration: none;
+}
+.nav-link:hover { background: var(--indigo-7); }
+.nav-link[aria-current="page"] { color: var(--saffron); }
+/* Below 46rem only the two account actions stay; the section links live in
+ * the footer rather than behind a hamburger nobody opens. */
+.nav-wide { display: none; }
+@media (min-width: 46rem) { .nav-wide { display: inline-flex; } }
+.masthead .btn { min-height: 44px; padding: var(--s-2) var(--s-4); font-size: var(--step--1); }
+
+/* ============================================================ hero */
+
+.hero { position: relative; isolation: isolate; overflow: hidden; background: var(--indigo-9); padding-block: var(--s-7) var(--s-8); }
+.hero-grid { display: grid; gap: var(--s-6); align-items: center; }
+@media (min-width: 60rem) {
+  .hero-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--s-8); }
+}
+.hero h1 {
+  max-width: 14ch;
+  font-size: var(--step-6);
+  font-weight: 700;
+  /* Tight, leaving room for the descender padding each masked word carries. */
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+}
+.hero .lede { margin-top: var(--s-5); }
+.hero-actions { display: flex; flex-direction: column; align-items: stretch; gap: var(--s-3); margin-top: var(--s-6); }
+/* Stacked buttons at different widths read as untidy, so below the
+ * breakpoint they share one width. */
+@media (min-width: 30rem) { .hero-actions { flex-direction: row; flex-wrap: wrap; align-items: center; } }
+.hero-note { margin-top: var(--s-4); font-size: var(--step--1); color: var(--indigo-2); }
+.hero-figures {
+  margin-top: var(--s-6);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--indigo-7);
+  max-width: var(--measure);
+  font-size: var(--step--1);
+  line-height: 1.7;
+  color: var(--indigo-2);
+}
+/* The figures are measurements, so they are in the evidence colour. */
+.figure {
+  font-family: var(--font-display);
+  font-size: 1.35em;
+  font-weight: 700;
+  color: var(--saffron);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================ artifact
+ * A real answer with its source open: the one genuinely raised object on the
+ * page, because it is the only thing that came off a different surface. */
+.artifact {
+  position: relative;
+  background: var(--cotton);
+  color: var(--indigo-9);
+  border-radius: var(--r-panel);
+  box-shadow: var(--shadow-lift);
+}
+/* Two sheets underneath, fanned very slightly: a worked solution is never the
+ * only page on the desk. */
+.artifact::before, .artifact::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--r-panel);
+  background: var(--cotton-2);
+  box-shadow: var(--shadow-lift);
+}
+.artifact::before { transform: rotate(-1.4deg) translate(-6px, 5px); }
+.artifact::after { transform: rotate(0.9deg) translate(5px, 8px); opacity: 0.7; }
+.artifact-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--cotton-3);
+  background: var(--cotton-2);
+  border-radius: var(--r-panel) var(--r-panel) 0 0;
+  font-size: var(--step--1);
+}
+.artifact-subject { font-weight: 700; color: var(--indigo-9); }
+.artifact-state { color: var(--indigo-5); white-space: nowrap; }
+/* The card that is genuinely sourced says so in the evidence colour. */
+.artifact-state.is-ready { color: var(--bronze); font-weight: 500; }
+.artifact-body { padding: var(--s-4); font-size: var(--step-0); }
+.artifact-body ol { margin: var(--s-2) 0; padding-left: 1.3em; list-style: decimal; }
+.artifact-body li + li { margin-top: var(--s-2); }
+.artifact-source {
+  margin-top: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  background: var(--cotton-2);
+  border-left: 3px solid var(--saffron);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+}
+.artifact-source .loc { display: block; margin-bottom: var(--s-2); font-family: var(--font-mono); font-size: var(--step--1); color: var(--bronze); }
+.artifact-source p { font-size: var(--step--1); line-height: 1.55; }
+.artifact-source u { text-decoration-color: var(--bronze); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.cite {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--bronze);
+  text-decoration: underline;
+  text-decoration-color: var(--bronze);
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.on-cloth .cite { color: var(--saffron); text-decoration-color: var(--saffron); }
+
+/* ============================================================ deck
+ * Four sheets on a desk, one face up, dealing. EVERY card sits in the same
+ * grid cell, including the ones nobody can see: the window is sized by the
+ * tallest card, so dealing can never change the height of the page. v1 hid
+ * the others with `hidden`, which dropped them out of the grid and made the
+ * whole page jump on every deal. */
+.deck { position: relative; }
+.deck-window { display: grid; perspective: 1400px; perspective-origin: 50% 30%; }
+.deck-card { grid-area: 1 / 1; transform-style: preserve-3d; }
+/* Before hydration there is nothing to deal with, so only the first card is
+ * shown — four stacked with no way to change them would be worse than one. */
+.deck:not([data-live]) .deck-card:not(.is-current) { display: none; }
+.deck[data-live] .deck-card {
+  visibility: hidden;
+  opacity: 0;
+  transform: translate3d(0, 30px, -170px) rotateX(7deg) scale(0.97);
+  transition:
+    opacity var(--t-mid) var(--ease-ink),
+    transform var(--t-deal) var(--ease-settle),
+    visibility 0s linear var(--t-mid);
+}
+.deck[data-live] .deck-card.is-current {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  z-index: 2;
+  transition:
+    opacity var(--t-mid) var(--ease-ink),
+    transform var(--t-deal) var(--ease-settle),
+    visibility 0s;
+}
+/* The card being replaced goes up and back rather than down, so the two
+ * movements read as one hand lifting a sheet off and laying another on. */
+.deck[data-live] .deck-card.is-leaving {
+  visibility: visible;
+  opacity: 0;
+  transform: translate3d(0, -26px, -90px) rotateX(-5deg) scale(0.985);
+  z-index: 1;
+}
+.deck-controls { display: flex; justify-content: center; gap: var(--s-1); margin-top: var(--s-5); }
+/* The dot is small; the button around it is a 44px target. */
+.deck-dot { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: none; cursor: pointer; }
+.deck-dot::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background: var(--indigo-5);
+  transition: background-color var(--t-mid) var(--ease), transform var(--t-mid) var(--ease-settle);
+}
+.deck-dot:hover::after { background: var(--indigo-3); }
+.deck-dot[aria-current="true"]::after { background: var(--saffron); transform: scale(1.7); }
+.deck-note { max-width: 44ch; margin: var(--s-3) auto 0; text-align: center; font-size: var(--step--1); color: var(--indigo-2); }
+
+/* ============================================================ ticker
+ * Real syllabus locators drifting past. The most honest ornament the page
+ * could carry: the locators ARE the product. Generated from the corpus and
+ * checked against it by a test, because v1's hand-typed list had drifted. */
+.ticker {
+  overflow: hidden;
+  padding-block: var(--s-3);
+  background: var(--indigo-8);
+  border-block: 1px solid var(--indigo-7);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+.ticker-track { display: flex; align-items: center; gap: var(--s-6); width: max-content; }
+@media (prefers-reduced-motion: no-preference) {
+  .ticker-track { animation: drift 80s linear infinite; }
+  /* Stops for anyone trying to actually read one. */
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+}
+@keyframes drift { to { transform: translateX(-50%); } }
+.ticker-item { display: flex; align-items: baseline; gap: var(--s-2); white-space: nowrap; font-size: var(--step--1); color: var(--indigo-2); }
+.ticker-item b { font-family: var(--font-mono); font-weight: 500; color: var(--saffron); }
+
+/* ============================================================ sequence
+ * Numbered because it genuinely is one: a question passes through these steps
+ * in this order. */
+.sequence { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.sequence > li { counter-increment: step; display: grid; grid-template-columns: 2.25rem 1fr; gap: var(--s-4); padding-block: var(--s-5); }
+.sequence > li + li { border-top: 1px solid var(--rule); }
+.sequence > li::before { content: counter(step, decimal-leading-zero); padding-top: 0.35em; font-family: var(--font-mono); font-size: var(--step--1); color: var(--gold-text); }
+.sequence h3 { margin-bottom: var(--s-2); }
+.sequence p { color: var(--muted); }
+.on-cloth .sequence > li + li { border-top-color: var(--indigo-5); }
+.on-cloth .sequence > li::before { color: var(--saffron); }
+.on-cloth .sequence p { color: var(--indigo-2); }
+
+/* ============================================================ feature rows */
+.features { display: grid; gap: var(--s-5); list-style: none; margin: 0; padding: 0; }
+@media (min-width: 46rem) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.feature {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s-2) var(--s-4);
+  padding: var(--s-5);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+}
+.feature .glyph { grid-row: 1 / 4; width: 2.75rem; height: 2.75rem; color: var(--gold-text); }
+.feature h3 { font-size: var(--step-1); }
+.feature p { color: var(--muted); }
+.tag {
+  justify-self: start;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+.tag-live { border-color: var(--gold-text); color: var(--gold-text); }
+
+/* ============================================================ exams */
+.exams { display: grid; gap: var(--s-3); list-style: none; margin: 0; padding: 0; }
+.exam {
+  display: grid;
+  gap: var(--s-1) var(--s-4);
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--indigo-5);
+}
+.exam:last-child { border-bottom: 1px solid var(--indigo-5); }
+.exam-name { font-family: var(--font-display); font-size: var(--step-2); font-weight: 700; color: var(--cotton); }
+.exam-shape { grid-column: 1 / -1; font-size: var(--step--1); color: var(--indigo-2); font-variant-numeric: tabular-nums; }
+.exam-state { font-size: var(--step--1); color: var(--indigo-2); white-space: nowrap; }
+.exam-state.is-ready { color: var(--saffron); font-weight: 500; }
+
+/* ============================================================ keycaps
+ * JAMB's own CBT keys, drawn as keys. The mock is driven by exactly these, so
+ * a student who practises on Sabi has the hall's keyboard in their hands. */
+.keys { display: grid; gap: var(--s-3); list-style: none; margin: 0; padding: 0; }
+.keys li { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; color: var(--indigo-2); font-size: var(--step--1); }
+.keys li > span:last-child { color: var(--cotton); font-size: var(--step-0); }
+kbd, .kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.4rem;
+  height: 2.4rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--indigo-5);
+  border-bottom-width: 3px;
+  border-radius: var(--r-control);
+  background: var(--indigo-7);
+  color: var(--cotton);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 700;
+}
+.keys .or { color: var(--indigo-2); }
+
+/* ============================================================ subjects */
+.subjects { display: grid; list-style: none; margin: 0; padding: 0; }
+.subject {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--s-4);
+  row-gap: var(--s-1);
+  align-items: center;
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--rule);
+}
+.subject:last-child { border-bottom: 1px solid var(--rule); }
+.subject .glyph { grid-row: 1 / 3; width: 2.75rem; height: 2.75rem; color: var(--muted); }
+.subject-name { align-self: end; font-family: var(--font-display); font-size: var(--step-1); font-weight: 700; }
+.subject-state { align-self: start; font-size: var(--step--1); color: var(--muted); }
+.subject-live .glyph, .subject-live .subject-state { color: var(--gold-text); }
+.subject-live .subject-state { font-weight: 500; }
+
+/* ============================================================ limits */
+.limits { width: 100%; border-collapse: collapse; font-size: var(--step--1); }
+.limits th, .limits td { padding: var(--s-3) var(--s-3) var(--s-3) 0; border-bottom: 1px solid var(--indigo-5); text-align: left; vertical-align: top; }
+.limits th { width: 42%; font-weight: 500; color: var(--cotton); }
+.limits td { color: var(--indigo-2); }
+
+/* ============================================================ faq */
+.faq { max-width: 46rem; }
+.faq details { border-bottom: 1px solid var(--rule); }
+.faq details:first-child { border-top: 1px solid var(--rule); }
+.faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 56px;
+  padding-block: var(--s-3);
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary:hover { color: var(--gold-text); }
+.faq summary::after {
+  content: "";
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--gold-text);
+  border-bottom: 2px solid var(--gold-text);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform var(--t-mid) var(--ease);
+}
+.faq details[open] summary::after { transform: rotate(-135deg) translateY(-2px); }
+/* Opening animates the height where the browser supports it, and snaps
+ * where it does not — both correct. */
+.faq details::details-content { block-size: 0; overflow: clip; transition: block-size var(--t-mid) var(--ease), content-visibility var(--t-mid) allow-discrete; }
+.faq details[open]::details-content { block-size: auto; }
+.faq details p { padding-bottom: var(--s-4); max-width: 62ch; color: var(--muted); }
+.faq details p + p { margin-top: calc(-1 * var(--s-2)); }
+
+/* ============================================================ glyphs
+ * One drawn hand for every icon in the product: the open stroke of the resist
+ * motifs. `vector-effect: non-scaling-stroke` keeps the line the same weight
+ * at 22px in the tab bar and at 44px on the landing page, which is what makes
+ * them read as one set rather than two icon packs. */
+.glyph { flex: none; }
+.glyph * { vector-effect: non-scaling-stroke; }
+
+/* ============================================================ footer */
+.site-footer { background: var(--indigo-9); color: var(--indigo-2); padding-block: var(--s-7) var(--s-6); font-size: var(--step--1); }
+.footer-grid { display: grid; gap: var(--s-6); }
+@media (min-width: 46rem) { .footer-grid { grid-template-columns: 1.4fr repeat(3, 1fr); } }
+.site-footer h2 { margin-bottom: var(--s-2); font-size: var(--step-0); color: var(--cotton); }
+.site-footer ul { list-style: none; margin: 0; padding: 0; }
+/* Footer links are navigation, not prose, so they get a real 44px target. */
+.site-footer li a { display: inline-block; min-height: 44px; line-height: 44px; color: var(--indigo-2); text-decoration: none; }
+.site-footer li a:hover { color: var(--cotton); }
+.footer-note { margin-top: var(--s-6); padding-top: var(--s-4); border-top: 1px solid var(--indigo-7); max-width: 62ch; }
+.footer-note p + p { margin-top: var(--s-2); }
+
+/* ============================================================ skip link
+ * Visible when focused. It used to be permanently visually-hidden, so the
+ * first Tab on every page landed on something no sighted keyboard user could
+ * see. */
+.skip-link {
+  position: fixed;
+  left: var(--s-4);
+  top: -4rem;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-control);
+  background: var(--saffron);
+  color: var(--indigo-9);
+  font-weight: 500;
+  transition: top var(--t-fast) var(--ease);
+}
+.skip-link:focus { top: var(--s-3); }
+
+}

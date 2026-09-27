@@ -67,12 +67,15 @@ ROUTE_BUDGETS = {
     # and the stack is written up in docs/OPEN_ITEMS.md, because the only way
     # to close it is a decision about the stack (a preact-compat alias, or an
     # exam route served outside the App Router), not an optimisation.
-    "/exam": 155 * KB,
+    #
+    # It applies to the running exam (/exam/[sessionId], full-screen, no tab
+    # bar), not to /exam, which is the Mocks hub a student browses from.
+    "/exam/[sessionId]": 155 * KB,
 }
 
 # The exam screen is the one a student sits in front of for two hours, so its
 # own code is held tighter than anywhere else even though its total cannot be.
-OWN_BUDGETS = {"/exam": 18 * KB}
+OWN_BUDGETS = {"/exam/[sessionId]": 18 * KB}
 FONT_BUDGET = 120 * KB
 
 # Next's own pages, not ours. They are built whether we write them or not.
@@ -156,8 +159,13 @@ def main() -> int:
 
     # Routes the app declares, so a route that is not prerendered still gets
     # measured rather than vanishing from the report.
+    # Route groups -- `(app)`, `(site)` -- organise files and never appear in
+    # a URL, so they are dropped here or every route is reported twice.
     declared = {
-        "/" + p.relative_to(WEB / "app").parent.as_posix().replace(".", "")
+        "/" + "/".join(
+            seg for seg in p.relative_to(WEB / "app").parent.parts
+            if not (seg.startswith("(") and seg.endswith(")"))
+        )
         for p in (WEB / "app").rglob("page.tsx")
     }
     declared = {r.rstrip("/") or "/" for r in declared}

@@ -102,7 +102,7 @@ the caveats I am adding as lead.
 | No JS framework; works with JS off | Next.js + React | Accepted. Exam mode with keyboard control, autosave, offline and a server-authoritative timer is a real application, not a document. **Caveat kept in spirit:** landing, pricing and reading must render and be readable without JS — that is a test, not an intention. |
 | Jinja is the UI | FastAPI becomes a JSON API | Accepted, no reservations. Two UIs would rot. |
 | Byte-exact HTML assertions | Playwright | Accepted, with the one-commit rule above. |
-| Adire indigo, Fraunces + Outfit | Verdant Ink, Sora + DM Sans | Owner's call. §7's contrast figures need re-measuring from the real token file by `tools/contrast_check.py` before Phase 2 ships — the brief's numbers are stated, not yet verified by our own tool. |
+| Adire indigo, Fraunces + Outfit | Adire indigo kept; Cabinet Grotesk + Satoshi on a cool page (2026-09-27, see DECISIONS.md) | Owner's call. §7's contrast figures need re-measuring from the real token file by `tools/contrast_check.py` before Phase 2 ships — the brief's numbers are stated, not yet verified by our own tool. |
 | No Alembic | Alembic in Phase 1 | Accepted and overdue. 19 tables becoming a full catalog. **Keep `tools/schema_drift.py` anyway** — it catches a different failure (ORM/DB divergence) than migrations do. |
 | No password-reset email | Email + SMS arrive | Accepted; the original reason ("no transport exists") genuinely no longer holds. Ships switched off until tested end to end. Recovery codes stay as the offline path. |
 | No client-side image downscaling | Downscale before upload | Accepted. Saves a student real money on metered data. |

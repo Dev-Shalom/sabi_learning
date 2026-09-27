@@ -1,24 +1,36 @@
 import type { Metadata, Viewport } from "next";
-import { Sora, DM_Sans } from "next/font/google";
-import { TabBar } from "@/components/tab-bar";
+import localFont from "next/font/local";
+import { AdireDefs } from "@/components/cloth";
 import { PAPER_DARK, PAPER_LIGHT } from "@/lib/theme-colors";
 import "./globals.css";
 
-/* Self-hosted at build time by next/font: the files are served from this
- * origin, so there is no extra DNS and TLS handshake to Google on a 3G
- * connection, and no third party on a page aimed at minors. Latin subset only,
- * and the two weights actually used -- the budget is 120 KB for everything. */
-const sora = Sora({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  variable: "--font-sora",
+/* Cabinet Grotesk for the voice, Satoshi for everything read and operated.
+ * Both from the Indian Type Foundry via Fontshare, under the ITF Free Font
+ * Licence (commercial use allowed; recorded in web/ASSETS.md).
+ *
+ * Self-hosted and subset to Latin plus the maths symbols a question uses
+ * (× ÷ − ± √ ≤ ≥ ≠ ° and super/subscripts): 71 KB for all five files against
+ * a 120 KB budget. Neither face draws ₦, so prices fall back to the system
+ * font for that one glyph -- measured, and cheaper than a third font.
+ *
+ * Satoshi has tabular figures and Cabinet Grotesk does not, so timers and
+ * scores are set in Satoshi with `.tabular`, never in the display face. */
+const cabinet = localFont({
+  src: [
+    { path: "./fonts/cabinet-grotesk-700.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/cabinet-grotesk-800.woff2", weight: "800", style: "normal" },
+  ],
+  variable: "--font-cabinet",
   display: "swap",
 });
 
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-dm-sans",
+const satoshi = localFont({
+  src: [
+    { path: "./fonts/satoshi-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/satoshi-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/satoshi-700.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-satoshi",
   display: "swap",
 });
 
@@ -39,6 +51,7 @@ export const viewport: Viewport = {
   // for two hours needs it, and locking it is a WCAG failure for the sake of
   // an app-like feel nobody asked for.
   maximumScale: 5,
+  viewportFit: "cover",
   // A meta tag is read before the stylesheet exists, so these cannot be
   // var(--paper). They come from the one module allowed to name a colour, and
   // the contrast checker fails if they drift from the tokens.
@@ -54,17 +67,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en-NG" className={`${sora.variable} ${dmSans.variable}`}>
+    <html lang="en-NG" className={`${cabinet.variable} ${satoshi.variable}`}>
       <body>
-        <a href="#main" className="visually-hidden">
+        <a href="#main" className="skip-link">
           Skip to content
         </a>
-        {/* pb-24 leaves room for the tab bar, which is fixed so a student can
-            move between sections without scrolling back to a header. */}
-        <main id="main" className="mx-auto w-full max-w-3xl px-4 pb-28 pt-6">
-          {children}
-        </main>
-        <TabBar />
+        <AdireDefs />
+        {children}
       </body>
     </html>
   );

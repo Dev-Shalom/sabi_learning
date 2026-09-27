@@ -10,7 +10,7 @@ import { test, expect } from "@playwright/test";
  */
 
 test("the skip link is the first thing a keyboard reaches", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/dashboard");
   await page.keyboard.press("Tab");
 
   const focused = page.locator(":focus");
@@ -24,7 +24,7 @@ test("the skip link is the first thing a keyboard reaches", async ({ page }) => 
 test("every section can be reached and opened without a mouse", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/dashboard");
 
   // Walk forward with Tab until the Practice tab has focus, then open it with
   // Enter. A bounded walk rather than a fixed count, because the number of
@@ -43,7 +43,7 @@ test("every section can be reached and opened without a mouse", async ({
 });
 
 test("focus is always visible", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/dashboard");
 
   const nav = page.getByRole("navigation", { name: "Sections" });
   const link = nav.getByRole("link", { name: "Tutor", exact: true });
@@ -66,7 +66,7 @@ test("focus is always visible", async ({ page }) => {
 });
 
 test("a keyboard user is never trapped", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/dashboard");
 
   // Tab all the way round. If focus never returns to the document body or the
   // first element, something is holding it -- which on an exam screen would

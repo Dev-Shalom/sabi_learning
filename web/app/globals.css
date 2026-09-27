@@ -2,66 +2,101 @@
 
 /* The design tokens are the frozen contract (contracts §10.2). They live in
  * ../styles/tokens.css and are imported rather than restated, so
- * tools/contrast_check.py has one file to measure and there is no second copy
- * to drift. */
+ * tools/contrast_web.py has one file to measure and there is no second copy
+ * to drift. The shared components and the one motion layer are adire.css. */
 @import "../styles/tokens.css";
+@import "../styles/adire.css";
+@import "../styles/shell.css";
 
-/* Map the tokens into Tailwind's theme so `bg-paper` and `text-ink` resolve to
- * them. A colour used anywhere in this app is one of these names; the contrast
- * checker fails on any hex literal outside the token file, which is what keeps
- * a design system a system. */
+/* Map the semantic tokens into Tailwind's theme so `bg-paper` and `text-ink`
+ * resolve to them. A colour used anywhere in this app is one of these names;
+ * the contrast checker fails on any hex literal outside the token file. */
 @theme inline {
   --color-paper: var(--paper);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-rule: var(--rule);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-primary: var(--primary);
   --color-primary-text: var(--primary-text);
   --color-primary-tint: var(--primary-tint);
+  /* A label sitting ON a fill. `bg-primary text-on-primary`, never
+   * `bg-primary text-ink` -- ink flips with the theme and the fills do not. */
+  --color-on-primary: var(--on-primary);
   --color-gold: var(--gold);
   --color-gold-text: var(--gold-text);
-  /* A label sitting ON a fill. `bg-primary text-on-primary`, never
-   * `bg-primary text-ink` -- ink flips with the theme and the fills do not,
-   * so ink on gold measures 1.52:1 in dark mode. */
-  --color-on-primary: var(--on-primary);
   --color-on-gold: var(--on-gold);
+  --color-success: var(--success);
   --color-danger: var(--danger);
   --color-danger-tint: var(--danger-tint);
   --color-focus: var(--focus);
 
-  --font-display: var(--font-sora), Georgia, serif;
-  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  /* The cloth, for components that sit on the hero or a dark band. */
+  --color-indigo-9: var(--indigo-9);
+  --color-indigo-8: var(--indigo-8);
+  --color-indigo-7: var(--indigo-7);
+  --color-indigo-5: var(--indigo-5);
+  --color-indigo-2: var(--indigo-2);
+  --color-cotton: var(--cotton);
+  --color-saffron: var(--saffron);
+  --color-bronze: var(--bronze);
+
+  --font-display: var(--font-cabinet), var(--font-satoshi), -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-sans: var(--font-satoshi), -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  /* Locators only. A syllabus code is a fixed-width reference, like an ISBN. */
+  --font-mono: ui-monospace, "Roboto Mono", "DejaVu Sans Mono", Consolas, monospace;
 }
 
 html {
   background: var(--paper);
   color: var(--ink);
   -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* In-page anchors land below the sticky masthead, not under it. */
+  scroll-padding-top: 80px;
 }
 
 body {
+  margin: 0;
+  min-height: 100dvh;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans);
-  /* 16px minimum on mobile. Question text goes larger still -- students read
+  /* 17px floor on a phone. Question text goes larger still -- students read
    * these for two hours. */
-  font-size: 1rem;
-  line-height: 1.55;
-  margin: 0;
-  min-height: 100dvh;
+  font-size: var(--step-0);
+  line-height: 1.6;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4 {
+  margin: 0;
   font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.2;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
+/* Cabinet Grotesk at 800 is the voice of the product: set tight and large it
+ * reads as a stamp, the way an exam paper's heading does. Smaller headings
+ * step down to 700 so a card title does not shout. */
+h1 { font-size: var(--step-5); font-weight: 800; line-height: 0.98; letter-spacing: -0.035em; }
+h2 { font-size: var(--step-3); font-weight: 800; letter-spacing: -0.03em; }
+h3 { font-size: var(--step-1); letter-spacing: -0.015em; }
+
+a {
+  color: inherit;
+  text-decoration-color: var(--gold-text);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+a:hover { text-decoration-thickness: 2px; }
 
 /* Timers, scores and anything numeric line up rather than jittering as the
  * digits change. */
-.tabular {
-  font-variant-numeric: tabular-nums;
-}
+.tabular { font-variant-numeric: tabular-nums; }
 
 /* Keyboard use is not optional here: the JAMB simulator is driven entirely
  * from the keyboard, so the focus ring is never removed. */
@@ -71,15 +106,10 @@ h1, h2, h3 {
   border-radius: 4px;
 }
 
-/* Every interactive target is at least 44px. A student tapping an option with
- * a thumb on a bus is the design case. */
-a, button, input, select, textarea, [role="button"] {
-  min-height: 44px;
-}
-
-a.inline, button.inline {
-  min-height: 0;
-}
+/* Every interactive target is at least 44px. A student tapping with a thumb
+ * on a moving bus is the design case. Inline links in prose are exempt by
+ * being inline: min-height does not apply to them. */
+a, button, input, select, textarea, [role="button"] { min-height: 44px; }
 
 .visually-hidden {
   position: absolute;
@@ -88,17 +118,18 @@ a.inline, button.inline {
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }
 
-/* Every animation has an instant equivalent, and it is tested rather than
- * intended (v2 §5.5). */
+/* The motion tokens already collapse to ~0 under reduced motion; this catches
+ * anything animated by a keyframe rather than a transition. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }

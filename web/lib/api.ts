@@ -37,11 +37,19 @@ function url(path: string): string {
  * Null rather than a throw, deliberately: the API being unreachable should
  * render a page that says so, not an error boundary. A student on a dropped
  * connection has done nothing wrong and should not be shown a stack trace.
+ *
+ * `headers` exists for the server: a server component's fetch to FastAPI is a
+ * request from Next, not from the student's browser, so it carries no cookie
+ * unless one is forwarded. Server code goes through `lib/server-api.ts`, which
+ * does that; calling this directly from the server reads as anonymous.
  */
-export async function getJSON<T>(path: string): Promise<T | null> {
+export async function getJSON<T>(
+  path: string,
+  headers: Record<string, string> = {},
+): Promise<T | null> {
   try {
     const res = await fetch(url(path), {
-      headers: { accept: "application/json" },
+      headers: { accept: "application/json", ...headers },
       // Always current: an allowance or a subject list served from a cache is
       // a number that is quietly wrong.
       cache: "no-store",
@@ -52,7 +60,3 @@ export async function getJSON<T>(path: string): Promise<T | null> {
     return null;
   }
 }
-
-export const getSubjects = () => getJSON<Subject[]>("/api/catalog/subjects");
-export const getExams = () => getJSON<ExamFormat[]>("/api/catalog/exams");
-export const getViewer = () => getJSON<Viewer>("/api/auth/viewer");

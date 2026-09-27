@@ -11,7 +11,7 @@ import { test, expect } from "@playwright/test";
  */
 
 const SECTIONS = [
-  { label: "Home", path: "/" },
+  { label: "Home", path: "/dashboard" },
   { label: "Practice", path: "/practice" },
   { label: "Mocks", path: "/exam" },
   { label: "Tutor", path: "/tutor" },
@@ -21,7 +21,7 @@ const SECTIONS = [
 test.describe("every section is reachable", () => {
   for (const { label, path } of SECTIONS) {
     test(`${label} can be reached from the home screen`, async ({ page }) => {
-      await page.goto("/");
+      await page.goto("/dashboard");
 
       const nav = page.getByRole("navigation", { name: "Sections" });
       const link = nav.getByRole("link", { name: label, exact: true });
@@ -39,7 +39,7 @@ test.describe("every section is reachable", () => {
 test("the tab bar names every section in words, not icons alone", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/dashboard");
   const nav = page.getByRole("navigation", { name: "Sections" });
 
   for (const { label } of SECTIONS) {
@@ -50,7 +50,7 @@ test("the tab bar names every section in words, not icons alone", async ({
 });
 
 test("nothing forces the page sideways", async ({ page }, testInfo) => {
-  await page.goto("/");
+  await page.goto("/dashboard");
 
   // A horizontal scrollbar at 360px means something is wider than the phone,
   // and the student reads the question by dragging. Checked on the real
@@ -67,7 +67,7 @@ test("nothing forces the page sideways", async ({ page }, testInfo) => {
 });
 
 test("every tab is a thumb-sized target", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/dashboard");
   const nav = page.getByRole("navigation", { name: "Sections" });
 
   for (const { label } of SECTIONS) {

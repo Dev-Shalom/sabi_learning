@@ -1,0 +1,140 @@
+{
+  "_comment": "Every fact on the landing page that could be wrong lives here, and tests/test_landing_facts.py checks each one against the corpus, the eval set and the exam configs. v1 typed these by hand into a template and two of its four hero citations pointed at the wrong syllabus section (PHY C2 is thermal expansion, not motion; CHM A4 is the periodic table, not the mole) on a page whose whole promise is that citations are real.",
+
+  "figures": {
+    "syllabus_documents": 74,
+    "worked_examples": 96,
+    "test_questions": 214
+  },
+
+  "deck": [
+    {
+      "subject": "Core Mathematics",
+      "state": "A real answer",
+      "ready": true,
+      "question": "Solve 2x² + 5x − 3 = 0 by completing the square.",
+      "steps": [
+        "Divide through by 2: x² + 2.5x − 1.5 = 0.",
+        "Move the constant across: x² + 2.5x = 1.5.",
+        "Add the square of half the coefficient of x, (1.25)² = 1.5625, to both sides.",
+        "(x + 1.25)² = 3.0625, so x + 1.25 = ±1.75."
+      ],
+      "cite_step": 2,
+      "answer": "x = 0.5 or x = −3.",
+      "source": {
+        "locator": "SYL B3",
+        "label": "WAEC syllabus",
+        "title": "Quadratic equations and their graphs",
+        "before": "",
+        "cited": "Solve quadratic equations by factorisation, by completing the square and by formula.",
+        "after": "Form a quadratic equation from given roots. Use the sum and product of roots."
+      }
+    },
+    {
+      "subject": "Physics",
+      "state": "A real answer",
+      "ready": true,
+      "question": "A car starts from rest and reaches 20 m/s in 8 s. Find its acceleration and the distance covered.",
+      "steps": [
+        "a = (v − u) / t = (20 − 0) / 8.",
+        "a = 2.5 m/s².",
+        "s = ut + ½at² = 0 + ½ × 2.5 × 8².",
+        "s = ½ × 2.5 × 64 = 80 m."
+      ],
+      "cite_step": 0,
+      "answer": "a = 2.5 m/s², distance = 80 m.",
+      "source": {
+        "locator": "PHY A3",
+        "label": "WAEC syllabus",
+        "title": "Linear motion",
+        "before": "Distinguish distance from displacement and speed from velocity. Define acceleration.",
+        "cited": "Use the equations of uniformly accelerated motion to solve problems, including free fall under gravity.",
+        "after": ""
+      }
+    },
+    {
+      "subject": "Chemistry",
+      "state": "A real answer",
+      "ready": true,
+      "question": "How many moles are there in 8 g of oxygen gas, O₂?",
+      "steps": [
+        "Molar mass of O₂ = 2 × 16 = 32 g/mol.",
+        "Number of moles = mass ÷ molar mass.",
+        "n = 8 ÷ 32."
+      ],
+      "cite_step": 1,
+      "answer": "n = 0.25 mol.",
+      "source": {
+        "locator": "CHM B1",
+        "label": "WAEC syllabus",
+        "title": "The mole concept and stoichiometry",
+        "before": "Define the mole, the Avogadro constant and molar mass.",
+        "cited": "Convert between mass, moles, number of particles and volume of gas at s.t.p.",
+        "after": "Write and balance chemical equations."
+      }
+    },
+    {
+      "subject": "Core Mathematics",
+      "state": "Refused, with its reason",
+      "ready": true,
+      "question": "Differentiate y = sin x.",
+      "refusal": "This is not on the WAEC Core Mathematics syllabus, so I do not have material for it. It belongs to Further Mathematics, which is a separate subject and a separate paper.",
+      "source": {
+        "locator": "SYL F1",
+        "label": "WAEC syllabus · not on this syllabus",
+        "title": "Differentiation of algebraic functions",
+        "before": "Differentiation of trigonometric functions is not on this syllabus.",
+        "cited": "You will not be asked to differentiate sin x, cos x or tan x on this paper.",
+        "after": ""
+      }
+    }
+  ],
+
+  "ticker": [
+    ["SYL A1", "Number bases"],
+    ["PHY A3", "Linear motion"],
+    ["CHM B1", "The mole concept and stoichiometry"],
+    ["SYL B3", "Quadratic equations and their graphs"],
+    ["PHY A4", "Projectile motion"],
+    ["CHM A3", "Chemical bonding"],
+    ["EX 31", "Sum of the interior angles of a polygon"],
+    ["PHY B1", "Work, energy and power"],
+    ["CHM C1", "Acids, bases and salts"],
+    ["SYL A6", "Sequences and series"],
+    ["PHY C4", "The gas laws"],
+    ["CHM C3", "Electrolysis"],
+    ["SYL D2", "Circle theorems"],
+    ["PHY D1", "Wave motion and sound"],
+    ["CHM A2", "Atomic structure and isotopes"],
+    ["EX 39", "Apply the sine rule"],
+    ["PHY E2", "Current electricity"],
+    ["CHM C5", "Rates of chemical reaction"],
+    ["SYL G3", "Probability"],
+    ["PHY D3", "Lenses and optical instruments"],
+    ["CHM G1", "Qualitative analysis and the practical paper"],
+    ["SYL H1", "Vectors in a plane"],
+    ["PHY F2", "Atomic and nuclear physics"],
+    ["SYL F1", "Differentiation of algebraic functions"]
+  ],
+
+  "subjects": [
+    { "name": "Core Mathematics", "glyph": "maths", "documents": 82, "live": true },
+    { "name": "Physics", "glyph": "physics", "documents": 42, "live": true },
+    { "name": "Chemistry", "glyph": "chemistry", "documents": 46, "live": true },
+    { "name": "Biology", "glyph": "biology", "documents": 0, "live": false }
+  ],
+
+  "exams": [
+    {
+      "key": "jamb_utme",
+      "name": "JAMB UTME",
+      "shape": "4 subjects · 180 questions · 2 hours · scored out of 400",
+      "state": "Format checked against JAMB's own CBT guide",
+      "ready": true
+    },
+    { "key": "waec_ssce", "name": "WAEC SSCE", "shape": "Objective and theory papers, subject by subject", "state": "Format being checked", "ready": false },
+    { "key": "neco_ssce", "name": "NECO SSCE", "shape": "Objective and theory papers, subject by subject", "state": "Format being checked", "ready": false },
+    { "key": "nabteb", "name": "NABTEB", "shape": "Objective and theory papers, subject by subject", "state": "Format being checked", "ready": false },
+    { "key": "post_utme", "name": "Post-UTME", "shape": "Set by each university, so each has its own", "state": "Format being checked", "ready": false }
+  ]
+}

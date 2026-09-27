@@ -666,6 +666,34 @@ writing the handler.
 
 ---
 
+### The identity: adire indigo, Cabinet Grotesk and Satoshi, a cool page
+
+Two owner decisions, in order. On 2026-09-24 the owner chose the v1 look for
+the whole product instead of Verdant Ink: adire indigo ground, saffron thread,
+the resist-dye pattern. On 2026-09-27, asked to apply the emil-kowalski and
+design-taste-frontend skills, the owner chose **Cabinet Grotesk + Satoshi on a
+cool off-white page** over keeping Fraunces + Outfit on cream cotton.
+
+The argument that decided it: the taste skill names Fraunces and warm cream
+paper as the two commonest generated-design tells, and v2 §4.7 already lists
+"cream background + serif display" as an anti-example. Keeping indigo and
+saffron keeps what was distinctive (a palette from the audience's own
+material culture); changing the page and the type removes what was generic.
+
+Measured: the five subset font files are **69.6 KB** against a 120 KB budget.
+Neither face has a ₦ glyph, so the price's currency sign falls back to the
+system font; accepted over a third font file. Cabinet Grotesk has no tabular
+figures, so timers and scores are Satoshi. All token pairs pass AA in both
+themes (`tools/contrast_web.py`); the tightest is bronze on cotton-2 at 4.92.
+
+**Motion is CSS-first, and Motion (the library) is not global.** Mounted in
+the root layout, even with `LazyMotion`, it cost ~12 KB on every route, and
+React plus the App Router runtime are already 127 KB of the 150 KB budget.
+So the page transition is React's `<ViewTransition>` with CSS, the tab
+marker is a CSS transform, and Motion is imported only by the client islands
+that need springs or exit animations, each code-split. The exam route never
+loads it.
+
 ## Things deliberately not done
 
 - **Alembic.** The schema is `create_all` plus a forward-only list of idempotent

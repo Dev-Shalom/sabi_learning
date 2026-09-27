@@ -17,7 +17,7 @@
  */
 
 /** `--paper` in the light theme. Must equal `:root { --paper }`. */
-export const PAPER_LIGHT = "#F7F9FB";
+export const PAPER_LIGHT = "#F4F6FB";
 
 /** `--paper` in the dark theme. Must equal the dark block's `--paper`. */
-export const PAPER_DARK = "#0E1B2A";
+export const PAPER_DARK = "#101A3C";

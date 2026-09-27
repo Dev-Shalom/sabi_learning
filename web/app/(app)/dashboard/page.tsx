@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getExams, getSubjects, getViewer } from "@/lib/api";
+import { getExams, getSubjects, getViewer } from "@/lib/server-api";
 
 /* A server component with no client boundary, so this page renders and reads
  * with JavaScript off. That is the kept-in-spirit half of the decision to

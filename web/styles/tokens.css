@@ -1,120 +1,198 @@
-/* Verdant Ink — the design tokens.
+/* Adire — the design tokens.
  *
  * FROZEN CONTRACT (master prompt v2 §10.2), between the design system and
  * every feature. Changing a token goes through the lead.
  *
- * Every colour in the product is named here. `tools/contrast_check.py` fails
- * on any colour literal in a property value anywhere else — that check is
- * what keeps a design system a system, because a ratio table can only vouch
- * for colours it knows the names of (carried over from v1).
+ * This replaced "Verdant Ink" on 2026-09-24, at the owner's direction: the
+ * product carries the v1 look — Yoruba adire indigo, undyed cotton, a saffron
+ * thread — into the whole app rather than only its landing page. The
+ * resist-dye motifs, the serif display face and the one motion vocabulary
+ * below are shared by every surface. See docs/DESIGN.md.
  *
- * The ratios below are MEASURED, on 2026-09-23, not copied from the brief.
- * Two of the brief's stated figures were slightly off and are corrected here.
+ * Every colour in the product is named here. `tools/contrast_web.py` fails on
+ * any colour literal anywhere else in web/, and measures every pairing below
+ * for WCAG 2.2 AA in both themes. A ratio in a comment here is what that tool
+ * measured, not an estimate.
  *
  * Meaning is fixed and never carried by colour alone (v2 §5.1, §7.1):
- *   green = primary action / correct
- *   gold  = achievement
- *   red   = wrong / error
+ *   indigo / saffron = action
+ *   bronze / saffron = evidence: a citation, a source, a measured number
+ *   success          = right
+ *   danger           = wrong / error
  * Each always appears with a word or an icon beside it, because roughly one
  * student in twelve cannot tell the green and the red apart.
  */
 
+/* ------------------------------------------------------------------ cloth
+ * The raw palette. It does NOT change with the theme: the hero, the dark
+ * bands and the answer cards are the same cloth in light mode and dark mode,
+ * because they are objects on the page, not the page. Components that sit on
+ * those grounds use these names; everything else uses the semantic layer. */
+:root {
+  /* adire: each dip in the vat takes the cloth a step deeper */
+  --indigo-9: #0A1230;
+  --indigo-8: #101A3C;
+  --indigo-7: #182654;
+  --indigo-5: #26386F;
+  --indigo-3: #4A5F9E;
+  --indigo-2: #7A8CC0;          /* 5.55:1 on indigo-9, 5.13:1 on indigo-8 */
+
+  /* undyed cotton, where the paste resisted the dye. Cool rather than cream:
+   * a warm paper ground is the commonest generated-design tell (v2 §4.7), and
+   * against indigo a blue-leaning white reads as the same cloth. */
+  --cotton: #F3F5FA;
+  --cotton-2: #E6EAF4;
+  --cotton-3: #D2D8E8;
+
+  /* The thread. Saffron on indigo, bronze on cotton: saffron on cotton is
+   * 1.9:1, so the accent is two tokens, never one used everywhere. */
+  --saffron: #E5A72C;           /* 8.66:1 on indigo-9 */
+  --bronze: #8A5A0B;            /* 5.34:1 on cotton, 4.80:1 on cotton-2 */
+}
+
+/* --------------------------------------------------------------- semantic
+ * Only these are used by app components. A theme reassigns them and nothing
+ * that uses them has to know. */
 :root {
   color-scheme: light dark;
 
-  /* -- surfaces ---------------------------------------------------------- */
-  --paper: #F7F9FB;              /* page background */
-  --surface: #FFFFFF;            /* cards, sheets */
+  --paper: #F4F6FB;             /* the page: cool undyed cotton */
+  --surface: #FFFFFF;           /* a card lifted off it */
+  --surface-2: #E9EDF6;         /* a quiet band */
+  --rule: #D5DBEA;              /* hairlines; never text */
 
-  /* -- text -------------------------------------------------------------- */
-  --ink: #0E1B2A;                /* 16.46:1 on paper */
-  --muted: #5B6B7B;              /*  5.19:1 on paper */
+  --ink: #0E1633;
+  --muted: #4C5675;             /*  6.55:1 on paper */
 
-  /* -- primary: green ----------------------------------------------------
-   * TWO tokens, and the split is not decoration. --primary is a FILL:
-   * #12B886 as text on paper measures 2.42:1, which fails AA badly. The
-   * brief estimated ~2.6; it is worse than that. Any green text on a light
-   * ground uses --primary-text.
-   *
-   * Do not reintroduce #0E8F6A, an earlier draft: it is exactly 4.07:1 on
-   * white and fails AA for body text. */
-  --primary: #12B886;            /* fill only; --ink on it is 6.80:1 */
-  --primary-text: #0B7A5A;       /*  5.04:1 on paper; white on it 5.32:1 */
-  --primary-tint: #E8F7F1;       /* --primary-text on it 4.82:1 */
+  /* Action. A FILL, with its own foreground that never flips: a label on a
+   * fill must not follow --ink, or it inverts in dark mode and lands at
+   * 1.52:1 on the saffron — the bug the checker caught in Phase 2. */
+  --primary: #101A3C;
+  --on-primary: #F3F5FA;
+  --primary-text: #26386F;      /* links and emphasis, 10.10:1 on paper */
+  --primary-tint: #E2E7F5;      /* a selected row */
 
-  /* -- gold: achievement -------------------------------------------------- */
-  --gold: #F4B740;               /* fill only; --on-gold on it is 9.67:1 */
-  --gold-text: #8A5A0B;          /*  5.61:1 on paper */
+  /* Evidence and achievement. */
+  --gold: #E5A72C;              /* fill only */
+  --on-gold: #0A1230;
+  --gold-text: #8A5A0B;         /* bronze: a locator, a measured figure */
 
-  /* Text ON a filled control, and it does NOT flip with the theme.
-   *
-   * The gold and the green are the same bright colours in dark mode, so a
-   * label that followed --ink would turn near-white on them: --ink on --gold
-   * measures 1.52:1 in dark, which is unreadable. Found by the contrast
-   * checker rather than by looking, which is the whole reason it reads both
-   * themes. A fill keeps its own foreground. */
-  --on-primary: #0E1B2A;         /*  6.80:1 on --primary */
-  --on-gold: #0E1B2A;            /*  9.67:1 on --gold */
+  --success: #1C6446;           /* right; always with the word */
+  --danger: #98332F;            /* wrong / error; always with the word */
+  --danger-tint: #FBE7E5;
 
-  /* -- danger: wrong, error ----------------------------------------------- */
-  --danger: #B42318;             /*  6.23:1 on paper */
-  --danger-tint: #FEEDEC;        /* --danger on it 5.80:1 */
-
-  /* -- focus --------------------------------------------------------------
-   * Its own token rather than reusing --primary, so that a focus ring stays
-   * visible if the primary colour is ever retuned. Keyboard use is not
-   * optional here: the JAMB simulator is driven entirely from the keyboard. */
-  --focus: #0B7A5A;
+  --focus: #8A5A0B;
 }
 
+/* The dark theme deepens the cloth rather than inverting it. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #0E1B2A;
-    --surface: #162536;
-    --ink: #E6EDF3;              /* 14.70:1 on paper, 13.15:1 on surface */
-    --muted: #9AA8B6;            /*  7.16:1 on paper,  6.40:1 on surface */
-
-    /* On dark, one green serves as both fill and text: 9.04:1 on paper. */
-    --primary: #34D399;
-    --primary-text: #34D399;
-    --primary-tint: #16342B;
-
-    --gold: #F4B740;             /*  9.67:1 on paper */
-    --gold-text: #F4B740;
-
-    --danger: #F97066;           /*  6.24:1 on paper */
-    --danger-tint: #3A1D1B;
-
-    --focus: #34D399;
+    --paper: #101A3C;
+    --surface: #182654;
+    --surface-2: #0A1230;
+    --rule: #26386F;
+    --ink: #F7F3EA;
+    --muted: #8C9CCB;           /*  6.26:1 on paper, 5.35:1 on surface */
+    --primary: #E5A72C;
+    --on-primary: #0A1230;
+    --primary-text: #E5A72C;
+    --primary-tint: #1E2B5C;
+    --gold: #E5A72C;
+    --on-gold: #0A1230;
+    --gold-text: #E5A72C;
+    --success: #68C79B;
+    --danger: #F09A95;
+    --danger-tint: #3A2030;
+    --focus: #E5A72C;
   }
 }
 
 :root[data-theme="dark"] {
-  --paper: #0E1B2A;
-  --surface: #162536;
-  --ink: #E6EDF3;
-  --muted: #9AA8B6;
-  --primary: #34D399;
-  --primary-text: #34D399;
-  --primary-tint: #16342B;
-  --gold: #F4B740;
-  --gold-text: #F4B740;
-  --danger: #F97066;
-  --danger-tint: #3A1D1B;
-  --focus: #34D399;
+  --paper: #101A3C;
+  --surface: #182654;
+  --surface-2: #0A1230;
+  --rule: #26386F;
+  --ink: #F7F3EA;
+  --muted: #8C9CCB;
+  --primary: #E5A72C;
+  --on-primary: #0A1230;
+  --primary-text: #E5A72C;
+  --primary-tint: #1E2B5C;
+  --gold: #E5A72C;
+  --on-gold: #0A1230;
+  --gold-text: #E5A72C;
+  --success: #68C79B;
+  --danger: #F09A95;
+  --danger-tint: #3A2030;
+  --focus: #E5A72C;
 }
 
-/* -- motion ---------------------------------------------------------------
- * v2 §7.3. Exam mode is calm: selection feedback within --t-tap, and never an
- * animation between a key press and the answer being saved. */
+/* ------------------------------------------------------------ type, space
+ * A modular scale that widens from 1.2 at 360px to 1.25 on a large screen, so
+ * a headline grows with the page instead of stepping at a breakpoint. */
 :root {
-  --t-tap: 120ms;    /* pressed, selected: must feel instant */
-  --t-fast: 180ms;   /* a control changing state */
-  --t-mid: 250ms;    /* something appearing or moving */
-  --t-page: 400ms;   /* a whole route transition */
+  --step--1: clamp(0.83rem, 0.81rem + 0.1vw, 0.88rem);
+  --step-0: clamp(1.0625rem, 1.04rem + 0.12vw, 1.125rem);
+  --step-1: clamp(1.28rem, 1.22rem + 0.28vw, 1.4rem);
+  --step-2: clamp(1.53rem, 1.42rem + 0.55vw, 1.75rem);
+  --step-3: clamp(1.84rem, 1.63rem + 1vw, 2.2rem);
+  --step-4: clamp(2.2rem, 1.83rem + 1.8vw, 2.75rem);
+  --step-5: clamp(2.65rem, 1.95rem + 3.3vw, 3.9rem);
+  --step-6: clamp(3.1rem, 1.9rem + 5.6vw, 5.2rem);
 
-  --ease-out: cubic-bezier(0.32, 0.72, 0, 1);   /* entry: arrives already settling */
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);        /* exit */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: 6rem;
+
+  --measure: 34rem;
+  --wide: 72rem;
+
+  --r-control: 6px;
+  --r-panel: 12px;
+  --r-pill: 999px;
+
+  /* Shadows mix the deepest indigo rather than naming a new colour, so the
+   * checker's "every colour is a token" rule holds for them too. */
+  --shadow-lift:
+    0 1px 2px color-mix(in srgb, var(--indigo-9) 8%, transparent),
+    0 12px 28px -8px color-mix(in srgb, var(--indigo-9) 22%, transparent);
+  --shadow-press: 0 6px 18px -6px color-mix(in srgb, var(--indigo-9) 45%, transparent);
+}
+
+/* ------------------------------------------------------------------ motion
+ * ONE vocabulary for the whole product: four curves, five durations. A
+ * component that invents its own timing is a bug — this is how the landing
+ * page, the tab bar, a practice answer and the exam screen come to feel like
+ * one thing.
+ *
+ * Durations are short on purpose. Motion that explains a change should be
+ * over before it is consciously noticed; only the page-level moments run
+ * long. Exam mode is calm: never an animation between a key press and the
+ * answer being saved (v2 §7.3). */
+:root {
+  --t-tap: 100ms;    /* pressed, hovered: must feel instant */
+  --t-fast: 180ms;   /* a control changing state */
+  --t-mid: 280ms;    /* something appearing or moving */
+  --t-slow: 420ms;   /* a whole region changing */
+  --t-deal: 560ms;   /* the deck dealing a card */
+
+  /* Decelerate hard and settle flat: most of the travel happens in the first
+   * third, so a movement reads as already arriving. The workhorse. */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  /* The same with a little overshoot, for things with physical weight: a
+   * sheet of paper landing, a dot growing. Never on text. */
+  --ease-settle: cubic-bezier(0.34, 1.35, 0.64, 1);
+  /* Accelerating away. Exits only, so leaving and arriving are not the same
+   * gesture played backwards. */
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  /* Ink spreading into cloth: slow to start, then it takes. Page-level only. */
+  --ease-ink: cubic-bezier(0.65, 0, 0.2, 1);
 }
 
 /* Every animation has an instant equivalent, and it is tested rather than
@@ -124,6 +202,7 @@
     --t-tap: 0.01ms;
     --t-fast: 0.01ms;
     --t-mid: 0.01ms;
-    --t-page: 0.01ms;
+    --t-slow: 0.01ms;
+    --t-deal: 0.01ms;
   }
 }
